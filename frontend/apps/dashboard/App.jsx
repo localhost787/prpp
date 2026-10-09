@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   notice: { paddingVertical: 6, paddingHorizontal: 16, backgroundColor: palette.white, borderBottomWidth: 1, borderColor: palette.borderSoft, flexDirection: 'row', gap: 8, justifyContent: 'center' },
   noticeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: palette.brandRed, marginTop: 6 },
   shell: { flex: 1, minWidth: 0, width: '100%' },
-  sidebar: { width: 244, padding: 22, borderRightWidth: 1, borderColor: palette.borderSoft, backgroundColor: palette.white, gap: 16 },
+  sidebar: { width: 244, padding: 22, borderRightWidth: 1, borderColor: palette.borderSoft, backgroundColor: palette.white, gap: 16, ...Platform.select({ web: { position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto', flexShrink: 0 }, default: {} }) },
   sidebarFooter: { marginTop: 'auto', paddingTop: 40, gap: 12 },
   redRule: { width: 26, height: 3, borderRadius: 3, backgroundColor: palette.brandRed },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },

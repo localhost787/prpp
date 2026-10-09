@@ -1,0 +1,25 @@
+.mock-start { box-sizing: border-box; width: 100%; min-height: 100dvh; margin: 0; padding: 16px; color: #172b4d; background: #ffffff; font: 1rem/1.45 system-ui, sans-serif; overflow-wrap: anywhere; }
+.mock-start * { box-sizing: border-box; }
+.mock-start h1 { font-size: 1.4em; margin: 12px 0; }
+.mock-start h2 { font-size: 1.3em; margin: 4px 0; }
+.mock-start h3 { font-size: 1.2em; margin: 0 0 8px; }
+.mock-start p { margin: 8px 0; }
+.mock-notice { padding: 10px; border: 1px solid #52647a; border-radius: 8px; }
+.mock-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.mock-tools button { flex: 1 1 8em; }
+.mock-selectors { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 12px 0; }
+.mock-selectors label { min-width: 0; font-weight: 600; }
+.mock-start button, .mock-start select { min-height: 44px; min-width: 44px; max-width: 100%; padding: 8px; border: 1px solid #52647a; border-radius: 8px; color: #172b4d; background: #ffffff; font: inherit; white-space: normal; }
+.mock-start button { cursor: pointer; }
+.mock-start button:disabled { cursor: default; border-style: dashed; opacity: 1; }
+.mock-selectors select { display: block; width: 100%; margin-top: 4px; }
+.mock-start :focus-visible { outline: 3px solid #172b4d; outline-offset: 3px; }
+.mock-navigation { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+.mock-navigation button { flex: 1 1 6.6em; }
+.mock-navigation button[aria-current="page"] { color: #ffffff; background: #172b4d; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.mock-panel { border: 1px solid #52647a; border-radius: 12px; padding: 16px; margin: 12px 0; }
+.mock-start footer { border-top: 1px solid #52647a; padding-top: 12px; margin-top: 16px; font-size: 0.875em; }
+/* Respaldo Vite temporal: sin marco de teléfono; el dashboard Expo vive en apps/dashboard. */
+@media (min-width: 800px) {
+  .mock-selectors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

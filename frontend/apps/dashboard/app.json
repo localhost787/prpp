@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Puerto Rico Patient Portal",
+    "slug": "prpp-dashboard-local",
+    "version": "0.1.0",
+    "platforms": ["web", "android", "ios"],
+    "web": { "bundler": "metro", "output": "single", "name": "Puerto Rico Patient Portal" }
+  }
+}

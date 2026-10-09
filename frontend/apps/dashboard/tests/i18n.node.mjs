@@ -48,8 +48,8 @@ test('English default with complete deterministic en/es dictionaries and matchin
     const parameters = value => [...value.matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort();
     assert.deepEqual(parameters(i18n.messages.en[key]), parameters(i18n.messages.es[key]), key);
   }
-  assert.equal(i18n.translate('en', 'enter'), 'Enter example');
-  assert.equal(i18n.translate('es', 'enter'), 'Entrar al ejemplo');
+  assert.equal(i18n.translate('en', 'chooseAccount'), 'Choose an account');
+  assert.equal(i18n.translate('es', 'chooseAccount'), 'Elija una cuenta');
   assert.equal(i18n.translate('en', 'resultCount', { visible: 1, total: 6 }), '1 of 6 example results');
   assert.throws(() => i18n.translate('en', 'unknown.key'));
 });

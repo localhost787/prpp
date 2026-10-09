@@ -35,8 +35,13 @@ export function createPortalStore(load = openContext) {
   return {
     getSnapshot: () => state,
     subscribe: listener => { listeners.add(listener); return () => listeners.delete(listener); },
-    enter: () => switchContext('carmen', 'self'),
-    selectAccount: account => switchContext(account, roles[account]?.[0]),
+    enter: (account, role) => switchContext(account, role),
+    selectAccount(account) {
+      if (!accounts.includes(account)) throw new Error('CONTEXT_UNAVAILABLE');
+      ++revision;
+      state.session?.client.clear();
+      publish({ status: 'choosing', account, role: null, session: null, section: 'visit' });
+    },
     selectRole: role => switchContext(state.account, role),
     navigate(section) {
       if (state.status !== 'ready' || !sections.includes(section)) return;

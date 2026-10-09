@@ -26,9 +26,10 @@ test('cambio de contexto retira pantalla anterior, reinicia navegación e ignora
   const store = api.createPortalStore((account, role) => new Promise(resolve => pending.push({ account, role, resolve })));
   const cleared = [];
   const session = (id, studies = true) => ({ patient: { id }, permissions: { estudios: studies }, client: { clear() { cleared.push(id); } } });
-  const first = store.enter();
+  const first = store.enter('carmen', 'self');
   assert.equal(store.getSnapshot().status, 'loading');
-  const second = store.selectAccount('lourdes');
+  store.selectAccount('lourdes');
+  const second = store.selectRole('delegate');
   assert.equal(store.getSnapshot().session, null);
   pending[1].resolve(session('lourdes-delegate', false)); await second;
   store.navigate('results');
@@ -93,12 +94,12 @@ test('error técnico no es vacío clínico; reintento y sesiones paralelas indep
   const second = api.createPortalStore();
   let notifications = 0;
   const unsubscribe = first.subscribe(() => notifications++);
-  await first.enter();
+  await first.enter('carmen', 'self');
   assert.equal(first.getSnapshot().status, 'error');
   assert.equal(first.getSnapshot().session, null);
   first.navigate('results');
   assert.equal(first.getSnapshot().section, 'visit');
-  await second.enter();
+  await second.enter('carmen', 'self');
   second.navigate('results');
   assert.equal(second.getSnapshot().section, 'results');
   first.close();
@@ -106,7 +107,7 @@ test('error técnico no es vacío clínico; reintento y sesiones paralelas indep
   assert.ok(notifications > 0);
   unsubscribe();
   const prior = notifications;
-  await first.enter();
+  await first.enter('carmen', 'self');
   assert.equal(notifications, prior);
   second.close();
 });

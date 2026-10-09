@@ -1,3 +1,4 @@
+import { enterContext, changeRole } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { translate } from '../src/i18n.mjs';
@@ -27,9 +28,9 @@ try {
   const overflow = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   await page.goto('http://127.0.0.1:3001');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(button('Enter example')).toBeVisible();
-  await switchLanguage(); await expect(button('Entrar al ejemplo')).toBeVisible(); await switchLanguage();
-  await button(t('enter')).click();
+  await expect(button('Account: Carmen')).toBeVisible();
+  await switchLanguage(); await expect(button('Cuenta: Carmen')).toBeVisible(); await switchLanguage();
+  await enterContext(page, 'Carmen', 'self', language);
   await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
   for (const pass of ['en', 'es', 'en']) {
     if (language !== pass) await switchLanguage();
@@ -64,7 +65,7 @@ try {
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     await expect(page.getByTestId('result-card')).toHaveCount(1);
     await expect(page.getByTestId('result-detail')).toHaveCount(1);
-    await expect(button(t('filterLabel', { status: t('preliminary') }))).toContainText(t('active'));
+    await expect(button(t('filterLabel', { status: t('preliminary') }))).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText(t('rxValue'), { exact: true })).toBeVisible();
     await switchLanguage();
     await overflow();
@@ -81,7 +82,7 @@ try {
   await switchLanguage();
   await expect(page.getByRole('textbox', { name: t('searchResult') })).toHaveValue('gl');
   await expect(page.getByTestId('result-card').getByRole('heading')).toHaveText([t('wbcTitle'), t('hbTitle'), t('glucosaTitle')]);
-  await button(t('accountLabel', { name: 'Lourdes' })).click();
+  await enterContext(page, 'Lourdes', 'delegate', language);
   for (let pass = 0; pass < 2; pass++) {
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     await expect(button(t('goTo', { section: t('results') }))).toBeDisabled();
@@ -90,23 +91,23 @@ try {
     await expect(page.getByText(t('restrictedResults'), { exact: true })).toBeVisible();
     await switchLanguage();
   }
-  await button(t('roleLabel', { role: t('myHealth') })).click();
+  await changeRole(page, 'self', language);
   await button(t('goTo', { section: t('results') })).click();
   await expect(page.getByText(t('noResults'), { exact: true })).toBeVisible();
   await switchLanguage();
   await expect(page.getByTestId('patient-name')).toHaveText('Lourdes');
   await expect(page.getByText(t('noResults'), { exact: true })).toBeVisible();
-  await button(t('accountLabel', { name: 'Rafael' })).click();
+  await enterContext(page, 'Rafael', 'delegate', language);
   await button(t('goTo', { section: t('results') })).click();
   await button(t('filterLabel', { status: t('final') })).click();
   await switchLanguage();
-  await expect(button(t('accountLabel', { name: 'Rafael' }))).toContainText(t('active'));
+  await expect(page.getByTestId('context-card')).toContainText('Rafael');
   await expect(page.getByTestId('result-card')).toHaveCount(2);
   await button(t('close')).click();
   await expect(page.getByTestId('result-card')).toHaveCount(0);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(button('Enter example')).toBeVisible();
+  await expect(button('Account: Carmen')).toBeVisible();
   expect(await page.evaluate(async () => [localStorage.length, sessionStorage.length, (await caches.keys()).length, (await indexedDB.databases()).length])).toEqual([0, 0, 0, 0]);
   expect(requests).toEqual([]); expect(errors).toEqual([]);
   report.cases.push({ width, passed: true, errors, requests, languages: ['en', 'es', 'en'], scale: [1, 1.5] });

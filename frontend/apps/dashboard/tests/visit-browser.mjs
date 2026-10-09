@@ -1,3 +1,4 @@
+import { enterContext, changeRole } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 const folder = '../../docs/evidence/AYO-66';
@@ -14,7 +15,7 @@ try {
   page.on('request', r => { if (['fetch', 'xhr'].includes(r.resourceType()) || !r.url().startsWith('http://127.0.0.1:3001/')) requests.push(r.url()); });
   page.on('websocket', s => requests.push(s.url()));
   await page.goto('http://127.0.0.1:3001');
-  await page.getByRole('button', { name: 'Enter example', exact: true }).click();
+  await enterContext(page, 'Carmen', 'self', 'en');
   const panel = page.getByTestId('visit-panel'), current = page.getByTestId('visit-current');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('Initial example status: Receiving care');
@@ -47,18 +48,18 @@ try {
     await expect(current).toContainText(`${stage} de 7`);
   }
   await expect(page.getByRole('button', { name: 'Simular etapa siguiente', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Cuenta: Rafael', exact: true }).click();
-  await expect(current).toContainText('7 de 7');
+  await enterContext(page, 'Rafael', 'delegate', 'es');
+  await expect(current).toContainText('5 de 7');
   await page.getByRole('button', { name: 'Reiniciar simulación a etapa 5', exact: true }).click();
-  await page.getByRole('button', { name: 'Cuenta: Lourdes', exact: true }).click();
+  await enterContext(page, 'Lourdes', 'delegate', 'es');
   await expect(current).toHaveText('Etapa simulada actual: 5 de 7 · Atención de la visita');
   expect(await panel.innerText()).not.toMatch(/Estudios|laboratorio|radiografía|Hemograma|15\.2|estudios en curso/);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${folder}/lourdes-${width}.png`, fullPage: true });
-  await page.getByRole('button', { name: 'Rol: Mi salud', exact: true }).click();
+  await changeRole(page, 'self', 'es');
   await expect(panel).toContainText('No hay visita activa en este contexto de ejemplo.');
   expect(await panel.innerText()).not.toMatch(/Cubículo|Ana Ramos|8:12|Carmen/);
-  await page.getByRole('button', { name: 'Cuenta: Carmen', exact: true }).click();
+  await enterContext(page, 'Carmen', 'self', 'es');
   for (const [scenario, button, text] of [
     ['denied', 'Simular sin permiso de visita', 'Acceso a la visita no habilitado'],
     ['error', 'Simular error de carga', 'No pudimos cargar la visita'],
@@ -100,7 +101,7 @@ try {
   await page.getByRole('button', { name: 'Simular etapa siguiente', exact: true }).click();
   await expect(current).toContainText('6 de 7');
   await page.getByRole('button', { name: 'Cerrar contexto', exact: true }).click();
-  await page.getByRole('button', { name: 'Entrar al ejemplo', exact: true }).click();
+  await enterContext(page, 'Carmen', 'self', 'es');
   await expect(current).toContainText('5 de 7');
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
   expect(errors).toEqual([]); expect(requests).toEqual([]);

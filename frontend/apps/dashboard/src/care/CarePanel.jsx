@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { CARMEN_CARE_FIXTURE, createCareModel } from './care.mjs';
+import { surfaceStyles } from '../ui.mjs';
 
 /**
  * Isolated AYO-89 panel. It is intentionally not connected to App.jsx.
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
   title: { color: '#172b4d', fontWeight: '800' },
   text: { color: '#172b4d', flexShrink: 1 },
   heading: { color: '#172b4d', fontWeight: '700' },
-  card: { backgroundColor: '#ffffff', borderColor: '#dce4ef', borderWidth: 1, borderRadius: 14, padding: 20, gap: 14, minWidth: 0 },
+  card: { ...surfaceStyles.card, padding: 16, gap: 12, minWidth: 0 },
   item: { borderTopColor: '#52647a', borderTopWidth: 1, paddingTop: 12, gap: 3 },
   medicine: { borderTopColor: '#52647a', borderTopWidth: 1, paddingTop: 12, gap: 5 },
   instruction: { backgroundColor: '#eaf0fb', borderRadius: 10, padding: 14 },

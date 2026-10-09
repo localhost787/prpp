@@ -16,9 +16,8 @@ function ResultCard({ item, expanded, controller, Label, Action, styles, wide, s
   }, [expanded]);
   const interpretation = interpretationLabel(item, language);
   const status = statusLabel(item, language);
-  return <View testID="result-card" style={[styles.card, { flexBasis: wide ? '47%' : '100%', flexGrow: 1, minWidth: 0, borderTopWidth: 4, borderTopColor: interpretationKey(item) === 'high' ? '#956000' : '#063b9e' }]}>
+  return <View testID="result-card" style={[styles.card, { boxShadow: 'none', flexBasis: wide ? '47%' : '100%', flexGrow: 1, minWidth: 0, borderTopWidth: 4, borderTopColor: interpretationKey(item) === 'high' ? '#956000' : '#063b9e' }]}>
     <View style={styles.topline}>
-      <Label style={styles.eyebrow}>{t('simulated')}</Label>
       <Label style={{ fontWeight: '700', color: statusKey(item) === 'preliminary' ? '#784d00' : '#425570' }}>{status}</Label>
     </View>
     <Label accessibilityRole="header" style={{ fontSize: 21 * scale, lineHeight: 28 * scale, fontWeight: '700' }}>{presentation.title}</Label>
@@ -26,13 +25,12 @@ function ResultCard({ item, expanded, controller, Label, Action, styles, wide, s
     <Label style={{ fontWeight: '700', color: interpretationKey(item) === 'high' ? '#784d00' : interpretationKey(item) === 'normal' ? '#176044' : '#425570' }}>{interpretation}</Label>
     <Label>{t('referenceRange', { range: item.referenceRange?.[0]?.text ?? t('unavailable') })}</Label>
     {!expanded ? <Action controlRef={opener} label={t('viewDetailLabel', { name: presentation.title })} onPress={() => controller.detail(item.id)}>{t('viewDetail')}</Action> : <View testID="result-detail" style={{ gap: 16, borderTopWidth: 1, borderColor: '#dce4ef', paddingTop: 16 }}>
-      <Action controlRef={closer} label={t('closeDetailLabel', { name: presentation.title })} onPress={() => controller.detail(null)}>{t('closeDetail')}</Action>
+      <Action variant="ghost" controlRef={closer} label={t('closeDetailLabel', { name: presentation.title })} onPress={() => controller.detail(null)}>{t('closeDetail')}</Action>
       {statusKey(item) === 'preliminary' && <View style={styles.restriction}><Label>{t('preliminaryExplanation')}</Label></View>}
       <Label>{presentation.note}</Label>
       <Label>{t('askTeam')}</Label>
       <Label>{t('study', { name: presentation.report })}</Label>
       <Label>{t('resultDate')}</Label>
-      <Label style={styles.small}>{t('fictitiousText')}</Label>
     </View>}
   </View>;
 }
@@ -71,25 +69,23 @@ export default function ResultsPanel({ session, reportScope, Label, Action, styl
     <Label ref={heading} tabIndex={-1} testID="section-heading" accessibilityRole="header" style={{ fontSize: 30 * scale, lineHeight: 38 * scale, fontWeight: '700' }}>{t('results')}</Label>
     <Label>{t('resultsSubtitle')}</Label>
     {downloadNotice?.generation === context.generation && downloadNotice.language === language && <Label accessibilityLiveRegion="polite">{t(`pdf_${downloadNotice.status}`)}</Label>}
-    <View style={styles.restriction}><Label style={{ fontWeight: '700' }}>{t('simulatedProvisional')}</Label><Label>{t('simulationExplanation')}</Label><Label>{t('translationReview')}</Label></View>
+    <Label style={styles.small}>{t('translationReview')}</Label>
     {!state.items.length ? <View style={styles.card}><Label>{t('noResults')}</Label><Label>{t('noResultsDisclaimer')}</Label></View> : <>
       <Label style={{ fontWeight: '700' }}>{t('searchByName')}</Label>
       <TextInput {...accessibilityLanguageProps(Platform.OS, language)} accessibilityLabel={t('searchResult')} value={query} onChangeText={text => { setQuery(text); controller.detail(null); }} placeholder={t('searchPlaceholder')} style={{ minHeight: 48, borderWidth: 1, borderColor: '#52647a', borderRadius: 9, padding: 12, backgroundColor: '#fff', color: '#172b4d', fontSize: 16 * scale }} />
       <Label style={{ fontWeight: '700' }}>{t('filterStatus')}</Label>
-      <View style={styles.selector}>{filters.map(filter => <Action key={filter} label={t('filterLabel', { status: t(filter) })} selected={state.filter === filter} onPress={() => controller.filter(filter)}>{t(filter)}</Action>)}</View>
+      <View style={styles.selector}>{filters.map(filter => <Action size="compact" key={filter} label={t('filterLabel', { status: t(filter) })} selected={state.filter === filter} onPress={() => controller.filter(filter)}>{t(filter)}</Action>)}</View>
       <Label accessibilityLiveRegion="polite">{t('resultCount', { visible: visible.length, total: state.items.length })}</Label>
       {!visible.length ? <View style={styles.card}><Label>{t('noMatches')}</Label><Action label={t('clearFilter')} onPress={() => { setQuery(''); controller.filter('all'); }}>{t('viewAll')}</Action></View> : <View style={{ gap: 24 }}>{reports.map(report => {
         const items = visible.filter(item => report.items.some(row => row.id === item.id));
         if (!items.length) return null;
         return <View key={report.id} testID="report-group" style={[styles.featureCard, { padding: wide ? 24 : 12 }]}>
           <View testID={`report-${report.id}`} style={{ gap: 16 }}>
-            <Label style={styles.eyebrow}>{copy.fictitious}</Label>
             <Label style={{ fontWeight: '700', color: '#063b9e' }}>{report.institution}</Label>
             <Label accessibilityRole="header" style={{ fontWeight: '700', fontSize: 24 * scale, lineHeight: 32 * scale }}>{report.title}</Label>
             <Label>{t(report.id === 'b' ? 'reportImaging' : 'reportLaboratory')}</Label>
             <Label>{t('reportStates', { states: [...new Set(report.items.map(item => item.statusLabel))].join(' · ') })}</Label>
             <Label style={styles.small}>{report.grouping}</Label>
-            <View style={styles.restriction}><Label style={{ fontWeight: '700' }}>{report.warning}</Label></View>
             {Platform.OS === 'web' ? <Action primary label={`${copy.download}: ${report.title}`} onPress={() => download(report)}>{copy.download}</Action> : <Label>{t('pdf_unsupported-platform')}</Label>}
             <Label style={styles.small}>{t('reportWholePdf')}</Label>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 16 }}>{items.map(item => <ResultCard key={item.id} {...{ item, controller, Label, Action, styles, scale, wide }} expanded={state.detail === item.id} />)}</View>

@@ -1,3 +1,4 @@
+import { enterContext, changeRole } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -21,7 +22,7 @@ try {
   page.on('download',d=>downloads.push(d));
   await page.goto('http://127.0.0.1:3001');
   const button=name=>page.getByRole('button',{name,exact:true});
-  await button('Enter example').click();await button('Open Results').click();
+  await enterContext(page, 'Carmen', 'self', 'en');await button('Open Results').click();
   await expect(page.getByTestId('report-group')).toHaveCount(3);
   expect(downloads.length).toBe(0);expect(assetRequests).toEqual([]);
   for(const lang of ['en','es']) {
@@ -60,16 +61,18 @@ try {
   await page.evaluate(()=>{
    const get=label=>document.querySelector(`[aria-label="${label}"]`);
    get('Descargar PDF sintético: Hemograma completo').click();
-   get('Cuenta: Lourdes').click();
+   get('Cambiar cuenta').click();
   });
+  await expect(page.getByTestId('patient-name')).toHaveCount(0);
+  await enterContext(page, 'Lourdes', 'delegate', 'es');
   await expect(button('Ir a Resultados')).toBeDisabled();
   await expect(page.getByTestId('report-group')).toHaveCount(0);
   expect(await page.locator('body').innerText()).not.toMatch(/Laboratorio de demostración|Hemograma completo|Otros resultados de sangre|Descargar PDF/);
-  await button('Rol: Mi salud').click();await button('Abrir Resultados').click();
+  await changeRole(page, 'self', 'es');await button('Abrir Resultados').click();
   await expect(page.getByText(translate('es','noResults'),{exact:true})).toBeVisible();
   await expect(page.getByTestId('report-group')).toHaveCount(0);
   expect(downloads.length).toBe(before);
-  await button('Cuenta: Rafael').click();await button('Abrir Resultados').click();
+  await enterContext(page, 'Rafael', 'delegate', 'es');await button('Abrir Resultados').click();
   await expect(page.getByTestId('report-group')).toHaveCount(3);
   await page.evaluate(()=>{
    document.querySelector('[aria-label="Descargar PDF sintético: Hemograma completo"]').click();
@@ -90,7 +93,7 @@ try {
    document.querySelector('[aria-label="Download synthetic PDF: Complete blood count"]').click();
    document.querySelector('[aria-label="Close context"]').click();
   });
-  await expect(button('Enter example')).toBeVisible();
+  await expect(button('Account: Carmen')).toBeVisible();
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   expect(downloads.length).toBe(before);
   expect(pdfRequests).toEqual([]);expect(errors).toEqual([]);

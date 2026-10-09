@@ -29,6 +29,16 @@ test('README credits the official Lucide package and licenses', async () => {
   assert.match(text, /react-native-svg` 15\.12\.1/);
 });
 
+test('restricted notices use white neutral frames without brown or yellow accents', async () => {
+  const text = await source('../App.jsx');
+  const restriction = text.match(/restriction:\s*\{([^}]+)\}/)?.[1];
+  assert.ok(restriction);
+  assert.match(restriction, /backgroundColor:\s*palette\.white/);
+  assert.match(restriction, /borderWidth:\s*1/);
+  assert.match(restriction, /borderColor:\s*palette\.borderSoft/);
+  assert.doesNotMatch(restriction, /palette\.(notice|warning)|borderLeftWidth/);
+});
+
 test('study cards do not add a blue frame', async () => {
   const text = await source('../src/StudiesPanel.jsx');
   assert.doesNotMatch(text, /borderLeftWidth/);

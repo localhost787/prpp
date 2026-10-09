@@ -1,9 +1,12 @@
 # Puerto Rico Patient Portal (PRPP)
 
-**Know where your ER visit stands, in real time — you and the family members you choose.**
-Prototype built during the Caribbean AI Summit Healthcare Hackathon (October 8–10, 2026) by Team PRPP: Edwin Rodriguez (backend lead) and Alberto Arias (frontend lead).
+**One place for Puerto Rico patients to access and understand their health information — and share it with the family members they authorize.**
 
-> **Synthetic data only.** No real patients, staff or hospitals. The portal informs; it does not diagnose or recommend treatment.
+Puerto Rico does not currently have a live patient-facing platform connected to PRHIE. PRPP demonstrates how information from connected clinical sources could be presented in one clear, accessible longitudinal view. The Emergency Department journey is the hackathon demonstration scenario, not the limit of the product vision.
+
+Built as a synthetic-data prototype during the Caribbean AI Summit Healthcare Hackathon (October 8–10, 2026) by Team PRPP: Edwin Rodriguez (backend lead) and Alberto Arias (frontend lead).
+
+> **Synthetic data only.** No real patients, staff or hospitals. PRPP is not currently connected to PRHIE. The portal informs; it does not diagnose or recommend treatment.
 
 ## The problem and our solution
 Puerto Rico does not currently have a live patient-facing platform connected to PRHIE where people can access their medical results in one place. PRPP addresses that gap with a synthetic-data prototype for patients and the family members they authorize; it is not currently connected to PRHIE. For the hackathon, the Emergency Department is the demonstration scenario: PRPP shows each stage, tests and results explained in plain Spanish, and clear discharge instructions. The patient decides, person by person, what each family member can see, and can revoke access instantly.

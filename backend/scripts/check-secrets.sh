@@ -9,8 +9,8 @@ diff="$(git diff --cached -- . ':!backend/scripts/check-secrets.sh')"
 leaks=0
 while IFS='=' read -r key value; do
   [[ -z "$key" || "$key" =~ ^# || -z "$value" ]] && continue
-  # Public values: the API URL and login emails are not secrets.
-  [[ "$key" == "MEDPLUM_BASE_URL" || "$key" == *_EMAIL ]] && continue
+  # Public values: the API URL, login emails and the fictional demo passwords (published in the README).
+  [[ "$key" == "MEDPLUM_BASE_URL" || "$key" == *_EMAIL || "$key" =~ ^DEMO_[A-Z]+_PASSWORD$ ]] && continue
   if grep -qF -- "$value" <<<"$diff"; then
     echo "LEAK: value of $key is in the staged diff"
     leaks=$((leaks + 1))

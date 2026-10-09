@@ -6,10 +6,10 @@
 //                          and her own Patient (MRN-0002, "Mi salud", with her own appointment) linked through Person
 //   Rafael Rivera        · RelatedPerson of Carmen (esposo) · the 4 categories
 //   simulador-hospital   · ClientApplication, minimal policy (run hl7-a-fhir, create/delete visit data)
-// Passwords and the client secret are generated once and stored only in the local env file.
+// The demo passwords are fictional and published on purpose (README) so anyone can run the demo.
+// The simulator client secret is generated once and stored only in the local env file.
 // Usage: node scripts/demo-users.mjs
 
-import { randomBytes } from 'node:crypto';
 import { createReference } from '@medplum/core';
 import { env, required, saveEnv } from '../lib/env.mjs';
 import { log, loginClient, loginUser, rawRequest } from '../lib/medplum.mjs';
@@ -19,10 +19,11 @@ import { setSharing } from '../lib/sharing.mjs';
 import { SIMULATOR_POLICY } from '../lib/simulator-policy.mjs';
 
 export const PEOPLE = {
-  carmen: { key: 'CARMEN', email: 'carmen@example.com', firstName: 'Carmen', lastName: 'Rivera Colón', mrn: 'MRN-0001' },
+  carmen: { key: 'CARMEN', email: 'carmen@example.com', password: 'ePUupeeRSpY9VtJwZrdW', firstName: 'Carmen', lastName: 'Rivera Colón', mrn: 'MRN-0001' },
   lourdes: {
     key: 'LOURDES',
     email: 'lourdes@example.com',
+    password: 'gsDjMOUA5LbdQk65TVMy',
     firstName: 'Lourdes',
     lastName: 'Rivera',
     mrn: 'MRN-0002',
@@ -32,6 +33,7 @@ export const PEOPLE = {
   rafael: {
     key: 'RAFAEL',
     email: 'rafael@example.com',
+    password: 'Xp1O8Jr3DE4MLMLbPoTO',
     firstName: 'Rafael',
     lastName: 'Rivera',
     relationship: 'esposo',
@@ -43,7 +45,7 @@ function password(person) {
   const key = `DEMO_${person.key}_PASSWORD`;
   if (!env[key]) {
     saveEnv(`DEMO_${person.key}_EMAIL`, person.email);
-    saveEnv(key, randomBytes(15).toString('base64url'));
+    saveEnv(key, person.password);
   }
   return env[key];
 }

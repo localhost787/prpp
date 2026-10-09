@@ -9,6 +9,7 @@ Contract: `docs/contrato-api.md` of the team kit (API-01…API-28).
 2. Create `~/.config/prpp/backend.env` (outside the repo, `chmod 600`) from `.env.example`: only the base URL and
    the super admin login are needed; the scripts write every generated id, password and secret back to that file.
    Set `PRPP_ENV_FILE` to use another path.
+   The demo accounts (Carmen, Lourdes, Rafael) use the fixed, fictional passwords listed in the root README.
 3. `npm run all` (project → demo users → seed → Bots). Every script is idempotent: running it twice creates nothing new.
 
 | Command | Issue | What it does |
@@ -37,4 +38,5 @@ Contract: `docs/contrato-api.md` of the team kit (API-01…API-28).
 
 Both run as `vmcontext` Bots: plain CommonJS, no imports, no `Buffer`.
 
-Before every commit: `bash backend/scripts/check-secrets.sh` (fails if a value from the local env file is in the staged diff).
+Before every commit: `bash backend/scripts/check-secrets.sh` (fails if a value from the local env file is in the staged diff;
+the public `DEMO_*_PASSWORD` values are allowed).

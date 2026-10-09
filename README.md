@@ -16,7 +16,7 @@ In Puerto Rico, patients can spend hours in the Emergency Department without kno
 4. As Lourdes, see the lock on Results. As Carmen, share Results with Lourdes — it appears instantly; revoke it — it disappears.
 
 ### Demo accounts
-Fictional people with synthetic data, published on purpose so anyone can run the demo. They are not admin accounts.
+> **These users and passwords are simulated.** Carmen, Lourdes and Rafael are fictional people with synthetic data. Their logins are published here only so anyone can run the demo: they are not real people, they have no admin rights, and they protect nothing real.
 
 | Account | Role | E-mail | Password |
 |---|---|---|---|

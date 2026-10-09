@@ -44,7 +44,8 @@ const DEPLOY_POLICY = {
         'category',
       ],
     },
-    { resourceType: 'Binary', interaction: ['create', 'read'] },
+    // $deploy only creates the code Binary. No read: Binaries can hold patient documents.
+    { resourceType: 'Binary', interaction: ['create'] },
   ],
 };
 
@@ -136,6 +137,13 @@ async function main() {
   const tamper = await rawRequest(deployer, 'PUT', `fhir/R4/Bot/${bot.id}`, { ...smoke, publicWebhook: true });
   const after = await admin.readResource('Bot', bot.id);
   log(after.publicWebhook ? 'FAIL' : 'ok', `negative: deploy-bots sets publicWebhook -> ${tamper.status}, stored ${!!after.publicWebhook}`);
+
+  // Reads return a presigned storage URL: .../storage/<Binary id>/<version>?...
+  const binaryId = after.executableCode?.url?.match(/storage\/([0-9a-f-]{36})\//)?.[1];
+  const binaryRead = await rawRequest(deployer, 'GET', `fhir/R4/Binary/${binaryId}`);
+  log(binaryRead.status === 403 ? 'ok' : 'FAIL', `negative: deploy-bots read Binary/${binaryId} -> ${binaryRead.status}`);
+  const binaryAdmin = await rawRequest(admin, 'GET', `fhir/R4/Binary/${binaryId}`);
+  log(binaryAdmin.status === 200 ? 'ok' : 'FAIL', `control: admin read Binary/${binaryId} -> ${binaryAdmin.status}`);
 
   const count = await superAdmin.searchResources('Project', { 'name:exact': PROJECT_NAME });
   log(count.length === 1 ? 'ok' : 'FAIL', `Project?name:exact=${PROJECT_NAME} -> ${count.length}`);

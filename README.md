@@ -21,14 +21,6 @@ Puerto Rico does not currently have a live patient-facing platform connected to 
 
 The full live flow — the hospital simulator sending HL7 v2, results arriving in real time, sharing and revoking with instant server-side effect — is shown in the 2-minute video. _TODO (Saturday): video URL._
 
-### Demo accounts
-> **These users and passwords are simulated.** Carmen and Lourdes are fictional people with synthetic data. Their logins are published here only so anyone can run the demo: they are not real people, they have no admin rights, and they protect nothing real.
-
-| Account | Role | E-mail | Password |
-|---|---|---|---|
-| Carmen Rivera Colón | Patient (MRN-0001) | `carmen@example.com` | `ePUupeeRSpY9VtJwZrdW` |
-| Lourdes Rivera | Daughter: visit, medications, instructions (+ her own record, MRN-0002) | `lourdes@example.com` | `gsDjMOUA5LbdQk65TVMy` |
-
 ## What is real and what is simulated
 | Real (working in the prototype) | Simulated |
 |---|---|
@@ -36,7 +28,7 @@ The full live flow — the hospital simulator sending HL7 v2, results arriving i
 | HL7 v2 → FHIR translation by Medplum Bots (admission, orders, results, medications, discharge) | All people, staff and the hospital (100% fictional) |
 | Real-time updates over FHIR subscriptions / WebSocket (measured ~0.2–0.3 s) | Wait-time estimates and the queue position |
 | Server-side permissions per person and per category (visit · medications · instructions · results), revocable at any time; sensitive data (label R) never shared | Prior authorization status |
-| Automated permission and live tests with the demo accounts | "Who saw my record" list (the demo server does not record read audits) |
+| Automated permission and live tests with synthetic identities | "Who saw my record" list (the demo server does not record read audits) |
 
 _TODO (Saturday): confirm this table against what the final demo actually shows._
 
@@ -46,7 +38,7 @@ Hospital simulator → **HL7 v2** → **Medplum Bots** (`hl7-a-fhir`, `compartir
 ## Run it locally
 - **Backend:** see [`backend/README.md`](backend/README.md) (Node 24, a Medplum 5.1.42 server, idempotent setup / seed / Bot scripts, tests).
 - **Frontend:** _TODO (Saturday): steps from the frontend lead._
-- Configuration lives in local env files outside the repository; `.env.example` lists the variables. The only values filled in are the fictional demo accounts above; admin logins and client secrets are never in the repository.
+- The public demo requires no login or authentication and runs entirely with synthetic data in the browser. Configuration for integrated environments lives in local env files outside the repository; admin logins and client secrets are never stored in the repository.
 
 ## Pre-existing components and credits
 | Component | What it is | License | How we use it |

@@ -47,7 +47,7 @@ const STAGES = {
   7: { name: 'Alta', text: () => "Le dieron de alta. Sus instrucciones están en 'Mi cuidado'." },
   ingreso: { name: 'Ingreso', text: (c) => `La van a ingresar. Cuarto ${c.room}.` },
 };
-// "Qué sigue" per stage. PROPOSED texts (not in textos-de-la-app.md yet): see docs/PREGUNTAS-para-Edwin.md.
+// "Qué sigue" per stage. PROPOSED texts (not in textos-de-la-app.md yet): pending decision of the backend lead.
 const NEXT = {
   1: 'Una enfermera la va a clasificar por gravedad.',
   2: 'Espere en la sala. La van a llamar.',

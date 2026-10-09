@@ -7,6 +7,8 @@ import { Language, useLanguage, accessibilityLanguageProps } from './src/Languag
 import ResultsPanel from './src/ResultsPanel.jsx';
 import { createReportScope } from './src/reports/scope.mjs';
 import VisitPanel from './src/VisitPanel.jsx';
+import CareSection from './src/care/CareSection.jsx';
+import ServicesPanel from './src/services/ServicesPanel.jsx';
 import { createVisitController } from './src/visit.mjs';
 
 import { Action, Label, Scale } from './src/ui/Action.jsx';
@@ -125,7 +127,9 @@ function Portal({ onLanguageChange }) {
               </View>
               <View style={styles.cardGrid}>
               {ready && state.section === 'visit' && <View testID="section-card" style={[styles.featureCard, { flex: 1, minWidth: 0 }]}><VisitPanel session={state.session} controller={visitController} {...{ Label, Action, styles, scale }} /></View>}
-              {ready && !['results', 'visit'].includes(state.section) && <View testID="section-card" key={`${state.account}:${state.role}:${state.section}`} style={[styles.featureCard, { flex: 1, minWidth: 0 }]}>
+              {ready && state.section === 'care' && <CareSection key={`${state.account}:${state.role}:${state.session.patient.id}:${JSON.stringify(state.session.permissions)}`} session={state.session} store={store} textScale={scale} />}
+              {ready && state.section === 'more' && <MoreSection key={`${state.account}:${state.role}`} language={language} scale={scale} />}
+              {ready && !['results', 'visit', 'care', 'more'].includes(state.section) && <View testID="section-card" key={`${state.account}:${state.role}:${state.section}`} style={[styles.featureCard, { flex: 1, minWidth: 0 }]}>
                 <Label style={styles.eyebrow}>{t(`${details}Eyebrow`)}</Label>
                 <Label testID="section-heading" accessibilityRole="header" style={{ fontSize: 26 * scale, lineHeight: 34 * scale, fontWeight: '700' }}>{t(state.section)}</Label>
                 <Label accessibilityRole="header" style={styles.cardHeading}>{t(`${details}Title`)}</Label>
@@ -146,7 +150,7 @@ function Portal({ onLanguageChange }) {
                     const restricted = section === 'results' && state.session.permissions.estudios !== true;
                     return <View testID="shortcut-card" key={section} style={[styles.card, { flex: 1, minWidth: 0 }]}>
                       <Label accessibilityRole="header" style={styles.cardHeading}>{t(section)}</Label>
-                      <Label>{restricted ? t('restrictedShortcut') : section === 'results' ? t('resultsShortcut') : t('pendingShortcut')}</Label>
+                      <Label>{restricted ? t('restrictedShortcut') : section === 'results' ? t('resultsShortcut') : section === 'care' ? t('careShortcut') : t('pendingShortcut')}</Label>
                       <Action label={t('openSection', { section: t(section) })} disabled={restricted} onPress={() => store.navigate(section)} style={{ marginTop: 'auto' }}>{t('openSection', { section: t(section) })}</Action>
                     </View>;
                   })}
@@ -162,6 +166,20 @@ function Portal({ onLanguageChange }) {
       </ScrollView>
     </View>
   </Scale.Provider>;
+}
+function MoreSection({ language, scale }) {
+  const { t } = useLanguage();
+  const [showServices, setShowServices] = useState(false);
+  return <View testID="section-card" style={[styles.featureCard, { flex: 1, minWidth: 0 }]}>
+    <Label testID="section-heading" accessibilityRole="header" style={styles.cardHeading}>{t('more')}</Label>
+    {showServices ? <>
+      <Action label={t('backMore')} onPress={() => setShowServices(false)}>{t('backMore')}</Action>
+      <ServicesPanel language={language} textScale={scale} />
+    </> : <>
+      <Label>{t('servicesIntro')}</Label>
+      <Action label={t('openServices')} onPress={() => setShowServices(true)}>{t('openServices')}</Action>
+    </>}
+  </View>;
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas, minHeight: '100%' },

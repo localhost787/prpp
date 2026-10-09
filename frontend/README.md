@@ -22,7 +22,7 @@ Open `http://127.0.0.1:3001`, then **Enter example**. `npm run web` is the alter
 
 The active web mock includes context/role switching, English and Spanish presentation, Mi visita / My visit, results and six locally bundled synthetic report PDFs (three reports in two languages). Downloads use temporary Blob URLs, not a PDF API endpoint. Results are permission-gated in the UI; those gates do not protect bundled data from source inspection.
 
-`apps/dashboard/src/care` is isolated work in progress with unit tests. **It is not integrated in `App.jsx`**; the My care route still shows pending content. Family and More also remain pending. Native iOS/Android, Expo Go, real login, server integration and clinical authorization have not been validated here.
+My care is integrated in the local mock: care participants and current instructions require the explicit visit permission; medicines have a separate permission. Unknown clinical fields remain unknown. More → Services opens a general fictional directory with distances from an example origin, not GPS or the user's location. Unknown waiting times and plan acceptance are not inferred. Family remains pending. Native iOS/Android, Expo Go, real login, server integration and clinical authorization have not been validated here.
 
 ## Tests and tool prerequisites
 

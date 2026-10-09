@@ -4,7 +4,7 @@ export const CARE_DICTIONARIES = Object.freeze({
   en: Object.freeze({
     title: 'My care',
     provisional: 'Provisional synthetic example',
-    teamTitle: 'Your care team',
+    teamTitle: 'Who is caring for you',
     instructionsTitle: 'What to do now',
     medicinesTitle: 'Medicines given today',
     emergencyPhysician: 'Emergency physician',
@@ -24,7 +24,7 @@ export const CARE_DICTIONARIES = Object.freeze({
   es: Object.freeze({
     title: 'Mi cuidado',
     provisional: 'Ejemplo sintético provisional',
-    teamTitle: 'Su equipo de cuidado',
+    teamTitle: 'Quién le atiende',
     instructionsTitle: 'Qué hacer ahora',
     medicinesTitle: 'Medicinas que le dieron hoy',
     emergencyPhysician: 'Médica de Emergencias',

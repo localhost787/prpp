@@ -1,28 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { CARMEN_CARE_FIXTURE, createCareModel } from './care.mjs';
+import { createCareModel } from './care.mjs';
 import { surfaceStyles } from '../ui.mjs';
 
-/**
- * Isolated AYO-89 panel. It is intentionally not connected to App.jsx.
- *
- * Props:
- * - language: "en" (default) or "es".
- * - patientDisplayName: already-authorized display name used only in restriction copy.
- * - permissions: explicit booleans for { team, instructions, medicines }.
- *   Missing/non-boolean values fail closed as unavailable; data shape never grants access.
- * - data: { participant, instructions, medicines }; defaults to the documented Carmen mock.
- * - textScale: optional positive multiplier supplied by the eventual host.
- *
- * The host remains responsible for removing this component on context/session changes and
- * for never passing data from a previous patient or role. This module performs no fetching,
- * subscriptions, persistence, analytics, navigation, or Medplum operations.
- */
+// Presentational only: data must come through the guarded local adapter.
 export default function CarePanel({
   language = 'en',
-  patientDisplayName = 'Doña Carmen',
+  patientDisplayName = '',
   permissions = {},
-  data = CARMEN_CARE_FIXTURE,
+  data = {},
   textScale = 1,
 }) {
   const model = createCareModel({ language, patientDisplayName, permissions, data });
@@ -32,8 +18,7 @@ export default function CarePanel({
 
   return <View testID="care-panel" style={styles.panel}>
     <View style={styles.header}>
-      {label(model.copy.title, [styles.title, { fontSize: 28 * scale, lineHeight: 36 * scale }])}
-      {label(model.copy.provisional, styles.provisional)}
+      <Text testID="section-heading" accessibilityRole="header" style={[styles.title, { fontSize: 28 * scale, lineHeight: 36 * scale }]}>{model.copy.title}</Text>
     </View>
 
     {model.sections.team.status !== 'hidden' && <View testID="care-team-section" style={styles.card}>

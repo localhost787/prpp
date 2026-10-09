@@ -1,0 +1,16 @@
+{
+  "name": "prpp-backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PRPP backend: Medplum project setup, demo users, seed, Bots and hospital simulator",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "setup": "node scripts/setup-project.mjs",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@medplum/core": "5.1.42"
+  }
+}

@@ -10,8 +10,31 @@ export function newClient() {
   return Object.assign(medplum, { pkceStorage: storage });
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Medplum allows 5 logins per minute per IP: on "Too Many Requests", wait and retry. */
+async function withLoginRetry(fn) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = String(err?.message ?? err);
+      if (attempt >= 4 || !/Too Many Requests/i.test(msg)) {
+        throw err;
+      }
+      const wait = Number(msg.match(/"_msBeforeNext":(\d+)/)?.[1] ?? 60000) + 1000;
+      log('wait', `login rate limit, retrying in ${Math.round(wait / 1000)} s`);
+      await sleep(wait);
+    }
+  }
+}
+
 /** Email + password login (two-step PKCE flow). Picks the membership in `projectId` if given. */
-export async function loginUser(email, password, projectId) {
+export function loginUser(email, password, projectId) {
+  return withLoginRetry(() => loginUserOnce(email, password, projectId));
+}
+
+async function loginUserOnce(email, password, projectId) {
   const medplum = newClient();
   // PKCE done here: the SDK's own PKCE helper needs `window.crypto` (browser only).
   const verifier = randomBytes(32).toString('base64url');
@@ -40,10 +63,12 @@ export async function loginUser(email, password, projectId) {
 }
 
 /** Client credentials login (ClientApplication). */
-export async function loginClient(clientId, clientSecret) {
-  const medplum = newClient();
-  await medplum.startClientLogin(clientId, clientSecret);
-  return medplum;
+export function loginClient(clientId, clientSecret) {
+  return withLoginRetry(async () => {
+    const medplum = newClient();
+    await medplum.startClientLogin(clientId, clientSecret);
+    return medplum;
+  });
 }
 
 /** Raw request that returns { status, body } instead of throwing. For permission tests. */

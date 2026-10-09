@@ -22,14 +22,14 @@ try {
     const clipped=[...document.querySelectorAll('[dir="auto"]')].filter(el=>{const r=el.getBoundingClientRect();return r.left<-.5||r.right>innerWidth+.5;}).map(el=>el.textContent);
     const luminance=color=>{const [r,g,b]=color.match(/[\d.]+/g).slice(0,3).map(Number).map(n=>{const c=n/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;});return .2126*r+.7152*g+.0722*b;};
     const ratio=(a,b)=>{const x=luminance(a),y=luminance(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
-    const background=el=>{for(let n=el;n;n=n.parentElement){const c=getComputedStyle(n).backgroundColor;if(c!=='rgba(0, 0, 0, 0)'&&c!=='transparent')return c;}return 'rgb(255, 255, 255)';};
+    const background=el=>{const layers=[];for(let n=el;n;n=n.parentElement){const c=getComputedStyle(n).backgroundColor;const v=c.match(/[\d.]+/g)?.map(Number);if(v?.length>=3)layers.push([v[0],v[1],v[2],v[3]??1]);}let rgb=[255,255,255];for(const [r,g,b,a]of layers.reverse())rgb=[r,g,b].map((v,i)=>v*a+rgb[i]*(1-a));return `rgb(${rgb.join(', ')})`;};
     const pairs=new Map();
     for(const el of document.querySelectorAll('[dir="auto"],input')){const fg=getComputedStyle(el).color,bg=background(el);pairs.set(fg+bg,{fg,bg,ratio:ratio(fg,bg)});}
     const borders=[...document.querySelectorAll('[role="button"]:not([aria-disabled="true"]),input')].map(el=>{const c=getComputedStyle(el).borderColor;return{color:c,background:background(el.parentElement),ratio:c==='rgba(0, 0, 0, 0)'?null:ratio(c,background(el.parentElement))};}).filter(b=>b.ratio!==null);
     return{scrollWidth:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,buttons,clipped,contrasts:[...pairs.values()],borders,notice:rect(document.querySelector('[data-testid="demo-notice"]')),heading:document.querySelector('[data-testid="section-heading"]')?rect(document.querySelector('[data-testid="section-heading"]')):null};
    });
    expect(metrics.scrollWidth,id).toBeLessThanOrEqual(width);expect(metrics.clipped,id).toEqual([]);
-   expect(metrics.contrasts.every(c=>c.ratio>=4.5),id+' normal text contrast AA').toBe(true);
+   expect(metrics.contrasts.filter(c=>c.ratio<4.5),id+' normal text contrast AA').toEqual([]);
    expect(metrics.borders.every(c=>c.ratio>=3),id+' enabled control border contrast AA').toBe(true);
    expect(metrics.buttons.every(b=>b.width>=44&&b.height>=44),id+' 44px targets').toBe(true);
    expect(metrics.notice.y,id+' persistent global notice').toBe(0);
@@ -75,6 +75,7 @@ try {
     }
    }
    await enterContext(page, 'Carmen', 'self', language);await button(t('goTo',{section:t('visit')})).click();
+   await button(language==='es'?'Opciones de demostración':'Demonstration options').click();
    for(const [scenario,key]of [['loading','visitLoading'],['error','visitError'],['empty','visitEmpty'],['denied','visitRestricted']]){
     await button(t('visitScenario_'+scenario)).click();await expect(page.getByText(t(key),{exact:true})).toBeVisible();
     await expect(page.getByTestId('visit-phase')).toHaveCount(0);

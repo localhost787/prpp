@@ -183,6 +183,10 @@ const q = await rawRequest(carmen, 'POST', 'fhir/R4/Communication', {
   payload: [{ contentString: 'Prueba automática de permisos (se borra).' }],
 });
 check('carmen crea Communication "pregunta" (API-25) -> 201', q.status === 201, `${q.status}`);
+for (const who of ['lourdes', 'rafael']) {
+  const seen = entries(await get(CLIENTS[who], `Communication?subject=${P}&_count=200`)).some((c) => c.id === q.body?.id);
+  check(`${who} NO ve la pregunta de Carmen al enfermero (API-25)`, q.status === 201 && !seen);
+}
 const question = (extra) => ({
   resourceType: 'Communication',
   status: 'completed',

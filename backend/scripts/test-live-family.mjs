@@ -21,8 +21,8 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'pasa ' : 'FALLA'} ${name}${detail ? ` · ${detail}` : ''}`);
 };
 
-async function listen(client) {
-  const sub = await client.createResource({ resourceType: 'Subscription', status: 'active', reason: 'test-live-family', criteria, channel: { type: 'websocket' } });
+async function listen(client, crit = criteria, type = 'MedicationAdministration') {
+  const sub = await client.createResource({ resourceType: 'Subscription', status: 'active', reason: 'test-live-family', criteria: crit, channel: { type: 'websocket' } });
   const binding = await client.get(client.fhirUrl('Subscription', sub.id, '$get-ws-binding-token'));
   const token = binding.parameter.find((p) => p.name === 'token').valueString;
   const ws = new WebSocket(binding.parameter.find((p) => p.name === 'websocket-url').valueUrl);
@@ -31,8 +31,8 @@ async function listen(client) {
   ws.send(JSON.stringify({ type: 'bind-with-token', payload: { token } }));
   ws.addEventListener('message', (ev) => {
     const r = JSON.parse(ev.data).entry?.[1]?.resource;
-    if (r?.resourceType === 'MedicationAdministration') {
-      got.push({ at: Date.now(), id: r.id, text: r.medicationCodeableConcept?.text });
+    if (r?.resourceType === type) {
+      got.push({ at: Date.now(), id: r.id, text: r.medicationCodeableConcept?.text ?? r.payload?.[0]?.contentString, resource: r });
     }
   });
   return { got, close: async () => (ws.close(), client.deleteResource('Subscription', sub.id).catch(() => undefined)) };
@@ -61,6 +61,9 @@ const tags = [];
 async function round(label, expectLourdes) {
   const c = await listen(carmen);
   const l = await listen(lourdes);
+  const cNotice = await listen(carmen, `Communication?subject=${P}`, 'Communication');
+  const cTask = await listen(carmen, `Task?patient=${P}`, 'Task');
+  const lNotice = await listen(lourdes, `Communication?subject=${P}`, 'Communication');
   await new Promise((r) => setTimeout(r, 1500));
   const tag = `${Date.now()}`;
   tags.push(tag);
@@ -76,8 +79,21 @@ async function round(label, expectLourdes) {
   } else {
     check(`${label}: a Lourdes NO le llega nada (8 s esperando)`, lMs === undefined, `${l.got.length} notificaciones`);
   }
-  await c.close();
-  await l.close();
+  const n = cNotice.got[0];
+  check(`${label}: Carmen recibe el aviso en < 5 s con el texto en la entrada 1`, n && n.at - sent < 5000 && /^Le dieron: Medicina de prueba/.test(n.text), `${n ? n.at - sent : '-'} ms "${n?.text}"`);
+  // A test RAS only changes the stage Task if something in it changes; usually nothing does,
+  // so this is informative, not a pass/fail check.
+  const t = cTask.got[0];
+  console.log(`info  ${label}: cambios de la Task recibidos: ${cTask.got.length}${t ? ` (${t.at - sent} ms)` : ' (la Task no cambió)'}`);
+  const ln = lNotice.got[0];
+  if (expectLourdes) {
+    check(`${label}: Lourdes recibe el aviso "medicina"`, !!ln, `${ln ? ln.at - sent : '-'} ms`);
+  } else {
+    check(`${label}: a Lourdes NO le llega el aviso`, !ln, `${lNotice.got.length}`);
+  }
+  for (const x of [c, l, cNotice, cTask, lNotice]) {
+    await x.close();
+  }
 }
 
 try {

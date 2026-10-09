@@ -295,7 +295,8 @@ async function updateStage(ctx, changes) {
     for: ref(ctx.patient),
     encounter: ref(ctx.visit),
     authoredOn: current?.authoredOn ?? ctx.time,
-    lastModified: ctx.time,
+    // Never moves back (a late or test message must not make the Task look older).
+    lastModified: current?.lastModified && current.lastModified > ctx.time ? current.lastModified : ctx.time,
     input: inputs,
   };
   // input is replaced as a whole (so removed queue fields really disappear).

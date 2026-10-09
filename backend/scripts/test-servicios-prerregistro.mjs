@@ -26,7 +26,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const admin = await loginUser(required('MEDPLUM_PROJECT_ADMIN_EMAIL'), required('MEDPLUM_PROJECT_ADMIN_PASSWORD'), projectId);
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
 
 console.log('== API-23 · Servicios cerca de usted ==');
 const sr = await get(carmen, 'HealthcareService?active=true&_include=HealthcareService:location');
@@ -39,9 +38,9 @@ check('  cada uno con type[0].text', svcs.every((s) => !!s.type?.[0]?.text), svc
 check('  cada uno con characteristic "Acepta su plan"', svcs.every((s) => s.characteristic?.some((c) => c.text === 'Acepta su plan')));
 check('  cada uno con extraDetails (distancia y espera simulada)', svcs.every((s) => /\(simulada\)/.test(s.extraDetails ?? '')), svcs.map((s) => s.extraDetails).join(' | '));
 check('  marcados simulado', svcs.every((s) => s.meta?.tag?.some((t) => t.code === 'simulado')));
-for (const [who, client] of [['lourdes', lourdes], ['rafael', rafael]]) {
-  const r = await get(client, 'HealthcareService?active=true');
-  info(`${who} HealthcareService?active=true -> ${r.status}${r.status === 200 ? `, ${entries(r).length}` : ''} (contrato: solo la paciente)`);
+{
+  const r = await get(lourdes, 'HealthcareService?active=true');
+  info(`lourdes HealthcareService?active=true -> ${r.status}${r.status === 200 ? `, ${entries(r).length}` : ''} (contrato: solo la paciente)`);
 }
 
 console.log('\n== API-22 · Pre-registro ==');
@@ -98,11 +97,9 @@ try {
   const mine2 = w2.list.filter((e) => !plannedBefore.some((b) => b.id === e.id));
   check('enviar el pre-registro dos veces deja UNA visita planned (la misma, actualizada)', c2.status === 201 && mine2.length === 1 && mine2[0].id === mine[0]?.id && /segundo/.test(mine2[0].reasonCode?.[0]?.text ?? ''), `${mine2.length}, "${mine2[0]?.reasonCode?.[0]?.text}"`);
 
-  for (const [who, client] of [['lourdes', lourdes], ['rafael', rafael]]) {
-    const r = await rawRequest(client, 'POST', 'fhir/R4/QuestionnaireResponse', answer());
-    createdQr.push(r);
-    check(`${who} envía un pre-registro para Carmen -> 403`, r.status === 403, `${r.status}`);
-  }
+  const lr = await rawRequest(lourdes, 'POST', 'fhir/R4/QuestionnaireResponse', answer());
+  createdQr.push(lr);
+  check('lourdes envía un pre-registro para Carmen -> 403', lr.status === 403, `${lr.status}`);
   const lv = await get(lourdes, `Encounter?patient=${P}&status=planned`);
   info(`lourdes (visita) Encounter?patient=<Carmen>&status=planned -> ${lv.status}, ${entries(lv).length} (la política de visita deja ver Encounter)`);
   const lq = await get(lourdes, `QuestionnaireResponse?subject=${P}`);

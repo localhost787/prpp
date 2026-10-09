@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // API-11 / POR-83 evidence: a NON-admin portal account subscribes over WebSocket (like useSubscription)
 // and we measure how long a change takes to arrive after the simulator sends an HL7 message.
-// Usage: node scripts/test-live.mjs [carmen|lourdes|rafael] [criteria-type] [message-id]
+// Usage: node scripts/test-live.mjs [carmen|lourdes] [criteria-type] [message-id]
 //   default: carmen DiagnosticReport correccion
 import { env, required } from '../lib/env.mjs';
 import { log, loginClient, loginUser } from '../lib/medplum.mjs';

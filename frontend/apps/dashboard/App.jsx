@@ -127,7 +127,7 @@ function Portal({ onLanguageChange }) {
                     {ready && <Label style={styles.small}>{copy('role')}{': '}{roleText}</Label>}
                   </View>
                   <View style={styles.tools}>
-                    {accounts.map(account => <Action key={account} size="compact" variant="ghost" label={copy('demoView', { name: accountNames[account] })} selected={state.account === account} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); }}>{copy('demoView', { name: accountNames[account] })}</Action>)}
+                    {accounts.map(account => <Action key={account} size="compact" variant="ghost" label={copy('demoView', { name: accountNames[account] })} selected={state.account === account} showMarker={false} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); }}>{copy('demoView', { name: accountNames[account] })}</Action>)}
 
                   </View>
                 </View>

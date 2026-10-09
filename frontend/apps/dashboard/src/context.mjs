@@ -28,8 +28,9 @@ export function createPortalStore(load = openContext) {
       const session = await load(account, role);
       if (request !== revision) { session.client.clear(); return; }
       publish({ ...state, status: 'ready', session });
-    } catch {
-      if (request === revision) publish({ ...state, status: 'error', session: null });
+    } catch (error) {
+      // errorCode lets the integrated mode explain a server failure (src/live/portal.mjs liveErrorKey).
+      if (request === revision) publish({ ...state, status: 'error', session: null, errorCode: error?.code ?? null });
     }
   }
   return {

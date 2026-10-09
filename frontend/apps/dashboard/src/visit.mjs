@@ -49,12 +49,23 @@ export function createVisitController(source = visitFixture) {
       stages.set(key(state.visit), stage);
       publish({ ...state, visit: { ...state.visit, stage, nextKey: stage === 5 && state.session.permissions.estudios === true ? 'visitNextStudies' : 'visitNextUnavailable' } });
     },
+    // Integrated mode: re-read after a realtime change without flashing the loading state.
+    async refresh(session) {
+      if (state.status !== 'ready' && state.status !== 'empty') return;
+      if (state.session !== session) return;
+      const request = ++revision;
+      try {
+        const data = await loadVisit(session, source);
+        if (request === revision) publish({ ...data, session, scenario: state.scenario });
+      } catch { if (request === revision) publish({ status: 'error', visit: null, session, scenario: state.scenario }); }
+    },
     close(reset = false) { ++revision; if (reset) stages.clear(); publish({ status: 'closed', visit: null, session: null }); },
   };
 }
 export async function loadVisit(session, source = visitFixture) {
   if (session?.permissions?.visita !== true) return { status: 'restricted', visit: null };
-  const visit = await source(session.patient.id);
+  // Integrated mode: the session brings its server source (src/live/portal.mjs); never mixed with the fixture.
+  const visit = await (session.live?.visit ?? source)(session.patient.id);
   if (visit === null) return { status: 'empty', visit: null };
   if (!visit?.id || visit.patientId !== session.patient.id || !Number.isInteger(visit.stage) || visit.stage < 1 || visit.stage > 7) throw new Error('INVALID_VISIT_FIXTURE');
   // Explicit projection: never carry hidden fields/titles/counts from a source into the view.

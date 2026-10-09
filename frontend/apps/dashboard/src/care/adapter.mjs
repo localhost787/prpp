@@ -1,4 +1,5 @@
 import { CARMEN_CARE_FIXTURE } from './care.mjs';
+import { loadLiveCare } from '../live/portal.mjs';
 // Approved LOCAL MOCK mapping only. Discharge instructions are not current instructions.
 export function carePermissions(session) {
  const p=session?.permissions??{};
@@ -11,6 +12,8 @@ function fixtureCategory(patientId, category) {
 }
 export async function loadCare(session, source=fixtureCategory, isCurrent=()=>true) {
  const permissions=carePermissions(session),data={};
+ // Integrated mode: server data in the same shape (src/live/portal.mjs); never the fixture.
+ if(session?.live?.care)return loadLiveCare(session,permissions,isCurrent);
  const id=session?.patient?.id;
  if(!['carmen','lourdes'].includes(id))return {permissions:{},data};
  for(const category of ['team','instructions','medicines']) {

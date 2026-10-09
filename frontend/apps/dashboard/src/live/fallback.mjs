@@ -61,11 +61,15 @@ export async function withLive(liveFn, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) 
   }
 }
 
-/** Is the live server reachable? GET healthcheck (no token). → { status: 'available' } | { status: 'unavailable', error } */
-export async function checkLive(cfg, { fetch = (...a) => globalThis.fetch(...a), timeoutMs } = {}) {
+/**
+ * Is the live server reachable? GET without token. → { status: 'available' } | { status: 'unavailable', error }
+ * Default path: healthcheck. From a browser use a CORS-enabled path (the healthcheck sends no CORS
+ * headers on this deployment, observed): the portal passes `.well-known/openid-configuration` (~1 KB).
+ */
+export async function checkLive(cfg, { fetch = (...a) => globalThis.fetch(...a), timeoutMs, path = 'healthcheck' } = {}) {
   if (!cfg?.baseUrl) return { status: 'unavailable', error: Object.assign(new Error('LIVE_CONFIG_INCOMPLETE'), { missing: cfg?.missing ?? [] }) };
   try {
-    const res = await withTimeout(fetch(`${cfg.baseUrl}healthcheck`), timeoutMs ?? cfg.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    const res = await withTimeout(fetch(`${cfg.baseUrl}${path}`), timeoutMs ?? cfg.timeoutMs ?? DEFAULT_TIMEOUT_MS);
     if (!res.ok) return { status: 'unavailable', error: Object.assign(new Error('LIVE_UNHEALTHY'), { status: res.status }) };
     return { status: 'available' };
   } catch (error) {

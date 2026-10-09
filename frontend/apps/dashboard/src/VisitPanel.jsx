@@ -2,11 +2,14 @@ import React, { useEffect, useSyncExternalStore } from 'react';
 import { View } from 'react-native';
 import { useLanguage } from './Language.jsx';
 import { visitPresentation } from './visit.mjs';
+import { useLiveRefresh } from './live/useLiveRefresh.mjs';
 
 export default function VisitPanel({ session, controller, Label, Action, styles, scale }) {
   const { t, language } = useLanguage();
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   useEffect(() => { controller.open(session); return () => controller.close(); }, [controller, session]);
+  // Integrated mode: the stage changes on the server; re-read on Encounter/Task events.
+  useLiveRefresh(session, ({ types }) => { if (types.has('Encounter') || types.has('Task')) controller.refresh(session); });
   // Render gate precedes effects: a switched context can never flash the old visit.
   const status = session.permissions.visita !== true ? 'restricted' : state.session === session ? state.status : 'loading';
   const visit = status === 'ready' ? state.visit : null;
@@ -26,20 +29,20 @@ export default function VisitPanel({ session, controller, Label, Action, styles,
         <Label>{presentation.description}</Label>
         <Label accessibilityRole="header" style={styles.cardHeading}>{t('visitNext')}</Label>
         <Label>{presentation.next}</Label>
-        <Label>{t('visitInitialStatus', { status: t(visit.status === 'in-progress' ? 'visitInCare' : 'unavailable') })}</Label>
+        <Label>{t('visitInitialStatus', { status: t(visit.status === 'in-progress' ? 'visitInCare' : visit.status === 'finished' ? 'visitDischarged' : 'unavailable') })}</Label>
         <Label>{t('visitLocation', visit)}</Label>
         <Label>{t('visitClinician', visit)}</Label>
         <Label>{t('visitStarted', { date: presentation.startedAt })}</Label>
-        <Label style={styles.small}>{t('visitFixedSnapshot')}</Label>
+        {!session.live && <Label style={styles.small}>{t('visitFixedSnapshot')}</Label>}
       </> : <>
         <Label>{t({ restricted: 'visitRestricted', error: 'visitError', empty: 'visitEmpty' }[status] ?? 'visitLoading')}</Label>
         {status === 'empty' && <Label>{t('visitEmptyDisclaimer')}</Label>}
       </>}
     </View>
     <View testID="simulation-controls" style={styles.simulation}>
-    <Label accessibilityRole="header" style={styles.cardHeading}>{t('visitScenarios')}</Label>
-    <Label style={styles.small}>{t('visitSimulation')}</Label>
-    {visit && <View style={styles.selector}>
+    {!session.live && <Label accessibilityRole="header" style={styles.cardHeading}>{t('visitScenarios')}</Label>}
+    {!session.live && <Label style={styles.small}>{t('visitSimulation')}</Label>}
+    {visit && !session.live && <View style={styles.selector}>
       <Action size="compact" variant="ghost" label={t('visitPrevious')} disabled={visit.stage === 1} onPress={() => controller.stage(visit.stage - 1)}>{t('visitPrevious')}</Action>
       <Action size="compact" variant="ghost" label={t('visitAdvance')} disabled={visit.stage === 7} onPress={() => controller.stage(visit.stage + 1)}>{t('visitAdvance')}</Action>
       <Action size="compact" variant="ghost" label={t('visitReset')} onPress={() => controller.stage(5)}>{t('visitReset')}</Action>
@@ -47,9 +50,9 @@ export default function VisitPanel({ session, controller, Label, Action, styles,
     {status === 'error' && <Action size="compact" variant="ghost" label={t('visitRetry')} onPress={() => controller.open(session, state.scenario)}>{t('visitRetry')}</Action>}
     {session.permissions.estudios !== true && <View style={styles.restriction}><Label>{t('restrictedResults')}</Label></View>}
     <Label style={styles.small}>{t('translationReview')}</Label>
-    <View style={styles.selector}>
+    {!session.live && <View style={styles.selector}>
       {['normal', 'denied', 'empty', 'error', 'loading'].map(scenario => <Action size="compact" variant="ghost" key={scenario} label={t(`visitScenario_${scenario}`)} selected={state.session === session && state.scenario === scenario} onPress={() => controller.open(session, scenario)}>{t(`visitScenario_${scenario}`)}</Action>)}
-    </View>
+    </View>}
     </View>
   </View>;
 }

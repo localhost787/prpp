@@ -49,11 +49,21 @@ export function createResultsController(source) {
     },
     filter(filter) { if (state.status === 'ready') publish({ ...state, filter, detail: null }); },
     detail(id) { if (state.status === 'ready' && (id === null || filterResults(state.items, state.filter).some(item => item.id === id))) publish({ ...state, detail: id }); },
+    // Integrated mode: re-read after a realtime change, keeping filter and open detail when still present.
+    async refresh(session) {
+      if (state.status !== 'ready') return;
+      const request = ++revision;
+      try {
+        const data = await loadResults(session, source);
+        if (request === revision) publish({ ...state, status: data.status, items: data.items, detail: data.items.some(item => item.id === state.detail) ? state.detail : null });
+      } catch { if (request === revision) publish(clean('error')); }
+    },
     close() { ++revision; publish(clean('closed')); },
   };
 }
 export async function loadResults(session, source = resultFixtures) {
   if (session?.permissions?.estudios !== true) return { status: 'restricted', items: [] };
-  const items = await source(session.patient.id);
+  // Integrated mode: the session brings its server source (src/live/portal.mjs); never mixed with the fixture.
+  const items = await (session.live?.results ?? source)(session.patient.id);
   return { status: 'ready', items };
 }

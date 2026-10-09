@@ -4,6 +4,8 @@ import { createResultsController, filterResults, interpretationLabel, interpreta
 
 import { useLanguage, accessibilityLanguageProps } from './Language.jsx';
 import { listReports, reportCopy } from './reports/index.mjs';
+import { liveReportGroups } from './live/portal.mjs';
+import { useLiveRefresh } from './live/useLiveRefresh.mjs';
 
 function ResultCard({ item, expanded, controller, Label, Action, styles, wide, scale }) {
   const { t, language } = useLanguage();
@@ -43,6 +45,8 @@ export default function ResultsPanel({ session, reportScope, Label, Action, styl
   const heading = useRef(null);
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   useEffect(() => { controller.open(session); return () => controller.close(); }, [controller, session]);
+  // Integrated mode: a new or corrected result on the server is re-read (never rendered from the event).
+  useLiveRefresh(session, ({ types }) => { if (['Observation', 'DiagnosticReport'].some(type => types.has(type))) controller.refresh(session); });
   useEffect(() => {
     if (state.status === 'ready') {
       heading.current?.focus?.();
@@ -56,7 +60,7 @@ export default function ResultsPanel({ session, reportScope, Label, Action, styl
   const visible = filterResults(state.items, state.filter).filter(item => resultPresentation(item, language).title.toLocaleLowerCase(language).includes(query.trim().toLocaleLowerCase(language)));
   const filters = ['all', ...new Set(state.items.map(statusKey))];
   const context = reportScope.getContext();
-  const reports = listReports(context, language, { source: () => state.items }).reports;
+  const reports = session.live ? liveReportGroups(state.items, { statusLabel: item => statusLabel(item, language), source: t('liveSource') }) : listReports(context, language, { source: () => state.items }).reports;
   const copy = reportCopy[language];
   const download = async report => {
     const generation = context.generation;
@@ -83,11 +87,11 @@ export default function ResultsPanel({ session, reportScope, Label, Action, styl
           <View testID={`report-${report.id}`} style={{ gap: 16 }}>
             <Label style={{ fontWeight: '700', color: '#063b9e' }}>{report.institution}</Label>
             <Label accessibilityRole="header" style={{ fontWeight: '700', fontSize: 24 * scale, lineHeight: 32 * scale }}>{report.title}</Label>
-            <Label>{t(report.id === 'b' ? 'reportImaging' : 'reportLaboratory')}</Label>
+            <Label>{t(report.typeKey ?? (report.id === 'b' ? 'reportImaging' : 'reportLaboratory'))}</Label>
             <Label>{t('reportStates', { states: [...new Set(report.items.map(item => item.statusLabel))].join(' · ') })}</Label>
             <Label style={styles.small}>{report.grouping}</Label>
-            {Platform.OS === 'web' ? <Action primary label={`${copy.download}: ${report.title}`} onPress={() => download(report)}>{copy.download}</Action> : <Label>{t('pdf_unsupported-platform')}</Label>}
-            <Label style={styles.small}>{t('reportWholePdf')}</Label>
+            {report.downloadable === false ? null : Platform.OS === 'web' ? <Action primary label={`${copy.download}: ${report.title}`} onPress={() => download(report)}>{copy.download}</Action> : <Label>{t('pdf_unsupported-platform')}</Label>}
+            {report.downloadable !== false && <Label style={styles.small}>{t('reportWholePdf')}</Label>}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 16 }}>{items.map(item => <ResultCard key={item.id} {...{ item, controller, Label, Action, styles, scale, wide }} expanded={state.detail === item.id} />)}</View>
           </View>
         </View>;

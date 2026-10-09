@@ -37,6 +37,16 @@ Variables públicas de Expo (van dentro del JavaScript que descarga cualquiera).
 
 Sesión: el cliente usa memoria por defecto (recargar = volver a entrar). El SDK puede usar `localStorage` si se le pasa ese `storage`; aceptable para la demo. `logout()` revoca y limpia.
 
+## Pantallas conectadas: cómo cambiar de modo
+
+`src/live/portal.mjs` adapta la capa live a la **misma forma de sesión** que ya usan las pantallas (`patient`, `permissions`) y agrega `session.live`; `loadVisit`, `loadResults` y `loadCare` usan esa fuente cuando existe (si no, el mock de siempre). Nunca se mezclan.
+
+- **Modo integrado** (por defecto si `EXPO_PUBLIC_DATA_MODE=live` y hay URL + proyecto): al elegir Carmen / Lourdes / Rafael se inicia sesión en el servidor con `EXPO_PUBLIC_DEMO_*` (un clic; la sesión se reutiliza en memoria para no gastar el límite de 5 logins/min). Mi visita, Resultados (candado desde auth/me), Mi cuidado + instrucciones del alta, y Familia (Carmen comparte/quita con el Bot; el familiar ve sus permisos) vienen del servidor. Visita, resultados y cuidado se releen solos con tiempo real; la vista del familiar revisa auth/me cada ~5 s y reabre el contexto si cambió lo compartido.
+- **Modo demostración (sin servidor)**: botón explícito en la pantalla de entrada ("Usar modo demostración"); cierra las sesiones del servidor y usa solo el mock. "Volver al modo integrado" hace lo contrario. Sin `EXPO_PUBLIC_DATA_MODE=live` la app queda siempre en este modo (igual que antes).
+- **Si el servidor falla**: la entrada muestra "No pudimos conectar con el servidor" con "Reintentar" y la opción del modo demostración; cada pantalla muestra su estado de error. Nunca aparecen datos del mock en su lugar.
+- **Vercel**: definir las variables `EXPO_PUBLIC_DATA_MODE`, `EXPO_PUBLIC_MEDPLUM_BASE_URL`, `EXPO_PUBLIC_MEDPLUM_PROJECT_ID`, `EXPO_PUBLIC_BOT_COMPARTIR_ID` y `EXPO_PUBLIC_DEMO_{CARMEN,LOURDES,RAFAEL}_{EMAIL,PASSWORD}` (valores fuera del repo).
+- **Prueba contra el servidor (solo lectura)**: `node --test tests/live-portal-server.check.mjs` (3 logins, no escribe nada). Las pruebas sin red del adaptador están en `tests/live-portal.node.mjs` (`npm test`).
+
 ## Qué función alimenta cada pantalla
 
 | Pantalla (POR) | Función |

@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Image, Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { accounts, accountNames, createPortalStore, roles, sections } from './src/context.mjs';
+import { accounts, accountNames, createPortalStore, openContext, roles, sections } from './src/context.mjs';
+import { readConfig } from './src/live/config.mjs';
+import { createIntegratedPortal, liveErrorKey } from './src/live/portal.mjs';
+import ModeBar from './src/live/ModeBar.jsx';
+import FamilyPanel from './src/live/FamilyPanel.jsx';
 
 import { DEFAULT_LANGUAGE } from './src/i18n.mjs';
 import { Language, useLanguage, accessibilityLanguageProps } from './src/Language.jsx';
@@ -23,7 +27,11 @@ export default function App() {
 }
 function Portal({ onLanguageChange }) {
   const { t, language } = useLanguage();
-  const [store] = useState(() => createPortalStore());
+  // Integrated mode (real server) vs demonstration mode (mock): explicit, see docs/CONEXION-LIVE.md.
+  const [portal] = useState(() => createIntegratedPortal({ cfg: readConfig(), openMock: openContext }));
+  const mode = useSyncExternalStore(portal.subscribe, portal.getSnapshot, portal.getSnapshot);
+  const integrated = mode.mode === 'integrado';
+  const [store] = useState(() => createPortalStore(portal.load));
   const [reportScope] = useState(() => createReportScope(store));
   const [visitController] = useState(() => createVisitController());
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
@@ -39,6 +47,16 @@ function Portal({ onLanguageChange }) {
     lastStatus.current = state.status;
   }, [state.status]);
   useEffect(() => () => store.close(), [store]);
+  useEffect(() => { portal.check(); return () => { portal.reset(); }; }, [portal]);
+  // Family view: when the patient changes what is shared, auth/me changes; reopen the context with it.
+  useEffect(() => {
+    if (state.status !== 'ready' || state.session?.role !== 'delegate') return undefined;
+    return portal.watchAccess(state.session, () => {
+      const { account, role, section } = store.getSnapshot();
+      store.enter(account, role).then(() => store.navigate(section));
+    });
+  }, [portal, store, state.status, state.session]);
+  const chooseMode = async next => { store.close(); reportScope.invalidate(); await portal.choose(next); };
   useEffect(() => { if (state.status === 'closed') visitController.close(true); }, [state.status, visitController]);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -58,8 +76,8 @@ function Portal({ onLanguageChange }) {
     <View style={styles.root}>
       <View testID="demo-notice" style={styles.notice}>
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <Label style={{ fontWeight: '700', fontSize: 14 * scale, lineHeight: 20 * scale }}>{t('demoNotice')}</Label>
-          <Label style={{ fontSize: 13 * scale, lineHeight: 18 * scale }}>{t('disconnected')}</Label>
+          <Label style={{ fontWeight: '700', fontSize: 14 * scale, lineHeight: 20 * scale }}>{t(integrated ? 'liveNotice' : 'demoNotice')}</Label>
+          <Label style={{ fontSize: 13 * scale, lineHeight: 18 * scale }}>{t(integrated ? 'liveConnected' : 'disconnected')}</Label>
         </View>
         <Action size="compact" variant="ghost" label={t('languageLabel')} onPress={() => { reportScope.invalidate(); onLanguageChange(); }}>{t('languageButton')}</Action>
       </View>
@@ -110,13 +128,14 @@ function Portal({ onLanguageChange }) {
                 <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: palette.pale, alignItems: 'center', justifyContent: 'center' }}><Label style={{ fontWeight: '800', color: palette.blue }}>{accountNames[account].slice(0, 1)}</Label></View>
                 <View style={{ flex: 1, gap: 3 }}><Label style={{ fontWeight: '700' }}>{accountNames[account]}</Label><Label style={styles.small}>{t(`account_${account}`)}</Label></View>
               </>} />)}
-              <Label style={styles.small}>{t('localEntry')}</Label>
+              <Label style={styles.small}>{t(integrated ? 'liveEntry' : 'localEntry')}</Label>
+              {!state.account && <ModeBar portal={portal} onChoose={chooseMode} />}
             </View> : <>
               <View testID="context-card" style={[styles.card, { padding: 14, gap: 8 }]}>
                 <View style={styles.topline}>
                   <View style={{ flex: 1, minWidth: 150, gap: 3 }}>
                     <Label style={styles.small}>{t('accountOf')} <Label style={{ fontWeight: '700' }}>{accountNames[state.account]}</Label></Label>
-                    {ready ? <><Label style={styles.eyebrow}>{t('informationOf')}</Label><Label testID="patient-name" style={{ fontWeight: '700', fontSize: 20 * scale, lineHeight: 28 * scale }}>{state.session.patient.name[0].text}</Label><Label style={styles.small}>{t('activeRole', { role: roleText })}</Label></> : <Label accessibilityLiveRegion="polite">{t(state.status === 'error' ? 'contextError' : 'contextLoading')}</Label>}
+                    {ready ? <><Label style={styles.eyebrow}>{t('informationOf')}</Label><Label testID="patient-name" style={{ fontWeight: '700', fontSize: 20 * scale, lineHeight: 28 * scale }}>{state.session.patient.name[0].text}</Label><Label style={styles.small}>{t('activeRole', { role: roleText })}</Label></> : <Label accessibilityLiveRegion="polite">{t(state.status === 'error' ? (integrated ? liveErrorKey(state.errorCode) : 'contextError') : (integrated ? 'liveContextLoading' : 'contextLoading'))}</Label>}
                   </View>
                   <View style={styles.tools}>
                     {roles[state.account].length > 1 && <Action size="compact" label={t('changeContext')} onPress={() => store.selectAccount(state.account)}>{t('changeContext')}</Action>}
@@ -128,8 +147,9 @@ function Portal({ onLanguageChange }) {
               <View style={styles.cardGrid}>
               {ready && state.section === 'visit' && <View testID="section-card" style={[styles.featureCard, { flex: 1, minWidth: 0 }]}><VisitPanel session={state.session} controller={visitController} {...{ Label, Action, styles, scale }} /></View>}
               {ready && state.section === 'care' && <CareSection key={`${state.account}:${state.role}:${state.session.patient.id}:${JSON.stringify(state.session.permissions)}`} session={state.session} store={store} textScale={scale} />}
+              {ready && state.section === 'family' && state.session.live && <FamilyPanel key={`${state.account}:${state.role}`} session={state.session} textScale={scale} />}
               {ready && state.section === 'more' && <MoreSection key={`${state.account}:${state.role}`} language={language} scale={scale} />}
-              {ready && !['results', 'visit', 'care', 'more'].includes(state.section) && <View testID="section-card" key={`${state.account}:${state.role}:${state.section}`} style={[styles.featureCard, { flex: 1, minWidth: 0 }]}>
+              {ready && !['results', 'visit', 'care', 'more'].includes(state.section) && !(state.section === 'family' && state.session.live) && <View testID="section-card" key={`${state.account}:${state.role}:${state.section}`} style={[styles.featureCard, { flex: 1, minWidth: 0 }]}>
                 <Label style={styles.eyebrow}>{t(`${details}Eyebrow`)}</Label>
                 <Label testID="section-heading" accessibilityRole="header" style={{ fontSize: 26 * scale, lineHeight: 34 * scale, fontWeight: '700' }}>{t(state.section)}</Label>
                 <Label accessibilityRole="header" style={styles.cardHeading}>{t(`${details}Title`)}</Label>
@@ -150,7 +170,7 @@ function Portal({ onLanguageChange }) {
                     const restricted = section === 'results' && state.session.permissions.estudios !== true;
                     return <View testID="shortcut-card" key={section} style={[styles.card, { flex: 1, minWidth: 0 }]}>
                       <Label accessibilityRole="header" style={styles.cardHeading}>{t(section)}</Label>
-                      <Label>{restricted ? t('restrictedShortcut') : section === 'results' ? t('resultsShortcut') : section === 'care' ? t('careShortcut') : t('pendingShortcut')}</Label>
+                      <Label>{restricted ? t('restrictedShortcut') : section === 'results' ? t('resultsShortcut') : section === 'care' ? t('careShortcut') : t(state.session.live ? 'familyShortcutLive' : 'pendingShortcut')}</Label>
                       <Action label={t('openSection', { section: t(section) })} disabled={restricted} onPress={() => store.navigate(section)} style={{ marginTop: 'auto' }}>{t('openSection', { section: t(section) })}</Action>
                     </View>;
                   })}
@@ -159,7 +179,7 @@ function Portal({ onLanguageChange }) {
             </>}
             <View style={styles.footer}>
               <Label style={styles.small}>PRPP{' · '}<Label style={styles.small}>{t('expoWeb')}</Label></Label>
-              <Label style={styles.small}>{t('permissionWarning')}</Label>
+              <Label style={styles.small}>{t(integrated ? 'livePermissionNote' : 'permissionWarning')}</Label>
             </View>
           </View>
         </View>

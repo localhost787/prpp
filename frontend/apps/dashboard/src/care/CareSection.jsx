@@ -5,27 +5,33 @@ import {Action,Label} from '../ui/Action.jsx';
 import {palette} from '../ui.mjs';
 import CarePanel from './CarePanel.jsx';
 import {createCareController} from './controller.mjs';
+import DischargeCard from '../live/DischargeCard.jsx';
+import {useLiveRefresh} from '../live/useLiveRefresh.mjs';
 export default function CareSection({session,store,textScale}){
  const {language,t}=useLanguage();
  const [controller]=useState(()=>createCareController());
  const [scenario,setScenario]=useState('normal');
+ const [tick,setTick]=useState(0);
+ // Integrated mode: re-read care when the server reports a change for this patient.
+ useLiveRefresh(session,({types})=>{if(['Encounter','Task','MedicationAdministration','Practitioner'].some(x=>types.has(x)))setTick(n=>n+1);});
  const state=useSyncExternalStore(controller.subscribe,controller.getSnapshot,controller.getSnapshot);
  useLayoutEffect(()=>{
   const live=()=>{const s=store.getSnapshot();return s.status==='ready'&&s.section==='care'?s.session:null;};
   const unsubscribe=store.subscribe(()=>{if(live()!==session)controller.close();});
   controller.open(session,live,scenario);
   return()=>{unsubscribe();controller.close();};
- },[session,store,controller,scenario]);
+ },[session,store,controller,scenario,tick]);
  return <View testID="section-card" style={{gap:16,minWidth:0}}>
   {state.status==='ready'?<CarePanel language={language} patientDisplayName={session.patient.name?.[0]?.text??''} permissions={state.permissions} data={state.data} textScale={textScale}/>:<View style={{gap:12}}>
    <Label testID="section-heading" accessibilityRole="header" style={{fontSize:28*textScale,lineHeight:36*textScale,fontWeight:'700'}}>{t('care')}</Label>
    <Label accessibilityLiveRegion="polite">{t(state.status==='error'?'careError':'careLoading')}</Label>
   </View>}
-  <View testID="care-simulation" style={{padding:12,gap:12,borderWidth:1,borderStyle:'dashed',borderColor:palette.border,borderRadius:10}}>
+  {session.live&&<DischargeCard session={session} textScale={textScale}/>}
+  {!session.live&&<View testID="care-simulation" style={{padding:12,gap:12,borderWidth:1,borderStyle:'dashed',borderColor:palette.border,borderRadius:10}}>
    <Label>{t('careSimulation')}</Label>
    <View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>
     {['normal','denied','noParticipant','loading','error','empty'].map(value=><Action size="compact" key={value} label={t(`care_${value}`)} selected={scenario===value} onPress={()=>{if(value!==scenario){controller.close();setScenario(value);}}}>{t(`care_${value}`)}</Action>)}
    </View>
-  </View>
+  </View>}
  </View>;
 }

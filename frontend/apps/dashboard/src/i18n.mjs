@@ -1,5 +1,6 @@
 // Explicit local UI and synthetic-case translations. Clinical wording is provisional;
 // see docs/PRPP-idiomas.md. Never translate live clinical data with this dictionary.
+import { liveMessages } from './live/copy.mjs';
 export const DEFAULT_LANGUAGE = 'en';
 export const messages = {
   en: {
@@ -254,6 +255,8 @@ export const messages = {
     contextUnavailable: 'Contexto no disponible', translationReview: 'Las traducciones clínicas son provisionales y están pendientes de revisión.',
   },
 };
+// Integrated-mode copy lives in src/live/copy.mjs.
+for (const language of Object.keys(liveMessages)) Object.assign(messages[language], liveMessages[language]);
 export function translate(language, key, parameters = {}) {
   const text = messages[language]?.[key];
   if (text === undefined) throw new Error(`Missing translation: ${language}:${key}`);

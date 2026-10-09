@@ -1,4 +1,4 @@
-# PRPP — Puerto Rico Patient Portal
+# Puerto Rico Patient Portal (PRPP)
 
 **Know where your ER visit stands, in real time — you and the family members you choose.**
 Prototype built during the Caribbean AI Summit Healthcare Hackathon (October 8–10, 2026) by Team PRPP.

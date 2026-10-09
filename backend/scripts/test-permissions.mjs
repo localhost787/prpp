@@ -2,22 +2,171 @@
 // POR-47 / POR-48 / POR-50 permission matrix with the real demo accounts (never admin for the checks).
 // Canon §4: unauthorized search -> 200 empty Bundle · unauthorized read by id -> 404 · rejected write -> 403.
 // Read-only except: QuestionnaireResponse + Communication created by Carmen (deleted at the end by admin).
-// Usage: node scripts/test-permissions.mjs
-import { required } from '../lib/env.mjs';
-import { loginUser, rawRequest } from '../lib/medplum.mjs';
-import { SYSTEMS } from '../lib/policies.mjs';
+// Usage: node scripts/test-permissions.mjs [--table]
+//   --table  also prints a Markdown table with one row per request made by a portal account (or without session):
+//            account/context | method and path | resource/filter | observed HTTP | body/type | permission | check
+//            Ids are replaced by placeholders and no token is printed. "observed HTTP" and "body/type" are the
+//            server's answer; "permission" is derived from lib/policies.mjs (static reading, not observed).
+import { baseUrl, required } from '../lib/env.mjs';
+import { loginUser, rawRequest as rawRequestUntracked } from '../lib/medplum.mjs';
+import { NOT_SENSITIVE, SYSTEMS } from '../lib/policies.mjs';
 
 const projectId = required('MEDPLUM_PROJECT_ID');
 const C = required('DEMO_CARMEN_PATIENT_ID');
 const P = `Patient/${C}`;
 const LP = required('DEMO_LOURDES_PATIENT_ID');
+const LOURDES_RP = required('DEMO_LOURDES_RELATEDPERSON_ID');
+const RAFAEL_RP = required('DEMO_RAFAEL_RELATEDPERSON_ID');
 const R_SYSTEM = `${SYSTEMS.confidentiality}|R`;
+const TABLE = process.argv.includes('--table');
+
+// ---------- request log for --table ----------
+const WHO = new Map(); // client -> account name (admin is never registered, so its requests are not logged)
+const rows = [];
+let pending = [];
+let sensitiveId; // id of the R-labeled Observation, set after the admin lookup
+
+function sanitize(text) {
+  let out = text;
+  for (const [id, label] of [
+    [sensitiveId, '<Observation:R>'],
+    [C, '<Patient:carmen>'],
+    [LP, '<Patient:lourdes>'],
+    [LOURDES_RP, '<RelatedPerson:lourdes>'],
+    [RAFAEL_RP, '<RelatedPerson:rafael>'],
+  ]) {
+    out = id ? out.replaceAll(id, label) : out;
+  }
+  return out.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '<id>');
+}
+
+function bodyType(body) {
+  if (body?.resourceType === 'Bundle') {
+    return `Bundle (${body.entry?.length ?? 0} entries${body.total !== undefined ? `, total ${body.total}` : ''})`;
+  }
+  if (body?.resourceType === 'OperationOutcome') {
+    const issue = body.issue?.[0];
+    return `OperationOutcome ${issue?.code ?? ''}: ${String(issue?.details?.text ?? issue?.diagnostics ?? '').slice(0, 60)}`;
+  }
+  if (body?.resourceType) {
+    return body.resourceType;
+  }
+  return body === undefined ? '(empty)' : typeof body === 'object' ? 'JSON' : `text: ${String(body).slice(0, 40)}`;
+}
+
+const CATEGORY_OF = {
+  Patient: 'visita',
+  Encounter: 'visita',
+  Task: 'visita',
+  MedicationAdministration: 'medicinas',
+  MedicationRequest: 'medicinas',
+  CarePlan: 'instrucciones',
+  Appointment: 'instrucciones',
+  ServiceRequest: 'estudios',
+  Specimen: 'estudios',
+  DiagnosticReport: 'estudios',
+  Observation: 'estudios',
+};
+const NOTICE_CATEGORY = { visita: 'visita', medicina: 'medicinas', estudios: 'estudios', resultado: 'estudios' };
+const FAMILY_POLICY = {
+  visita: 'Familiar: estado en Emergencias',
+  medicinas: 'Familiar: medicinas',
+  instrucciones: 'Familiar: instrucciones del alta',
+  estudios: 'Familiar: estudios y resultados',
+};
+const PATIENT_EXTRA = ['Consent', 'RelatedPerson', 'Person', 'AuditEvent', 'Bot', 'HealthcareService', 'Questionnaire'];
+const PATIENT_WRITES = ['AppointmentResponse', 'QuestionnaireResponse', 'Communication'];
+
+/** Which AccessPolicy entry explains the answer (static reading of lib/policies.mjs). `path` has real ids. */
+function explain(who, method, path, notice) {
+  if (who === 'no session' || who === 'invalid token') {
+    return 'no valid access token: rejected before any AccessPolicy is applied';
+  }
+  if (path === 'auth/me') {
+    return 'auth/me: the AccessPolicy the server resolved from the membership (access[] itself is not returned)';
+  }
+  const type = path.replace(/^fhir\/R4\//, '').split(/[/?]/)[0];
+  const write = method !== 'GET';
+  const ownLourdes = who === 'lourdes' && (path.includes(LP) || path.includes(LOURDES_RP));
+  if (who === 'carmen' || ownLourdes) {
+    const policy = ownLourdes ? 'Paciente (portal) for <Patient:lourdes> ("Mi salud")' : 'Paciente (portal)';
+    if (write) {
+      return PATIENT_WRITES.includes(type)
+        ? `${policy}: ${type} create, writeConstraint (only about herself)`
+        : `${policy}: ${type} is readonly`;
+    }
+    if (who === 'carmen' && path.includes(LP)) {
+      return `${policy}: criteria only match her own Patient`;
+    }
+    if (type === 'Patient') {
+      return `${policy}: Patient?_id=%patient.id`;
+    }
+    if (PATIENT_EXTRA.includes(type)) {
+      return `${policy}: ${type} entry with its own criteria`;
+    }
+    if (['ProjectMembership', 'ClientApplication'].includes(type)) {
+      return `${policy}: ${type} absent from the policy (project-admin type)`;
+    }
+    return `${policy}: ${type}?_compartment=%patient (R-labeled data included)`;
+  }
+  // A family member reading or writing Carmen's data.
+  if (write) {
+    return 'every family policy entry is readonly';
+  }
+  if (type === 'Consent') {
+    return 'Consent only via "Paciente (portal)" for her own Patient (Lourdes) / absent (Rafael)';
+  }
+  let category = CATEGORY_OF[type];
+  if (type === 'Communication') {
+    const code = notice ?? path.match(/category=[^|&]*\|(\w+)/)?.[1];
+    category = code ? NOTICE_CATEGORY[code] : undefined;
+    if (!category) {
+      return `Communication entries per notice category (shared: ${SHARES[who].join('+')}), ${NOT_SENSITIVE}`;
+    }
+  }
+  if (!category) {
+    return `${type} absent from the family policies`;
+  }
+  const r = path.includes('_security') || (sensitiveId && path.includes(sensitiveId)) ? ' -> R-labeled excluded' : '';
+  if (SHARES[who].includes(category)) {
+    const hidden = type === 'Patient' ? ', hiddenFields identifier/address/telecom' : '';
+    return `${FAMILY_POLICY[category]} for <Patient:carmen> (${NOT_SENSITIVE}${hidden})${r}`;
+  }
+  return `"${category}" not shared: only the no-match entry ${type}?_id=00000000-… applies`;
+}
+
+/** Request with no Authorization header at all (missing session). */
+async function requestWithoutAuth(method, path) {
+  const res = await fetch(baseUrl() + path, { method });
+  const text = await res.text();
+  let json;
+  try {
+    json = text ? JSON.parse(text) : undefined;
+  } catch {
+    json = text;
+  }
+  return { status: res.status, body: json };
+}
+
+/** rawRequest that also logs the request for --table (portal accounts only). */
+async function rawRequest(client, method, path, body, notice) {
+  const res = client.noAuth ? await requestWithoutAuth(method, path) : await rawRequestUntracked(client, method, path, body);
+  const who = WHO.get(client);
+  if (who) {
+    pending.push({ who, method, path: sanitize(path), status: res.status, body: bodyType(res.body), why: explain(who, method, path, notice) });
+  }
+  return res;
+}
 
 let pass = 0;
 let fail = 0;
 function check(name, ok, detail = '') {
   ok ? pass++ : fail++;
   console.log(`${ok ? 'pasa ' : 'FALLA'} ${name}${detail ? ` · ${detail}` : ''}`);
+  for (const row of pending) {
+    rows.push({ ...row, check: `${ok ? 'pasa' : 'FALLA'}: ${name}` });
+  }
+  pending = [];
 }
 
 const get = (client, path) => rawRequest(client, 'GET', `fhir/R4/${path}`);
@@ -38,10 +187,12 @@ const sample = {
 const sensitive = await one('Observation', { patient: P, _security: R_SYSTEM });
 const resultNotice = await one('Communication', { subject: P, category: `${SYSTEMS.notice}|resultado` });
 const medNotice = await one('Communication', { subject: P, category: `${SYSTEMS.notice}|medicina` });
+sensitiveId = sensitive?.id;
 
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
 const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
+WHO.set(carmen, 'carmen').set(lourdes, 'lourdes').set(rafael, 'rafael');
 
 // Category of each type, and who has it (approved seed: Lourdes v+m+i, Rafael all 4).
 const TYPES = {
@@ -92,9 +243,9 @@ for (const [who, client] of Object.entries(CLIENTS)) {
   check(`${who} avisos "resultado"/"estudios" ${est ? 'sí' : 'no'}`, sees('resultado') === est && sees('estudios') === est);
   check(`${who} ve el aviso neutral "Hay un resultado nuevo (privado)"`, sees('neutral-familia'));
 }
-const ln = await get(lourdes, `Communication/${resultNotice.id}`);
+const ln = await rawRequest(lourdes, 'GET', `fhir/R4/Communication/${resultNotice.id}`, undefined, 'resultado');
 check('lourdes lee por id un aviso "resultado" -> 404', ln.status === 404, `${ln.status}`);
-const lm = await get(lourdes, `Communication/${medNotice.id}`);
+const lm = await rawRequest(lourdes, 'GET', `fhir/R4/Communication/${medNotice.id}`, undefined, 'medicina');
 check('lourdes lee por id un aviso "medicina" (compartido) -> 200', lm.status === 200, `${lm.status}`);
 
 console.log('\n== Ficha de Carmen vista por la familia (campos ocultos) ==');
@@ -268,10 +419,47 @@ check('lourdes lee su propia ficha con su MRN', own.status === 200 && own.body.i
 const person = await get(lourdes, `Person?relatedperson=RelatedPerson/${required('DEMO_LOURDES_RELATEDPERSON_ID')}`);
 check('lourdes encuentra su Person (dos roles)', count(person) === 1, `${person.status}, ${count(person)}`);
 
+console.log('\n== Sin sesión / token inválido (401) ==');
+// No Authorization header, an opaque garbage token and a forged JWT (bad signature, exp in the past).
+// A really expired token is covered by scripts/test-auth-session.mjs --expiry-probe.
+const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+const forgedJwt = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({ sub: 'x', exp: Math.floor(Date.now() / 1000) - 3600 })}.c2ln`;
+const NO_SESSION = { noAuth: true };
+const GARBAGE = { getBaseUrl: () => baseUrl(), getAccessToken: () => 'not-a-token' };
+const FORGED = { getBaseUrl: () => baseUrl(), getAccessToken: () => forgedJwt };
+const MALFORMED = { getBaseUrl: () => baseUrl(), getAccessToken: () => 'invalid.token.value' };
+WHO.set(NO_SESSION, 'no session').set(GARBAGE, 'invalid token').set(FORGED, 'invalid token').set(MALFORMED, 'invalid token');
+const unauthPaths = [`fhir/R4/Patient/${C}`, `fhir/R4/Observation?patient=${P}`, 'auth/me'];
+for (const [label, client] of [['sin sesión', NO_SESSION], ['token basura', GARBAGE], ['JWT falsificado (firma mala, exp vencido)', FORGED]]) {
+  for (const path of unauthPaths) {
+    const r = await rawRequest(client, 'GET', path);
+    check(`${label}: GET ${sanitize(path)} -> 401`, r.status === 401, `${r.status} ${bodyType(r.body)}`);
+  }
+}
+// Observed quirk of Medplum 5.1.42: three dot-separated segments that are not base64 JSON -> 400 "Authentication error".
+for (const path of unauthPaths) {
+  const r = await rawRequest(MALFORMED, 'GET', path);
+  check(`JWT malformado ("a.b.c"): GET ${sanitize(path)} -> rechazado (400 o 401, nunca 2xx)`, r.status === 401 || r.status === 400, `${r.status} ${bodyType(r.body)}`);
+  if (r.status !== 401) {
+    console.log(`info  JWT malformado -> ${r.status} (no 401): el servidor falla al leer el token; el contrato pide 401, decisión abierta`);
+  }
+}
+
 // cleanup of the two resources Carmen created
 for (const r of [qr, q]) {
   if (r.status === 201) {
     await admin.deleteResource(r.body.resourceType, r.body.id);
+  }
+}
+
+if (TABLE) {
+  const cell = (v) => String(v).replaceAll('|', '\\|');
+  console.log('\n| account/context | method and path | resource/filter | observed HTTP | body/type | permission that explains it (static) | check |');
+  console.log('|---|---|---|---|---|---|---|');
+  for (const r of rows) {
+    const [route, filter = ''] = r.path.split('?');
+    const resource = route.startsWith('fhir/R4/') ? `${route.slice(8).split('/')[0]}${filter ? `?${filter}` : ''}` : '-';
+    console.log(`| ${[r.who, `${r.method} ${route}`, resource, r.status, r.body, r.why, r.check].map(cell).join(' | ')} |`);
   }
 }
 

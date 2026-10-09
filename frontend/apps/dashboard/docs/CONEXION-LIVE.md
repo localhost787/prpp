@@ -52,4 +52,6 @@ El candado sale **solo** de auth/me (API-02): si `canView` dice que no, no se co
 
 ## Pruebas
 
-`node --test tests/live-unit.node.mjs` (sin red). `tests/live-server.node.mjs` solo corre si existe el archivo local de entorno (fuera del repo); cambia lo compartido y restaura el seed al final.
+`node --test tests/live-unit.node.mjs` (sin red). `tests/live-server.check.mjs` solo corre si existe el archivo local de entorno (fuera del repo); cambia lo compartido y restaura el seed al final.
+
+> La prueba contra el servidor **no** corre con `npm test` (cambia por un momento lo que comparte la cuenta de demo). Se corre a mano: `node --test tests/live-server.check.mjs`. Nunca durante una demo.

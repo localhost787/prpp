@@ -21,6 +21,14 @@ test('the five portal destinations use Lucide icons', async () => {
   assert.match(text, /testID=\{`nav-icon-\$\{section\}`\}/);
 });
 
+test('README credits the official Lucide package and licenses', async () => {
+  const text = await source('../README.md');
+  assert.match(text, /lucide-react-native` 1\.54\.0/);
+  assert.match(text, /ISC/);
+  assert.match(text, /Feather.*MIT/s);
+  assert.match(text, /react-native-svg` 15\.12\.1/);
+});
+
 test('study cards do not add a blue frame', async () => {
   const text = await source('../src/StudiesPanel.jsx');
   assert.doesNotMatch(text, /borderLeftWidth/);

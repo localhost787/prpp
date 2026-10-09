@@ -21,9 +21,15 @@ node tests/browser.mjs
 
 `npm run web` inicia Metro para desarrollo, pero la ruta ejercitada de esta entrega es el export estático. No ejecutar ambos servidores al mismo tiempo. No detener procesos desconocidos.
 
+## Iconografía y créditos
+
+- La navegación usa el paquete oficial [`lucide-react-native` 1.54.0](https://lucide.dev/), bajo licencia ISC. Algunos iconos Lucide se derivan de Feather Icons y conservan su atribución MIT, según el archivo `LICENSE` distribuido por el paquete.
+- La representación SVG multiplataforma usa [`react-native-svg` 15.12.1](https://github.com/software-mansion/react-native-svg), bajo licencia MIT.
+- Los iconos son decorativos dentro de controles que mantienen nombres accesibles completos en texto; no reemplazan las etiquetas de navegación.
+
 ## Límites
 
-- Cinco secciones navegables con contenido pendiente explícito, no datos clínicos inventados.
+- Cinco secciones navegables con datos sintéticos explícitos; un pase mock no demuestra integración clínica.
 - Los permisos son fixtures, no reglas aplicadas por servidor.
 - Reutiliza `../../src/mock/session.ts` mediante `src/context.mjs`; corrige únicamente en el adaptador el perfil propio de Lourdes.
 - UI con componentes React Native y React Native Web; sin Mantine ni Medplum React DOM.

@@ -46,7 +46,7 @@ Hospital simulator → **HL7 v2** → **Medplum Bots** (`hl7-a-fhir`, `compartir
 **Done during the event:** all the code in this repository (see the commit history).
 
 ## Use of AI
-Built with AI coding agents — **Claude Code** (backend) and **Hermes** (frontend) — following instructions written before the event. The portal itself does not use AI to diagnose: result explanations are fixed, reviewed texts.
+Built with AI agents, following instructions written before the event: backend with **OpenClaw** and **Claude Code**; frontend with **Hermes Agent** and **Codex**. The portal itself does not use AI to diagnose: result explanations are fixed, reviewed texts.
 
 ## License
 [Apache 2.0](LICENSE). Medplum notices are kept in any files derived from Medplum examples.

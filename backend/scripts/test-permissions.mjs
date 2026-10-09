@@ -251,6 +251,17 @@ check('carmen no lee ClientApplication', ca.status === 403 || count(ca) === 0, `
 const lc = await get(lourdes, `Consent?patient=${P}`);
 check('lourdes busca los Consent de Carmen -> Bundle vacío', lc.status === 200 && count(lc) === 0, `${lc.status}, ${count(lc)}`);
 
+console.log('\n== Candados desde auth/me (regla de API-02) ==');
+const REPRESENTATIVE = { visita: 'Encounter', medicinas: 'MedicationRequest', instrucciones: 'CarePlan', estudios: 'DiagnosticReport' };
+for (const who of ['lourdes', 'rafael']) {
+  const meRes = await rawRequest(CLIENTS[who], 'GET', 'auth/me');
+  const resources = meRes.body?.accessPolicy?.resource ?? [];
+  const allowed = Object.entries(REPRESENTATIVE)
+    .filter(([, type]) => resources.some((r) => r.resourceType === type && (!r.criteria || r.criteria.includes(C))))
+    .map(([cat]) => cat);
+  check(`auth/me de ${who}: categorías abiertas = ${SHARES[who].join('+')}`, JSON.stringify(allowed) === JSON.stringify(SHARES[who]), allowed.join('+'));
+}
+
 console.log('\n== Lourdes "Mi salud" (POR-101) ==');
 const own = await get(lourdes, `Patient/${LP}`);
 check('lourdes lee su propia ficha con su MRN', own.status === 200 && own.body.identifier?.[0]?.value === 'MRN-0002', `${own.status}`);

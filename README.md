@@ -50,9 +50,6 @@ Hospital simulator → **HL7 v2** → **Medplum Bots** (`hl7-a-fhir`, `compartir
 | React, Vite | UI framework and build tool | MIT | Portal |
 | Mantine, Tabler Icons | UI components and icons | MIT | Portal screens |
 
-**Done before the event (no code):** product design, texts, the test case described in words, and the instructions for the AI agents.
-**Done during the event:** all the code in this repository (see the commit history).
-
 ## Use of AI
 Built with AI agents: backend with **OpenClaw** and **Claude Code**; frontend with **Hermes Agent** and **Codex**. The portal itself does not use AI to diagnose: result explanations are fixed, reviewed texts.
 

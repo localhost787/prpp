@@ -54,6 +54,7 @@ export function createResultsController(source) {
 }
 export async function loadResults(session, source = resultFixtures) {
   if (session?.permissions?.estudios !== true) return { status: 'restricted', items: [] };
-  const items = await source(session.patient.id);
+  if (session.mode === 'live' && typeof session.resultsSource !== 'function') throw new Error('SESSION_SOURCE_UNAVAILABLE');
+  const items = await (session.mode === 'live' ? session.resultsSource : source)(session.patient.id);
   return { status: 'ready', items };
 }

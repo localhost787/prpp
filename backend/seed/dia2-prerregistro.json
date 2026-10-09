@@ -1,0 +1,74 @@
+{
+  "_comment": "POR-55 prereg-data (API-22). Pre-registration form, 5 sections. Matched by url + identifier. EMTALA: it does not reserve a place in line nor change the order of care.",
+  "resourceType": "Questionnaire",
+  "url": "https://prpp.example/fhir/Questionnaire/pre-registro",
+  "identifier": [{ "system": "urn:portal:cuestionario", "value": "pre-registro" }],
+  "version": "1",
+  "name": "pre-registro",
+  "title": "Pre-registro para Emergencias",
+  "status": "active",
+  "subjectType": ["Patient"],
+  "description": "Adelante sus datos desde la casa. No reserva turno: en Emergencias la atienden por gravedad, con o sin pre-registro.",
+  "item": [
+    {
+      "linkId": "aviso",
+      "type": "display",
+      "text": "Este pre-registro no reserva turno ni cambia el orden de atención. Si es una emergencia, vaya a Emergencias o llame al 911."
+    },
+    {
+      "linkId": "datos",
+      "type": "group",
+      "text": "Sus datos",
+      "item": [
+        { "linkId": "datos-nombre", "type": "string", "text": "Nombre completo", "required": true },
+        { "linkId": "datos-nacimiento", "type": "date", "text": "Fecha de nacimiento", "required": true },
+        {
+          "linkId": "datos-idioma",
+          "type": "choice",
+          "text": "Idioma preferido",
+          "answerOption": [
+            { "valueCoding": { "system": "urn:ietf:bcp:47", "code": "es-PR", "display": "Español" } },
+            { "valueCoding": { "system": "urn:ietf:bcp:47", "code": "en-US", "display": "Inglés" } }
+          ]
+        }
+      ]
+    },
+    {
+      "linkId": "plan",
+      "type": "group",
+      "text": "Plan médico",
+      "item": [
+        { "linkId": "plan-nombre", "type": "string", "text": "Nombre del plan" },
+        { "linkId": "plan-numero", "type": "string", "text": "Número de socio del plan" }
+      ]
+    },
+    {
+      "linkId": "medicinas",
+      "type": "group",
+      "text": "Medicinas y alergias",
+      "item": [
+        { "linkId": "medicinas-lista", "type": "text", "text": "Medicinas que toma" },
+        { "linkId": "medicinas-alergias", "type": "text", "text": "Alergias" }
+      ]
+    },
+    {
+      "linkId": "contacto",
+      "type": "group",
+      "text": "Contacto de emergencia",
+      "item": [
+        { "linkId": "contacto-nombre", "type": "string", "text": "Nombre" },
+        { "linkId": "contacto-relacion", "type": "string", "text": "Relación (por ejemplo: hija, esposo)" },
+        { "linkId": "contacto-telefono", "type": "string", "text": "Teléfono" }
+      ]
+    },
+    {
+      "linkId": "motivo",
+      "type": "group",
+      "text": "Motivo de la visita",
+      "item": [
+        { "linkId": "motivo-texto", "type": "text", "text": "¿Qué le pasa?", "required": true },
+        { "linkId": "motivo-desde", "type": "string", "text": "¿Desde cuándo?" }
+      ]
+    }
+  ]
+}

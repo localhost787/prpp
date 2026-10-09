@@ -105,7 +105,7 @@ async function verify(admin, carmen) {
   const count = async (type, params) => (await admin.searchResources(type, { ...params, _count: '100' })).length;
   const orgs = await count('Organization', { name: 'Hospital Demo' });
   log(orgs === 1 ? 'ok' : 'FAIL', `Organization?name=Hospital Demo -> ${orgs}`);
-  const locations = (await admin.searchResources('Location', { _count: '100' })).map((l) => l.name).sort();
+  const locations = (await admin.searchResources('Location', { identifier: 'urn:hospital-demo:lugar|', _count: '100' })).map((l) => l.name).sort();
   log(locations.length === 3 ? 'ok' : 'FAIL', `Location -> ${locations.length}: ${locations.join(' | ')}`);
   const staff = (await admin.searchResources('Practitioner', { identifier: 'urn:hospital-demo:personal|', _count: '100' }))
     .map((p) => p.name?.[0]?.text)

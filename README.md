@@ -12,11 +12,14 @@ Built as a synthetic-data prototype during the Caribbean AI Summit Healthcare Ha
 Puerto Rico does not currently have a live patient-facing platform connected to PRHIE where people can access their medical results in one place. PRPP addresses that gap with a synthetic-data prototype for patients and the family members they authorize; it is not currently connected to PRHIE. For the hackathon, the Emergency Department is the demonstration scenario: PRPP shows each stage, tests and results explained in plain Spanish, and clear discharge instructions. The patient decides, person by person, what each family member can see, and can revoke access instantly.
 
 ## Try it in 2 minutes
-> _TODO (Saturday): live demo URL, backup video URL._
-1. Open the portal. There is no sign-in step: you are **Doña Carmen** (patient, fictional).
-2. As Carmen, run the hospital simulator's full tour and watch the visit advance and the blood test result arrive **without reloading**.
-3. Switch to **Lourdes**, her daughter: she sees the visit, medications and instructions, **not** results (Results shows a lock).
-4. Back as Carmen, share Results with Lourdes — it appears instantly; revoke it — it disappears.
+**Live demo: <https://prpp-frontend.vercel.app/>** — no sign-in: you enter directly as **Doña Carmen** (patient, fictional). The public link runs entirely in your browser with synthetic data.
+
+1. **My visit:** the current stage, what comes next and why she waits.
+2. **Results:** values explained in plain Spanish, noting her doctor may not have reviewed them yet.
+3. Switch to **Lourdes**, her daughter: visit, medications and instructions are visible; Results shows a lock that does not reveal whether information exists.
+4. Back as Carmen, **Family** shows the sharing matrix: person by person, category by category.
+
+The full live flow — the hospital simulator sending HL7 v2, results arriving in real time, sharing and revoking with instant server-side effect — is shown in the 2-minute video. _TODO (Saturday): video URL._
 
 ### Demo accounts
 > **These users and passwords are simulated.** Carmen and Lourdes are fictional people with synthetic data. Their logins are published here only so anyone can run the demo: they are not real people, they have no admin rights, and they protect nothing real.

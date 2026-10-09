@@ -130,7 +130,9 @@ export async function changeFamilyPermission({
   const optimistic = original.map(caregiver => {
     if (caregiver?.id !== caregiverId) return caregiver;
     found = true;
-    const permissions = { ...caregiver.permissions, [category]: enabled };
+    const permissions = category === 'status' && enabled === false
+      ? Object.fromEntries(FAMILY_CATEGORIES.map(id => [id, false]))
+      : { ...caregiver.permissions, [category]: enabled };
     if (enabled && category !== 'status') permissions.status = true;
     return { ...caregiver, permissions };
   });
@@ -161,4 +163,23 @@ export async function removeFamilyAccess({ caregivers = [], caregiverId, languag
   } catch {
     return { status: 'error', caregivers: original, message: language === 'es' ? 'No se pudo guardar. Se restauró el ejemplo local.' : 'Could not save. The local example was restored.' };
   }
+}
+
+export function createFamilyMutationQueue(initialCaregivers = [], save = async () => {}) {
+  let caregivers = initialCaregivers.map(caregiver => ({ ...caregiver, permissions: { ...caregiver.permissions } }));
+  let pending = Promise.resolve();
+  const enqueue = operation => {
+    const result = pending.then(async () => {
+      const next = await operation(caregivers);
+      if (next.status === 'saved') caregivers = next.caregivers;
+      return next;
+    });
+    pending = result.catch(() => undefined);
+    return result;
+  };
+  return {
+    getCaregivers: () => caregivers,
+    change: input => enqueue(current => changeFamilyPermission({ ...input, caregivers: current, save })),
+    remove: input => enqueue(current => removeFamilyAccess({ ...input, caregivers: current, save })),
+  };
 }

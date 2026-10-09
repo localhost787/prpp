@@ -1,11 +1,24 @@
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { enterContext } from './entry-helpers.mjs';
 import { translate } from '../src/i18n.mjs';
+import { readFile } from 'node:fs/promises';
+import { extname, join, normalize } from 'node:path';
 
+const root = new URL('../dist/', import.meta.url).pathname;
+const types = { '.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.png': 'image/png' };
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   for (const width of [320, 390, 1280]) {
     const context = await browser.newContext({ viewport: { width, height: 900 } });
+    await context.route('http://127.0.0.1:3001/**', async route => {
+      const url = new URL(route.request().url());
+      const relative = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
+      const file = normalize(join(root, relative));
+      if (!file.startsWith(root)) return route.abort();
+      try {
+        await route.fulfill({ status: 200, body: await readFile(file), contentType: types[extname(file)] ?? 'application/octet-stream' });
+      } catch { await route.fulfill({ status: 404, body: 'not found' }); }
+    });
     const page = await context.newPage();
     const errors = [];
     const requests = [];
@@ -43,8 +56,12 @@ try {
     await enterContext(page, 'Lourdes', 'delegate', 'es');
     const es = (key, args) => translate('es', key, args);
     await page.getByRole('button', { name: es('goTo', { section: es('family') }), exact: true }).click();
-    await expect(page.getByTestId('family-panel')).toHaveCount(0);
-    await expect(page.getByRole('switch')).toHaveCount(0);
+    const delegatePanel = page.getByTestId('family-panel');
+    await expect(delegatePanel).toBeVisible();
+    await expect(delegatePanel.getByTestId('delegate-family-categories')).toContainText('Estudios y resultados');
+    await expect(delegatePanel.getByTestId('delegate-family-categories')).toContainText('Privado');
+    await expect(delegatePanel).not.toContainText(/Hemograma|15\.2|glóbulos/i);
+    await expect(delegatePanel.getByRole('switch')).toHaveCount(0);
 
     await enterContext(page, 'Carmen', 'self', 'es');
     await page.getByRole('button', { name: es('goTo', { section: es('family') }), exact: true }).click();

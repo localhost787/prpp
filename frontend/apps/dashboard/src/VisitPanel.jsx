@@ -1,4 +1,4 @@
-import React, { useEffect, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { View } from 'react-native';
 import { useLanguage } from './Language.jsx';
 import { visitPresentation } from './visit.mjs';
@@ -6,15 +6,29 @@ import StudiesPanel from './StudiesPanel.jsx';
 import { palette } from './ui.mjs';
 import { uiCopy } from './ui-copy.mjs';
 import Disclosure from './ui/Disclosure.jsx';
+import { cancelSpeech, speakVisit } from './a11y.mjs';
+import WaitPanel from './wait/WaitPanel.jsx';
+import { WAIT_FIXTURES, createWaitModel } from './wait/wait.mjs';
+import NoticesPanel from './notices/NoticesPanel.jsx';
+import { SYNTHETIC_NOTICE_FIXTURE, createNoticesModel } from './notices/notices.mjs';
 
 export default function VisitPanel({ session, controller, Label, Action, styles, scale, wide = false }) {
   const { t, language } = useLanguage();
   const copy = (key, values) => uiCopy(language, key, values);
+  const [noticesRead, setNoticesRead] = useState(false);
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   useEffect(() => { controller.open(session); return () => controller.close(); }, [controller, session]);
+  useEffect(() => { setNoticesRead(false); return () => cancelSpeech(); }, [session]);
   const status = session.permissions.visita !== true ? 'restricted' : state.session === session ? state.status : 'loading';
+  useEffect(() => { if (status !== 'ready') cancelSpeech(); }, [status]);
   const visit = status === 'ready' ? state.visit : null;
   const presentation = visit ? visitPresentation(visit, session.permissions, language) : null;
+  const waitingFixture = visit?.stage === 3 ? WAIT_FIXTURES.afterTriage : visit?.stage === 5 ? WAIT_FIXTURES.afterSamples : null;
+  const waitState = createWaitModel({ language, state: waitingFixture ? 'ready' : 'empty', ...(waitingFixture ?? {}) });
+  const validNoticeContext = ((session.account === 'carmen' && session.role === 'self') || (session.account === 'lourdes' && session.role === 'delegate')) && session.patient?.id === 'carmen';
+  const noticePermission = status !== 'restricted' && validNoticeContext;
+  const notices = createNoticesModel({ language, permission: noticePermission, state: noticePermission ? 'ready' : 'empty', communications: noticePermission ? SYNTHETIC_NOTICE_FIXTURE : [] });
+  const unreadCount = noticesRead ? 0 : notices.items.length;
 
   return <View testID="visit-panel" style={{ gap: 22, minWidth: 0 }}>
     <Label testID="section-heading" accessibilityRole="header" style={{ fontSize: 30 * scale, lineHeight: 38 * scale, fontWeight: '700', letterSpacing: -0.6 }}>{t('visit')}</Label>
@@ -37,6 +51,7 @@ export default function VisitPanel({ session, controller, Label, Action, styles,
             <View style={{ gap: 4 }}><Label style={styles.small}>{copy('location')}</Label><Label style={{ fontWeight: '700' }}>{copy('cubicle', { number: visit.cubicle })}</Label></View>
             <View style={{ gap: 4 }}><Label style={styles.small}>{copy('clinician')}</Label><Label style={{ fontWeight: '700' }}>{copy('doctor', { name: visit.clinician })}</Label></View>
             <Label style={{ color: palette.muted, fontSize: 13 * scale, lineHeight: 20 * scale }}>{t('visitStarted', { date: presentation.startedAt })}</Label>
+            <Action size="compact" label={t('listen')} onPress={() => speakVisit({ visit, permissions: session.permissions })}>{t('listen')}</Action>
           </View>
         </View>
         <View style={[styles.card, { paddingVertical: 10 }]}>
@@ -52,12 +67,14 @@ export default function VisitPanel({ session, controller, Label, Action, styles,
             <Label style={styles.small}>{t('visitFixedSnapshot')}</Label>
           </Disclosure>
         </View>
+        <WaitPanel language={language} textScale={scale} state={waitState} />
       </> : <View style={styles.card}>
         <Label>{t({ restricted: 'visitRestricted', error: 'visitError', empty: 'visitEmpty' }[status] ?? 'visitLoading')}</Label>
         {status === 'empty' && <Label style={styles.small}>{t('visitEmptyDisclaimer')}</Label>}
         {status === 'error' && <Action label={t('visitRetry')} onPress={() => controller.open(session, state.scenario)}>{t('visitRetry')}</Action>}
       </View>}
     </View>
+    <NoticesPanel language={language} textScale={scale} state={notices} unreadCount={unreadCount} onOpen={() => setNoticesRead(true)} />
     {visit && <StudiesPanel session={session} {...{ Label, Action, styles, scale }} />}
     <Disclosure title={copy('demoTools')} {...{ Action, Label }}>
       <View testID="simulation-controls" style={styles.simulation}>

@@ -38,6 +38,14 @@ function Portal({ onLanguageChange }) {
     if (state.status === 'choosing' || (state.status === 'ready' && lastStatus.current === 'loading')) accountRef.current?.focus?.();
     lastStatus.current = state.status;
   }, [state.status]);
+  // Demo entry without sign-in for non-technical judges: auto-enter as Carmen (patient)
+  // ONCE on first load. "Change account" still opens the chooser and is never overridden.
+  const autoEntered = useRef(false);
+  useEffect(() => {
+    if (autoEntered.current) return;
+    autoEntered.current = true;
+    store.enter('carmen', 'self');
+  }, [store]);
   useEffect(() => () => store.close(), [store]);
   useEffect(() => { if (state.status === 'closed') visitController.close(true); }, [state.status, visitController]);
   useEffect(() => {

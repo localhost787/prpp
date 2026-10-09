@@ -6,7 +6,7 @@ export const messages = {
     chooseAccount: 'Choose an account', chooseContext: 'What would you like to view?',
     entryIntro: 'Choose an example account, then the information you want to explore.',
     localEntry: 'Local preview only — not a real sign-in. Nothing is saved when you reload.',
-    account_carmen: 'View her own health information', account_lourdes: 'View her own health or permitted information for Carmen', account_rafael: 'View permitted information for Carmen',
+    account_carmen: 'View her own health information', account_lourdes: 'View her own health or permitted information for Carmen',
     changeAccount: 'Change account', changeContext: 'Change context', backAccounts: 'Back to accounts',
     contextIntro: 'Only the contexts available to this account are shown. A family relationship does not grant access.',
 
@@ -132,7 +132,7 @@ export const messages = {
     chooseAccount: 'Elija una cuenta', chooseContext: '¿Qué desea consultar?',
     entryIntro: 'Elija una cuenta de ejemplo y luego la información que desea explorar.',
     localEntry: 'Solo vista local; no inicia una sesión real. Nada se guarda al recargar.',
-    account_carmen: 'Consultar su propia salud', account_lourdes: 'Consultar su salud o la información permitida de Carmen', account_rafael: 'Consultar la información permitida de Carmen',
+    account_carmen: 'Consultar su propia salud', account_lourdes: 'Consultar su salud o la información permitida de Carmen',
     changeAccount: 'Cambiar cuenta', changeContext: 'Cambiar contexto', backAccounts: 'Volver a las cuentas',
     contextIntro: 'Solo se muestran los contextos disponibles para esta cuenta. El parentesco no concede acceso.',
 

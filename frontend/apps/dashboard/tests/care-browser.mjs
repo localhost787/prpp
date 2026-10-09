@@ -17,7 +17,7 @@ try{
   const t=(k,p)=>translate(language,k,p),button=name=>page.getByRole('button',{name,exact:true});
   await page.goto('http://127.0.0.1:3001');
   if(language==='es')await button('Switch language to Spanish').click();
-  for(const [account,role] of [['Carmen','self'],['Lourdes','delegate'],['Lourdes','self'],['Rafael','delegate']]){
+  for(const [account,role] of [['Carmen','self'],['Lourdes','delegate'],['Lourdes','self']]){
    await enterContext(page,account,role,language);
    await button(t('goTo',{section:t('care')})).click();
    for(const scale of [1,1.5]){

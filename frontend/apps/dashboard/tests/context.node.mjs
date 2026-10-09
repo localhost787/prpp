@@ -65,7 +65,6 @@ test('matriz de identidades usa repositorios aislados, sin red ni storage del na
       ['carmen', 'self', 'carmen', 'Patient', true],
       ['lourdes', 'delegate', 'carmen', 'RelatedPerson', false],
       ['lourdes', 'self', 'lourdes', 'Patient', true],
-      ['rafael', 'delegate', 'carmen', 'RelatedPerson', true],
     ]) {
       const current = await api.openContext(account, role);
       assert.equal(current.patient.id, patient);

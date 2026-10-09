@@ -51,7 +51,7 @@ test('simulation shares stages by visit, isolates context, and resets on close',
     controller.stage(stage); assert.equal(controller.getSnapshot().visit.stage, stage);
   }
   controller.stage(8); assert.equal(controller.getSnapshot().visit.stage, 7);
-  await controller.open({ ...carmen, account: 'rafael' });
+  await controller.open({ ...carmen, account: 'lourdes' });
   assert.equal(controller.getSnapshot().visit.stage, 7);
   await controller.open({ ...carmen, account: 'lourdes', permissions: { visita: true, estudios: false } });
   assert.equal(controller.getSnapshot().visit.stage, 7);

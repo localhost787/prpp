@@ -72,7 +72,7 @@ try {
   await expect(page.getByText(translate('es','noResults'),{exact:true})).toBeVisible();
   await expect(page.getByTestId('report-group')).toHaveCount(0);
   expect(downloads.length).toBe(before);
-  await enterContext(page, 'Rafael', 'delegate', 'es');await button('Abrir Resultados').click();
+  await enterContext(page, 'Lourdes', 'delegate', 'es');await button('Abrir Resultados').click();
   await expect(page.getByTestId('report-group')).toHaveCount(3);
   await page.evaluate(()=>{
    document.querySelector('[aria-label="Descargar PDF sintético: Hemograma completo"]').click();

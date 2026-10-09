@@ -46,7 +46,7 @@ try {
    if(width===390) expect(box.y,'entry first viewport').toBeLessThan(650);
    await expect(page.getByTestId('demo-notice')).toContainText(t('demoNotice'));
    await capture(`${width}-${language}-landing`,{language,section:'landing',scale:1,entry:box});
-   for(const [account,role]of [['Carmen','self'],['Rafael','delegate'],['Lourdes','delegate'],['Lourdes','self']]){
+   for(const [account,role]of [['Carmen','self'],['Lourdes','delegate'],['Lourdes','self']]){
     await enterContext(page, account, role, language);
     await expect(page.getByTestId('patient-name')).toHaveText(account==='Lourdes'&&role==='self'?'Lourdes':'Carmen Rivera Colón');
     await expect(page.getByTestId('context-card')).toContainText(account);

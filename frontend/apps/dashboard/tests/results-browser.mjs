@@ -57,7 +57,7 @@ try {
   await page.getByRole('button', { name: 'Abrir Resultados', exact: true }).click();
   await expect(page.getByText('No hay resultados cargados para este contexto en el ejemplo.', { exact: true })).toBeVisible();
   await expect(page.getByTestId('result-card')).toHaveCount(0);
-  await enterContext(page, 'Rafael', 'delegate', 'es');
+  await enterContext(page, 'Lourdes', 'delegate', 'es');
   await page.getByRole('button', { name: 'Abrir Resultados', exact: true }).click();
   await expect(page.getByTestId('result-card')).toHaveCount(6);
   await page.getByRole('button', { name: 'Filtrar: Listo', exact: true }).click();

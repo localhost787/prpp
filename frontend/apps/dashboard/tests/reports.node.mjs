@@ -36,8 +36,8 @@ test('download rechecks live patient, permission, session and generation after a
 });
 
 test('role matrix and invalid inputs fail closed without PDF preparation', async () => {
-  const rafael = context(); rafael.session.account = 'rafael'; rafael.session.role = 'delegate';
-  assert.equal(api.listReports(rafael).reports.length, 3);
+  const delegate = context('carmen', true); delegate.session.role = 'delegate';
+  assert.equal(api.listReports(delegate).reports.length, 3);
   const lourdes = context('carmen', false); lourdes.session.account = 'lourdes'; lourdes.session.role = 'delegate';
   assert.equal(api.listReports(lourdes).reports.length, 0);
   for (const invalid of [context('lourdes'), { ...context(), generation: undefined }, { ...context(), generation: -1 }, context('carmen', 'true')]) {

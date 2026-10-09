@@ -5,14 +5,13 @@ export const DEFAULT_TIMEOUT_MS = 4000;
 
 /**
  * Demo accounts: their email/password come ONLY from public env vars
- * EXPO_PUBLIC_DEMO_{CARMEN,LOURDES,RAFAEL}_{EMAIL,PASSWORD}, set in Vercel or in a local .env.
+ * EXPO_PUBLIC_DEMO_{CARMEN,LOURDES}_{EMAIL,PASSWORD}, set in Vercel or in a local .env.
  * These users and passwords are simulated (fictional people, synthetic data, non-admin
  * least-privilege accounts) and published on purpose in .env.example so anyone can run the demo.
  */
 export const DEMO_ACCOUNTS = Object.freeze([
   Object.freeze({ key: 'carmen', envKey: 'CARMEN', label: Object.freeze({ es: 'Carmen (paciente)', en: 'Carmen (patient)' }) }),
   Object.freeze({ key: 'lourdes', envKey: 'LOURDES', label: Object.freeze({ es: 'Lourdes (hija)', en: 'Lourdes (daughter)' }) }),
-  Object.freeze({ key: 'rafael', envKey: 'RAFAEL', label: Object.freeze({ es: 'Rafael (esposo)', en: 'Rafael (husband)' }) }),
 ]);
 
 const clean = value => (typeof value === 'string' && value.trim() ? value.trim() : null);
@@ -73,8 +72,6 @@ export function readConfig() {
       EXPO_PUBLIC_DEMO_CARMEN_PASSWORD: process.env.EXPO_PUBLIC_DEMO_CARMEN_PASSWORD,
       EXPO_PUBLIC_DEMO_LOURDES_EMAIL: process.env.EXPO_PUBLIC_DEMO_LOURDES_EMAIL,
       EXPO_PUBLIC_DEMO_LOURDES_PASSWORD: process.env.EXPO_PUBLIC_DEMO_LOURDES_PASSWORD,
-      EXPO_PUBLIC_DEMO_RAFAEL_EMAIL: process.env.EXPO_PUBLIC_DEMO_RAFAEL_EMAIL,
-      EXPO_PUBLIC_DEMO_RAFAEL_PASSWORD: process.env.EXPO_PUBLIC_DEMO_RAFAEL_PASSWORD,
     };
   } catch {
     // No process.env (unusual runtime): stay on the mock.

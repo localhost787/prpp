@@ -76,7 +76,6 @@ test('config: demo buttons only for accounts with email AND password, never with
     ...PUBLIC,
     EXPO_PUBLIC_DEMO_CARMEN_EMAIL: 'c@example.test', EXPO_PUBLIC_DEMO_CARMEN_PASSWORD: 'placeholder-1',
     EXPO_PUBLIC_DEMO_LOURDES_EMAIL: 'l@example.test', // no password → hidden
-    EXPO_PUBLIC_DEMO_RAFAEL_PASSWORD: 'placeholder-3', // no email → hidden
   });
   const buttons = demoButtons(cfg);
   assert.deepEqual(buttons.map(b => b.key), ['carmen']);

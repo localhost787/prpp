@@ -91,7 +91,7 @@ try {
     await page.getByRole('button', { name: 'Reducir letra', exact: true }).click();
     await page.getByRole('button', { name: 'Reducir letra', exact: true }).click();
     expect(await page.getByTestId('patient-name').evaluate(el => getComputedStyle(el).fontSize)).toBe(initial);
-    await enterContext(page, 'Rafael', 'delegate', 'es');
+    await enterContext(page, 'Lourdes', 'delegate', 'es');
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     await expect(page.getByRole('button', { name: 'Ir a Resultados', exact: true })).toBeEnabled();
     await page.getByRole('button', { name: 'Cerrar contexto', exact: true }).click();

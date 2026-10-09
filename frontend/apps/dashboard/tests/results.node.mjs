@@ -24,10 +24,10 @@ test('seis valores documentados, fuente aislada, interpretación nunca inferida 
   assert.equal(api.filterResults(data.items, 'final').length, 2);
   assert.equal(api.filterResults(data.items, 'unknown').length, 3);
   assert.equal(api.filterResults([], 'final').length, 0);
-  const rafael = await openContext('rafael', 'delegate');
-  assert.equal((await api.loadResults(rafael)).items.length, 6);
+  const fresh = await openContext('carmen', 'self');
+  assert.equal((await api.loadResults(fresh)).items.length, 6);
   assert.equal((await session.client.searchResources('Observation', {})).length, 0);
-  session.client.clear(); rafael.client.clear();
+  session.client.clear(); fresh.client.clear();
 });
 test('controlador limpia filtros/detalle al cerrar y descarta carga tardía', async () => {
   assert.equal(typeof api.createResultsController, 'function');

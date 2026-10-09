@@ -48,7 +48,7 @@ try {
     await expect(current).toContainText(`${stage} de 7`);
   }
   await expect(page.getByRole('button', { name: 'Simular etapa siguiente', exact: true })).toBeDisabled();
-  await enterContext(page, 'Rafael', 'delegate', 'es');
+  await enterContext(page, 'Lourdes', 'delegate', 'es');
   await expect(current).toContainText('5 de 7');
   await page.getByRole('button', { name: 'Reiniciar simulación a etapa 5', exact: true }).click();
   await enterContext(page, 'Lourdes', 'delegate', 'es');

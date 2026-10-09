@@ -97,11 +97,11 @@ try {
   await switchLanguage();
   await expect(page.getByTestId('patient-name')).toHaveText('Lourdes');
   await expect(page.getByText(t('noResults'), { exact: true })).toBeVisible();
-  await enterContext(page, 'Rafael', 'delegate', language);
+  await enterContext(page, 'Lourdes', 'delegate', language);
   await button(t('goTo', { section: t('results') })).click();
   await button(t('filterLabel', { status: t('final') })).click();
   await switchLanguage();
-  await expect(page.getByTestId('context-card')).toContainText('Rafael');
+  await expect(page.getByTestId('context-card')).toContainText('Lourdes');
   await expect(page.getByTestId('result-card')).toHaveCount(2);
   await button(t('close')).click();
   await expect(page.getByTestId('result-card')).toHaveCount(0);

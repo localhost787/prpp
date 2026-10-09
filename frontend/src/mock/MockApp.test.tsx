@@ -17,7 +17,7 @@ test('patient shell has five honest sections and resets navigation with context'
     expect(screen.getByText('Esta sección todavía no está implementada en este prototipo')).toBeVisible();
   }
   expect(screen.queryByText(/Permisos del ejemplo/)).toBeNull();
-  fireEvent.change(screen.getByLabelText('Cuenta de'), { target: { value: 'rafael' } });
+  fireEvent.change(screen.getByLabelText('Cuenta de'), { target: { value: 'lourdes' } });
   expect(await screen.findByRole('heading', { name: 'Mi visita' })).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Más' })).toBeNull();
 });
@@ -83,7 +83,7 @@ test('startup shows provisional Carmen without password; account and role switch
   expect(await screen.findByRole('heading', { name: 'Carmen Rivera Colón' })).toBeVisible();
   expect(screen.getByText(/Modo provisional/)).toBeVisible();
   expect(document.querySelector('input[type=password]')).toBeNull();
-  expect(screen.getAllByRole('option', { name: /^(Carmen|Lourdes|Rafael)$/ })).toHaveLength(3);
+  expect(screen.getAllByRole('option', { name: /^(Carmen|Lourdes)$/ })).toHaveLength(2);
   fireEvent.change(screen.getByLabelText('Cuenta de'), { target: { value: 'lourdes' } });
   expect(screen.queryByRole('heading', { name: 'Carmen Rivera Colón' })).toBeNull();
   expect(await screen.findByRole('button', { name: 'Resultados' })).toBeDisabled();
@@ -91,7 +91,7 @@ test('startup shows provisional Carmen without password; account and role switch
   expect(screen.queryByRole('heading', { name: 'Carmen Rivera Colón' })).toBeNull();
   expect(await screen.findByRole('heading', { name: 'Lourdes' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Resultados' })).toBeEnabled();
-  fireEvent.change(screen.getByLabelText('Cuenta de'), { target: { value: 'rafael' } });
+  fireEvent.change(screen.getByLabelText('Cuenta de'), { target: { value: 'carmen' } });
   expect(screen.queryByRole('heading', { name: 'Lourdes' })).toBeNull();
   expect(await screen.findByRole('heading', { name: 'Carmen Rivera Colón' })).toBeVisible();
   expect(screen.getByLabelText('Rol').querySelectorAll('option')).toHaveLength(1);

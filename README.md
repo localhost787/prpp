@@ -1,4 +1,4 @@
-# PRPP — Portal de Paciente y Familia
+# Puerto Rico Patient Portal (PRPP)
 
 Prototipo creado durante el hackathon del Caribbean AI Summit (8–10 de octubre de 2026). Un portal para que el paciente y la familia que él autorice puedan seguir la visita a Emergencias.
 

@@ -1,6 +1,6 @@
 // Local secrets file, outside the repo. Never commit its contents.
 // Default: ~/.config/prpp/backend.env (override with PRPP_ENV_FILE).
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -29,6 +29,8 @@ export function saveEnv(key, value) {
   const next = lines.filter((l) => !l.startsWith(`${key}=`));
   next.push(`${key}=${value}`);
   writeFileSync(ENV_FILE, next.join('\n') + '\n', { mode: 0o600 });
+  // `mode` only applies when the file is created; enforce 600 on existing files too.
+  chmodSync(ENV_FILE, 0o600);
 }
 
 export function required(key) {

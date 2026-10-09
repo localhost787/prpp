@@ -23,19 +23,50 @@ const SMOKE_BOT_NAME = 'setup-smoke-test';
 const DEPLOY_POLICY = {
   resourceType: 'AccessPolicy',
   name: 'deploy-bots',
-  resource: [{ resourceType: 'Bot' }, { resourceType: 'Binary' }],
+  // Only the code may change. Fields like publicWebhook or runAsUser would let a leaked deploy
+  // secret open a Bot to unauthenticated callers, so they are read-only for this client.
+  resource: [
+    {
+      resourceType: 'Bot',
+      interaction: ['read', 'vread', 'search', 'update'],
+      readonlyFields: [
+        'name',
+        'identifier',
+        'publicWebhook',
+        'runAsUser',
+        'system',
+        'runtimeVersion',
+        'timeout',
+        'cronTiming',
+        'cronString',
+        'auditEventTrigger',
+        'auditEventDestination',
+        'category',
+      ],
+    },
+    { resourceType: 'Binary', interaction: ['create', 'read'] },
+  ],
 };
 
 async function main() {
   const superAdmin = await loginUser(required('MEDPLUM_SUPERADMIN_EMAIL'), required('MEDPLUM_SUPERADMIN_PASSWORD'));
   log('ok', 'super admin login');
 
-  // 1. Project
-  const matches = await superAdmin.searchResources('Project', { 'name:exact': PROJECT_NAME });
-  if (matches.length > 1) {
-    throw new Error(`Expected at most 1 Project named ${PROJECT_NAME}, found ${matches.length}`);
+  // 1. Project. Once known, the id in the env file wins over the name (anyone could register
+  // another project named PRPP on this server).
+  let project;
+  if (env.MEDPLUM_PROJECT_ID) {
+    project = await superAdmin.readResource('Project', env.MEDPLUM_PROJECT_ID);
+    if (project.name !== PROJECT_NAME) {
+      throw new Error(`Project/${project.id} is named ${project.name}, expected ${PROJECT_NAME}`);
+    }
+  } else {
+    const matches = await superAdmin.searchResources('Project', { 'name:exact': PROJECT_NAME });
+    if (matches.length > 1) {
+      throw new Error(`Expected at most 1 Project named ${PROJECT_NAME}, found ${matches.length}`);
+    }
+    project = matches[0];
   }
-  let project = matches[0];
   if (!project) {
     project = await superAdmin.createResource({ resourceType: 'Project', name: PROJECT_NAME, features: FEATURES });
     log('new', `Project/${project.id}`);
@@ -100,6 +131,11 @@ async function main() {
 
   const negative = await rawRequest(deployer, 'POST', 'fhir/R4/Patient', { resourceType: 'Patient' });
   log(negative.status === 403 ? 'ok' : 'FAIL', `negative: deploy-bots POST Patient -> ${negative.status}`);
+
+  const smoke = await deployer.readResource('Bot', bot.id);
+  const tamper = await rawRequest(deployer, 'PUT', `fhir/R4/Bot/${bot.id}`, { ...smoke, publicWebhook: true });
+  const after = await admin.readResource('Bot', bot.id);
+  log(after.publicWebhook ? 'FAIL' : 'ok', `negative: deploy-bots sets publicWebhook -> ${tamper.status}, stored ${!!after.publicWebhook}`);
 
   const count = await superAdmin.searchResources('Project', { 'name:exact': PROJECT_NAME });
   log(count.length === 1 ? 'ok' : 'FAIL', `Project?name:exact=${PROJECT_NAME} -> ${count.length}`);

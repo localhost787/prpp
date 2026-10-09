@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   selector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   small: { color: palette.muted, fontSize: 14, lineHeight: 21 },
   micro: { color: palette.muted, fontSize: 12, lineHeight: 18 },
-  restriction: { backgroundColor: palette.notice, borderLeftWidth: 3, borderColor: palette.warning, padding: 14, borderRadius: 12, gap: 6 },
+  restriction: { backgroundColor: palette.white, borderWidth: 1, borderColor: palette.borderSoft, padding: 14, borderRadius: 12, gap: 6 },
   simulation: { padding: 16, backgroundColor: palette.canvas, borderRadius: 12, gap: 12 },
   familyNotice: { backgroundColor: palette.pale, padding: 16, borderRadius: 14 },
   disclosure: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderColor: palette.borderSoft, gap: 8 },

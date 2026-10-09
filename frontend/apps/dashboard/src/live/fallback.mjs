@@ -1,5 +1,7 @@
-// Demo safety net: if the server cannot be reached (network error, 5xx, ~4 s timeout), show the mock
-// and flag `demoFallback: true` so the UI can say "Modo demostración". Never used for locks or 401/403.
+// Explicit data modes. NO silent mixing: live results never contain mock data and the mock is never
+// used automatically. If the live server is unreachable (network error, 5xx or ~4 s timeout), calls
+// return { status: 'unavailable' } and the UI offers "Modo demostración (sin servidor)" as an explicit
+// choice. Locks, 401/403 and other errors are never "unavailable".
 import { getStatus, isOperationOutcome } from '@medplum/core';
 import { DEFAULT_TIMEOUT_MS } from './config.mjs';
 
@@ -11,10 +13,13 @@ export function classifyError(error) {
   if (error.code === 'LIVE_TIMEOUT' || error.name === 'TimeoutError' || error.name === 'AbortError') return 'timeout';
   const outcome = error.outcome ?? (isOperationOutcome(error) ? error : null);
   if (outcome) {
-    const code = outcome.issue?.[0]?.code;
+    const issue = outcome.issue?.[0];
+    const code = issue?.code;
     if (code === 'timeout') return 'timeout';
     const status = getStatus(outcome);
     if (status === 401 || code === 'login') return 'session';
+    // Observed: a token that is not a JWT gets 400 "Authentication error" (same meaning as 401).
+    if (code === 'invalid' && /^authentication error$/i.test(issue?.details?.text ?? '')) return 'session';
     if (status === 403 || code === 'forbidden') return 'forbidden';
     if (status === 404 || code === 'not-found') return 'not-found';
     if (status === 429 || code === 'throttled') return 'throttled';
@@ -38,19 +43,46 @@ export function withTimeout(promise, ms = DEFAULT_TIMEOUT_MS) {
   return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
 }
 
-const asResult = value => (value && typeof value === 'object' && ['ok', 'locked', 'error'].includes(value.status) ? value : { status: 'ok', data: value });
+const asResult = value => (value && typeof value === 'object' && ['ok', 'locked', 'error', 'unavailable'].includes(value.status) ? value : { status: 'ok', data: value });
 
 /**
- * withFallback(liveFn, mockFn, { timeoutMs }) → the live result (+ demoFallback:false), or, only when the
- * server is unreachable, the mock result with demoFallback:true. Locks and other errors pass through.
+ * withLive(liveFn, { timeoutMs }) → the live result tagged `source: 'live'`, or
+ * { status: 'unavailable', source: 'live', error } when the server cannot be reached.
+ * Never calls or returns mock data.
  */
-export async function withFallback(liveFn, mockFn, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
-  let live;
+export async function withLive(liveFn, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   try {
-    live = asResult(await withTimeout(liveFn(), timeoutMs));
-    if (!(live.status === 'error' && isUnreachable(live.error))) return { ...live, demoFallback: false };
+    const live = asResult(await withTimeout(liveFn(), timeoutMs));
+    if (live.status === 'error' && isUnreachable(live.error)) return { status: 'unavailable', source: 'live', error: live.error };
+    return { ...live, source: 'live' };
   } catch (error) {
-    if (!isUnreachable(error)) return { status: 'error', error, demoFallback: false };
+    if (isUnreachable(error)) return { status: 'unavailable', source: 'live', error };
+    return { status: 'error', source: 'live', error: Object.assign(error, { kind: classifyError(error) }) };
   }
-  return { ...asResult(await mockFn()), demoFallback: true };
+}
+
+/** Is the live server reachable? GET healthcheck (no token). → { status: 'available' } | { status: 'unavailable', error } */
+export async function checkLive(cfg, { fetch = (...a) => globalThis.fetch(...a), timeoutMs } = {}) {
+  if (!cfg?.baseUrl) return { status: 'unavailable', error: Object.assign(new Error('LIVE_CONFIG_INCOMPLETE'), { missing: cfg?.missing ?? [] }) };
+  try {
+    const res = await withTimeout(fetch(`${cfg.baseUrl}healthcheck`), timeoutMs ?? cfg.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    if (!res.ok) return { status: 'unavailable', error: Object.assign(new Error('LIVE_UNHEALTHY'), { status: res.status }) };
+    return { status: 'available' };
+  } catch (error) {
+    return { status: 'unavailable', error };
+  }
+}
+
+/**
+ * The one place that decides the data mode. Explicit, never automatic:
+ * - 'mock'        the user chose "Modo demostración (sin servidor)" (or the config is not live)
+ * - 'live'        integrated mode, server reachable
+ * - 'unavailable' live configured but the server is down: show an error and OFFER the mock (offerMock)
+ * Switching mode must reset the session and UI state (no data carried across modes).
+ */
+export function resolveDataMode({ cfg, availability, mockChosen = false } = {}) {
+  if (mockChosen) return { mode: 'mock', explicit: true };
+  if (!cfg?.live) return { mode: 'mock', explicit: false };
+  if (availability?.status === 'available') return { mode: 'live' };
+  return { mode: 'unavailable', offerMock: true };
 }

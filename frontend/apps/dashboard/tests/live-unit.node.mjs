@@ -2,12 +2,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { OperationOutcomeError, serverError, forbidden, unauthorized } from '@medplum/core';
-import { buildConfig } from '../src/live/config.mjs';
-import { canView, createAccess } from '../src/live/permissions.mjs';
+import { buildConfig, demoButtons } from '../src/live/config.mjs';
+import { canView, createAccess, isValidMe, ownPatientIds, familyCriteria, FAMILY_POLICY_NAMES } from '../src/live/permissions.mjs';
 import * as q from '../src/live/queries.mjs';
-import { withFallback, classifyError } from '../src/live/fallback.mjs';
-import { criteriaFor, subscribe } from '../src/live/realtime.mjs';
+import { withLive, checkLive, resolveDataMode, classifyError } from '../src/live/fallback.mjs';
+import { criteriaFor, subscribe, subscribePatient, closeAll } from '../src/live/realtime.mjs';
 import { setFamilySharing, toggleCategory } from '../src/live/sharing.mjs';
+import { resolveLoginResponse, getRoles, loginDemo, LiveLoginError } from '../src/live/session.mjs';
 import { loadVisit } from '../src/visit.mjs';
 import { loadResults, resultPresentation, statusKey } from '../src/results.mjs';
 import { createCareModel } from '../src/care/care.mjs';
@@ -15,27 +16,45 @@ import { createCareModel } from '../src/care/care.mjs';
 const MOTHER = 'p-1111';
 const DAUGHTER_OWN = 'p-2222';
 const NO_MATCH = '00000000-0000-0000-0000-000000000000';
-const familyEntry = (type, id) => ({ resourceType: type, readonly: true, criteria: `${type}?patient=Patient/${id}&_security:not=x|R` });
+const NOT_R = '_security:not=http://terminology.hl7.org/CodeSystem/v3-Confidentiality|R';
+// Shapes copied from the live auth/me (sanitized): see docs/CONEXION-LIVE.md.
+const basedOn = (...names) => names.map((display, i) => ({ reference: `AccessPolicy/ap-${i}`, display }));
+const own = id => [
+  { resourceType: 'Patient', readonly: true, criteria: `Patient?_id=${id}` },
+  ...['Encounter', 'Task', 'DiagnosticReport', 'MedicationAdministration', 'MedicationRequest', 'CarePlan', 'Observation'].map(t => ({ resourceType: t, readonly: true, criteria: `${t}?_compartment=Patient/${id}` })),
+];
+const familyEntry = (type, id) => ({ resourceType: type, readonly: true, criteria: `${type}?patient=Patient/${id}&${NOT_R}` });
 const noMatch = type => ({ resourceType: type, readonly: true, criteria: `${type}?_id=${NO_MATCH}` });
-const patientMe = { profile: { resourceType: 'Patient', id: MOTHER }, accessPolicy: { resource: [{ resourceType: 'Encounter', criteria: `Encounter?_compartment=Patient/${MOTHER}` }] } };
-// Family member: visita + medicinas + instrucciones for the mother; own record via compartment.
+const NO_MATCH_ALL = ['Patient', 'Encounter', 'Task', 'DiagnosticReport', 'MedicationAdministration', 'MedicationRequest', 'CarePlan', 'Observation'].map(noMatch);
+const patientMe = {
+  profile: { resourceType: 'Patient', id: MOTHER },
+  accessPolicy: { basedOn: basedOn('Paciente (portal)'), resource: own(MOTHER) },
+};
+// Lourdes: own record ("Paciente (portal)") + visita/medicinas/instrucciones of her mother.
 const delegateMe = {
-  profile: { resourceType: 'RelatedPerson', id: 'rp-1' },
+  profile: { resourceType: 'RelatedPerson', id: 'rp-1', patient: { reference: `Patient/${MOTHER}`, display: 'Madre' }, relationship: [{ text: 'hija' }], name: [{ given: ['Hija'], family: 'Ejemplo' }] },
   accessPolicy: {
+    basedOn: basedOn('Paciente (portal)', FAMILY_POLICY_NAMES.visita, FAMILY_POLICY_NAMES.medicinas, FAMILY_POLICY_NAMES.instrucciones),
     resource: [
-      ...['Encounter', 'DiagnosticReport', 'MedicationRequest', 'CarePlan'].map(t => ({ resourceType: t, criteria: `${t}?_compartment=Patient/${DAUGHTER_OWN}` })),
-      familyEntry('Encounter', MOTHER), familyEntry('MedicationRequest', MOTHER), familyEntry('CarePlan', MOTHER),
-      ...['Encounter', 'DiagnosticReport', 'MedicationRequest', 'CarePlan'].map(noMatch),
+      ...own(DAUGHTER_OWN),
+      familyEntry('Patient', MOTHER), familyEntry('Encounter', MOTHER), familyEntry('Task', MOTHER),
+      familyEntry('MedicationAdministration', MOTHER), familyEntry('MedicationRequest', MOTHER), familyEntry('CarePlan', MOTHER),
+      ...NO_MATCH_ALL,
       { resourceType: 'Practitioner', readonly: true },
     ],
   },
 };
-const noneMe = { profile: { resourceType: 'RelatedPerson', id: 'rp-2' }, accessPolicy: { resource: ['Encounter', 'DiagnosticReport'].map(noMatch) } };
+const noneMe = {
+  profile: { resourceType: 'RelatedPerson', id: 'rp-2', patient: { reference: `Patient/${MOTHER}` } },
+  accessPolicy: { basedOn: basedOn('Familiar sin acceso'), resource: NO_MATCH_ALL },
+};
+const PUBLIC = { EXPO_PUBLIC_MEDPLUM_BASE_URL: 'https://example.test', EXPO_PUBLIC_MEDPLUM_PROJECT_ID: 'proj' };
 
 test('index exposes the whole layer; login refuses an incomplete config without network', async () => {
   const live = await import('../src/live/index.mjs');
-  for (const name of ['login', 'logout', 'getAuthMe', 'getRoles', 'openLiveSession', 'canView', 'getVisit', 'getResults', 'subscribePatient', 'setFamilySharing', 'withFallback']) assert.equal(typeof live[name], 'function', name);
-  await assert.rejects(live.login('a@example.test', 'x', buildConfig({})), /LIVE_CONFIG_INCOMPLETE/);
+  for (const name of ['login', 'loginDemo', 'logout', 'getAuthMe', 'getRoles', 'openLiveSession', 'canView', 'getVisit', 'getResults', 'subscribePatient', 'closeAll', 'setFamilySharing', 'withLive', 'checkLive', 'resolveDataMode']) assert.equal(typeof live[name], 'function', name);
+  assert.equal(live.withFallback, undefined, 'no silent mock fallback');
+  await assert.rejects(live.login('a@example.test', 'x', buildConfig({})), e => e.code === 'LIVE_CONFIG_INCOMPLETE');
 });
 
 test('config: default mock, live only when complete, URL normalized', () => {
@@ -51,28 +70,85 @@ test('config: default mock, live only when complete, URL normalized', () => {
   assert.equal(full.timeoutMs, 4000);
 });
 
-test('canView: own patient sees everything', () => {
-  for (const c of ['visita', 'medicinas', 'instrucciones', 'estudios']) assert.equal(canView(patientMe, MOTHER, c), true);
+test('config: demo buttons only for accounts with email AND password, never without server config', async () => {
+  assert.deepEqual(demoButtons(buildConfig(PUBLIC)), []);
+  const cfg = buildConfig({
+    ...PUBLIC,
+    EXPO_PUBLIC_DEMO_CARMEN_EMAIL: 'c@example.test', EXPO_PUBLIC_DEMO_CARMEN_PASSWORD: 'placeholder-1',
+    EXPO_PUBLIC_DEMO_LOURDES_EMAIL: 'l@example.test', // no password → hidden
+    EXPO_PUBLIC_DEMO_RAFAEL_PASSWORD: 'placeholder-3', // no email → hidden
+  });
+  const buttons = demoButtons(cfg);
+  assert.deepEqual(buttons.map(b => b.key), ['carmen']);
+  assert.equal(JSON.stringify(buttons).includes('placeholder-1'), false, 'buttons never carry the password');
+  assert.deepEqual(buildConfig({ EXPO_PUBLIC_DEMO_CARMEN_EMAIL: 'c@example.test', EXPO_PUBLIC_DEMO_CARMEN_PASSWORD: 'x' }).demoAccounts, []);
+  await assert.rejects(loginDemo(cfg, 'lourdes'), e => e instanceof LiveLoginError && e.code === 'LIVE_DEMO_ACCOUNT_NOT_CONFIGURED');
+});
+
+test('login: every LoginAuthenticationResponse branch; code is never assumed', async () => {
+  const posts = [];
+  const client = { post: async (path, body) => { posts.push([path, body]); return { code: 'c-after-profile' }; } };
+  assert.equal(await resolveLoginResponse(client, { login: 'l1', code: 'c1' }, 'proj'), 'c1');
+  const memberships = [{ id: 'm-other', project: { reference: 'Project/other' } }, { id: 'm-ok', project: { reference: 'Project/proj' } }];
+  assert.equal(await resolveLoginResponse(client, { login: 'l1', memberships }, 'proj'), 'c-after-profile');
+  assert.deepEqual(posts, [['auth/profile', { login: 'l1', profile: 'm-ok' }]]);
+  await assert.rejects(resolveLoginResponse(client, { login: 'l1', memberships: [memberships[0]] }, 'proj'), e => e.code === 'LIVE_NO_PROJECT_MEMBERSHIP');
+  await assert.rejects(resolveLoginResponse(client, { login: 'l1', mfaRequired: true }, 'proj'), e => e.code === 'LIVE_LOGIN_MFA_REQUIRED');
+  await assert.rejects(resolveLoginResponse(client, { login: 'l1' }, 'proj'), e => e.code === 'LIVE_LOGIN_UNEXPECTED');
+  await assert.rejects(resolveLoginResponse(client, undefined, 'proj'), e => e.code === 'LIVE_LOGIN_UNEXPECTED');
+  const mfaAfterProfile = { post: async () => ({ mfaRequired: true }) };
+  await assert.rejects(resolveLoginResponse(mfaAfterProfile, { login: 'l1', memberships }, 'proj'), e => e.code === 'LIVE_LOGIN_MFA_REQUIRED');
+});
+
+test('roles come from auth/me: patient = self; caregiver = delegate + own record', async () => {
+  assert.deepEqual(await getRoles({}, patientMe), [{ role: 'self', patientId: MOTHER, displayName: null }]);
+  const roles = await getRoles({}, delegateMe);
+  assert.deepEqual(roles.map(r => [r.role, r.patientId]), [['delegate', MOTHER], ['self', DAUGHTER_OWN]]);
+  assert.equal(roles[0].relationship, 'hija');
+  assert.deepEqual((await getRoles({}, noneMe)).map(r => r.role), ['delegate']);
+  assert.deepEqual(await getRoles({ getProfile: () => null }, {}), []);
+});
+
+test('canView: own record sees everything (Patient profile and caregiver\'s own record)', () => {
+  for (const c of ['visita', 'medicinas', 'instrucciones', 'estudios']) {
+    assert.equal(canView(patientMe, MOTHER, c), true);
+    assert.equal(canView(delegateMe, DAUGHTER_OWN, c), true);
+  }
   assert.equal(canView(patientMe, 'someone-else', 'visita'), false);
+  assert.deepEqual(ownPatientIds(delegateMe), [DAUGHTER_OWN]);
+  // The NO_MATCH "Patient?_id=…" entry is not an own record (no compartment entry).
+  assert.equal(ownPatientIds(delegateMe).includes(NO_MATCH), false);
 });
 
-test('canView: representative-type rule per patient (API-02)', () => {
+test('canView: family categories = exact policy name AND exact criteria for that patient', () => {
   assert.deepEqual(createAccess(delegateMe).permissionsFor(MOTHER), { visita: true, medicinas: true, instrucciones: true, estudios: false });
-  assert.deepEqual(createAccess(delegateMe).permissionsFor(DAUGHTER_OWN), { visita: true, medicinas: true, instrucciones: true, estudios: true });
   assert.deepEqual(createAccess(noneMe).permissionsFor(MOTHER), { visita: false, medicinas: false, instrucciones: false, estudios: false });
-  // A non-representative type with no criteria does not open a category.
-  assert.equal(canView({ profile: {}, accessPolicy: { resource: [{ resourceType: 'Observation' }] } }, MOTHER, 'estudios'), false);
-  // Representative type without criteria = allowed.
-  assert.equal(canView({ profile: {}, accessPolicy: { resource: [{ resourceType: 'DiagnosticReport' }] } }, MOTHER, 'estudios'), true);
+  // Criteria present but policy name missing → no.
+  const noName = { ...delegateMe, accessPolicy: { ...delegateMe.accessPolicy, basedOn: basedOn('Paciente (portal)') } };
+  assert.equal(canView(noName, MOTHER, 'visita'), false);
+  // Policy name present but criteria for another patient → no.
+  const otherPatient = { profile: noneMe.profile, accessPolicy: { basedOn: basedOn(FAMILY_POLICY_NAMES.estudios), resource: [familyEntry('DiagnosticReport', 'p-9999')] } };
+  assert.equal(canView(otherPatient, MOTHER, 'estudios'), false);
+  assert.equal(canView(otherPatient, 'p-9999', 'estudios'), true);
+  // A type without criteria (e.g. Practitioner, or an unrestricted DiagnosticReport) never opens a category.
+  assert.equal(canView({ profile: noneMe.profile, accessPolicy: { basedOn: basedOn(FAMILY_POLICY_NAMES.estudios), resource: [{ resourceType: 'DiagnosticReport' }] } }, MOTHER, 'estudios'), false);
+  // Name with different case/spacing → no (exact match only).
+  assert.equal(canView({ profile: noneMe.profile, accessPolicy: { basedOn: basedOn('familiar: estudios y resultados '), resource: [familyEntry('DiagnosticReport', MOTHER)] } }, MOTHER, 'estudios'), false);
+  assert.equal(familyCriteria('medicinas', MOTHER), `MedicationAdministration?patient=Patient/${MOTHER}&${NOT_R}`);
 });
 
-test('canView fails closed and does not match id substrings', () => {
+test('canView fails closed on unknown shapes and never matches id substrings', () => {
   assert.equal(canView(delegateMe, MOTHER, 'unknown'), false);
   assert.equal(canView(delegateMe, '', 'visita'), false);
   assert.equal(canView({ profile: {} }, MOTHER, 'visita'), false);
   assert.equal(canView(undefined, MOTHER, 'visita'), false);
+  assert.equal(canView({ profile: patientMe.profile, accessPolicy: { resource: own(MOTHER) } }, MOTHER, 'visita'), false, 'no basedOn');
+  assert.equal(canView({ profile: patientMe.profile, accessPolicy: { basedOn: 'x', resource: own(MOTHER) } }, MOTHER, 'visita'), false);
+  assert.equal(isValidMe({ profile: { resourceType: 'Patient' }, accessPolicy: { basedOn: [null], resource: [] } }), false);
   assert.equal(canView(delegateMe, 'p-111', 'visita'), false); // prefix of p-1111
   assert.equal(canView(delegateMe, '1111', 'visita'), false);
+  assert.equal(canView(delegateMe, `${MOTHER}&x=1`, 'visita'), false);
+  assert.equal(createAccess({}).valid, false);
 });
 
 // ---------- fake client ----------
@@ -208,44 +284,68 @@ test('care: same shape as loadCare(), each section guarded, renders with createC
   assert.equal(createCareModel({ permissions: none.permissions, data: none.data }).sections.medicines.status, 'restricted');
 });
 
-test('fallback: unreachable → mock + demoFallback; locks, 403 and 401 never fall back', async () => {
-  const mock = async () => ({ status: 'ok', data: ['mock'] });
-  assert.deepEqual(await withFallback(async () => ({ status: 'ok', data: ['live'] }), mock), { status: 'ok', data: ['live'], demoFallback: false });
-  assert.deepEqual(await withFallback(async () => { throw new TypeError('fetch failed'); }, mock), { status: 'ok', data: ['mock'], demoFallback: true });
-  assert.deepEqual(await withFallback(async () => ({ status: 'error', error: new OperationOutcomeError(serverError(new Error('x'))) }), mock), { status: 'ok', data: ['mock'], demoFallback: true });
-  const slow = await withFallback(() => new Promise(r => setTimeout(() => r({ status: 'ok', data: ['late'] }), 200)), mock, { timeoutMs: 30 });
-  assert.deepEqual(slow, { status: 'ok', data: ['mock'], demoFallback: true });
-  assert.deepEqual(await withFallback(async () => ({ status: 'locked' }), mock), { status: 'locked', demoFallback: false });
-  const denied = await withFallback(async () => { throw new OperationOutcomeError(forbidden); }, mock);
-  assert.equal(denied.status, 'error'); assert.equal(denied.demoFallback, false);
-  const expired = await withFallback(async () => ({ status: 'error', error: new OperationOutcomeError(unauthorized) }), mock);
-  assert.equal(expired.demoFallback, false);
+test('modes are explicit: unreachable → unavailable (never mock data); locks, 403 and 401 pass through', async () => {
+  assert.deepEqual(await withLive(async () => ({ status: 'ok', data: ['live'] })), { status: 'ok', data: ['live'], source: 'live' });
+  const down = await withLive(async () => { throw new TypeError('fetch failed'); });
+  assert.equal(down.status, 'unavailable'); assert.equal(down.source, 'live'); assert.equal('data' in down, false);
+  assert.equal((await withLive(async () => ({ status: 'error', error: new OperationOutcomeError(serverError(new Error('x'))) }))).status, 'unavailable');
+  assert.equal((await withLive(() => new Promise(r => setTimeout(() => r({ status: 'ok', data: ['late'] }), 200)), { timeoutMs: 30 })).status, 'unavailable');
+  assert.deepEqual(await withLive(async () => ({ status: 'locked' })), { status: 'locked', source: 'live' });
+  const denied = await withLive(async () => { throw new OperationOutcomeError(forbidden); });
+  assert.equal(denied.status, 'error'); assert.equal(denied.error.kind, 'forbidden');
+  const expired = await withLive(async () => ({ status: 'error', error: new OperationOutcomeError(unauthorized) }));
+  assert.equal(expired.status, 'error');
   assert.equal(classifyError(new OperationOutcomeError(unauthorized)), 'session');
-  // Plain mock values are wrapped as ok.
-  assert.deepEqual(await withFallback(async () => { throw new TypeError('Failed to fetch'); }, async () => [1]), { status: 'ok', data: [1], demoFallback: true });
+  // Observed: a non-JWT token gets 400 "Authentication error" → same as 401.
+  assert.equal(classifyError(new OperationOutcomeError({ resourceType: 'OperationOutcome', issue: [{ severity: 'error', code: 'invalid', details: { text: 'Authentication error' } }] })), 'session');
+  const cfg = buildConfig({ ...PUBLIC, EXPO_PUBLIC_DATA_MODE: 'live' });
+  assert.deepEqual(await checkLive(cfg, { fetch: async () => ({ ok: true }) }), { status: 'available' });
+  assert.equal((await checkLive(cfg, { fetch: async () => { throw new TypeError('fetch failed'); } })).status, 'unavailable');
+  assert.equal((await checkLive(buildConfig({}))).status, 'unavailable');
+  assert.deepEqual(resolveDataMode({ cfg, availability: { status: 'available' } }), { mode: 'live' });
+  assert.deepEqual(resolveDataMode({ cfg, availability: { status: 'unavailable' } }), { mode: 'unavailable', offerMock: true });
+  assert.deepEqual(resolveDataMode({ cfg, availability: { status: 'unavailable' }, mockChosen: true }), { mode: 'mock', explicit: true });
+  assert.deepEqual(resolveDataMode({ cfg: buildConfig({}) }), { mode: 'mock', explicit: false });
 });
 
-test('realtime: criteria follow canView; unsubscribe releases the criteria once', () => {
+test('realtime: only permitted categories; events carry only the type (re-read); closeAll releases everything', async () => {
   const crit = criteriaFor(createAccess(delegateMe), MOTHER);
   assert.ok(crit.includes(`Task?patient=Patient/${MOTHER}`));
   assert.ok(crit.includes(`MedicationAdministration?patient=Patient/${MOTHER}`));
   assert.ok(!crit.some(c => /DiagnosticReport|Observation|ServiceRequest/.test(c)));
   assert.deepEqual(criteriaFor(createAccess(noneMe), MOTHER), []);
-  const listeners = {};
+  assert.deepEqual(criteriaFor(createAccess({ broken: true }), MOTHER), [], 'bad auth/me → nothing');
+  const listeners = new Map();
   const released = [];
+  let socketClosed = 0;
   const manager = {
-    addCriteria: () => ({ addEventListener: (t, fn) => { listeners[t] = fn; }, removeEventListener: t => { delete listeners[t]; } }),
+    addCriteria: c => {
+      const own = {};
+      listeners.set(c, own);
+      return { addEventListener: (t, fn) => { own[t] = fn; }, removeEventListener: t => { delete own[t]; } };
+    },
     removeCriteria: c => released.push(c),
+    closeWebSocket: () => { socketClosed++; },
   };
   const client = { getSubscriptionManager: () => manager };
   const got = [];
-  const sub = subscribe(client, 'Task?patient=Patient/x', { onEvent: e => got.push(e.resource.id), onConnect: c => got.push(c.subscriptionId) });
-  listeners.connect({ payload: { subscriptionId: 's1' } });
-  listeners.message({ payload: { entry: [{}, { resource: { id: 't1' } }] } });
+  const sub = subscribe(client, 'Task?patient=Patient/x', { onEvent: e => got.push(e), onConnect: c => got.push(c.subscriptionId) });
+  listeners.get('Task?patient=Patient/x').connect({ payload: { subscriptionId: 's1' } });
+  listeners.get('Task?patient=Patient/x').message({ payload: { entry: [{}, { resource: { resourceType: 'Task', id: 't1', secret: 'payload' } }] } });
   sub.unsubscribe(); sub.unsubscribe();
-  assert.deepEqual(got, ['s1', 't1']);
+  assert.deepEqual(got, ['s1', { resourceType: 'Task' }], 'payload content is never passed on');
   assert.deepEqual(released, ['Task?patient=Patient/x']);
-  assert.deepEqual(Object.keys(listeners), []);
+  // subscribePatient batches types; closeAll releases every criterion and closes the socket.
+  const changes = [];
+  const all = subscribePatient(client, createAccess(delegateMe), MOTHER, { onChange: c => changes.push([...c.types]), batchMs: 5 });
+  listeners.get(`Encounter?patient=Patient/${MOTHER}`).message({ payload: { entry: [{}, { resource: { resourceType: 'Encounter' } }] } });
+  listeners.get(`Task?patient=Patient/${MOTHER}`).message({ payload: { entry: [{}, { resource: { resourceType: 'Task' } }] } });
+  await new Promise(r => setTimeout(r, 20));
+  assert.deepEqual(changes, [['Encounter', 'Task']]);
+  assert.equal(closeAll(client), all.criteria.length);
+  assert.deepEqual(released.slice(1).sort(), [...all.criteria].sort());
+  assert.equal(socketClosed, 1);
+  assert.equal(closeAll(client), 0);
 });
 
 test('sharing: validates input before calling the Bot; toggle keeps "visita" as base', async () => {

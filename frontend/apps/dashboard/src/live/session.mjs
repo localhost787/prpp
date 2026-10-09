@@ -1,7 +1,8 @@
 // API-01 (login/logout), API-02 (auth/me) and API-03 (roles) against the real Medplum server.
 // Tokens live only inside MedplumClient; this module never stores passwords or clinical data.
 import { ClientStorage, MedplumClient, MemoryStorage } from '@medplum/core';
-import { createAccess } from './permissions.mjs';
+import { createAccess, ownPatientIds } from './permissions.mjs';
+import { classifyError } from './fallback.mjs';
 
 const toBase64Url = bytes => {
   let binary = '';
@@ -17,9 +18,24 @@ async function preparePkce(storage) {
   return { codeChallenge: toBase64Url(new Uint8Array(digest)), codeChallengeMethod: 'S256' };
 }
 
+/**
+ * Typed login error. `code`:
+ *  LIVE_CONFIG_INCOMPLETE · LIVE_LOGIN_REJECTED (wrong email/password: server answers 400) ·
+ *  LIVE_LOGIN_THROTTLED (5 logins/min/IP) · LIVE_LOGIN_MFA_REQUIRED · LIVE_NO_PROJECT_MEMBERSHIP ·
+ *  LIVE_LOGIN_UNEXPECTED (no code and no known branch) · LIVE_UNAVAILABLE (network/5xx/timeout)
+ */
+export class LiveLoginError extends Error {
+  constructor(code, extra = {}) {
+    super(code);
+    this.name = 'LiveLoginError';
+    this.code = code;
+    Object.assign(this, extra);
+  }
+}
+
 /** New client for the configured server. `storage` defaults to memory (nothing persisted by us). */
 export function createClient(cfg, { storage = new ClientStorage(new MemoryStorage()), fetch } = {}) {
-  if (!cfg?.baseUrl) throw Object.assign(new Error('LIVE_CONFIG_INCOMPLETE'), { missing: cfg?.missing ?? [] });
+  if (!cfg?.baseUrl) throw new LiveLoginError('LIVE_CONFIG_INCOMPLETE', { missing: cfg?.missing ?? [] });
   const client = new MedplumClient({
     baseUrl: cfg.baseUrl,
     storage,
@@ -29,23 +45,62 @@ export function createClient(cfg, { storage = new ClientStorage(new MemoryStorag
   return Object.assign(client, { liveStorage: storage });
 }
 
-/** Email + password login (two steps). Picks the membership of `cfg.projectId` if there are several. */
-export async function login(email, password, cfg, options = {}) {
-  if (!cfg?.projectId) throw Object.assign(new Error('LIVE_CONFIG_INCOMPLETE'), { missing: cfg?.missing ?? [] });
-  const client = createClient(cfg, options);
-  const pkce = await preparePkce(client.liveStorage);
-  let res = await client.startLogin({ email, password, projectId: cfg.projectId, scope: 'openid', ...pkce });
-  if (res.memberships && !res.code) {
-    const membership = res.memberships.find(m => m.project?.reference === `Project/${cfg.projectId}`);
-    if (!membership) throw new Error('LIVE_NO_PROJECT_MEMBERSHIP');
-    res = await client.post('auth/profile', { login: res.login, profile: membership.id });
-  }
-  if (!res.code) throw new Error('LIVE_LOGIN_NO_CODE');
-  await client.processCode(res.code);
-  return client;
+function loginFailure(error) {
+  if (error instanceof LiveLoginError) return error;
+  const kind = classifyError(error);
+  if (['network', 'timeout', 'server'].includes(kind)) return new LiveLoginError('LIVE_UNAVAILABLE', { cause: error });
+  if (kind === 'throttled' || /too many requests/i.test(String(error?.message))) return new LiveLoginError('LIVE_LOGIN_THROTTLED', { cause: error });
+  return new LiveLoginError('LIVE_LOGIN_REJECTED', { cause: error });
 }
 
-/** Signs out (the SDK revokes the token) and clears local state. Never throws. */
+/**
+ * Follows one LoginAuthenticationResponse until a code. Never assumes `code` is present:
+ *  - code            → done
+ *  - mfaRequired     → LIVE_LOGIN_MFA_REQUIRED (the demo accounts have no MFA)
+ *  - memberships[]   → pick the one of cfg.projectId, POST auth/profile, then follow that answer
+ *  - anything else   → LIVE_LOGIN_UNEXPECTED
+ */
+export async function resolveLoginResponse(client, res, projectId) {
+  for (let step = 0; step < 3; step++) {
+    if (res?.code) return res.code;
+    if (res?.mfaRequired) throw new LiveLoginError('LIVE_LOGIN_MFA_REQUIRED');
+    if (Array.isArray(res?.memberships)) {
+      const membership = res.memberships.find(m => m?.project?.reference === `Project/${projectId}`);
+      if (!membership?.id || !res.login) throw new LiveLoginError('LIVE_NO_PROJECT_MEMBERSHIP');
+      res = await client.post('auth/profile', { login: res.login, profile: membership.id });
+      continue;
+    }
+    break;
+  }
+  throw new LiveLoginError('LIVE_LOGIN_UNEXPECTED');
+}
+
+/**
+ * Email + password login. projectId is REQUIRED on this deployment: the accounts are project users and
+ * the server answers 400 "User not found" without it (observed).
+ */
+export async function login(email, password, cfg, options = {}) {
+  if (!cfg?.baseUrl || !cfg?.projectId) throw new LiveLoginError('LIVE_CONFIG_INCOMPLETE', { missing: cfg?.missing ?? [] });
+  const client = createClient(cfg, options);
+  try {
+    const pkce = await preparePkce(client.liveStorage);
+    const res = await client.startLogin({ email, password, projectId: cfg.projectId, scope: 'openid', ...pkce });
+    const code = await resolveLoginResponse(client, res, cfg.projectId);
+    await client.processCode(code);
+    return client;
+  } catch (error) {
+    throw loginFailure(error);
+  }
+}
+
+/** One-click demo login (team decision) with credentials from EXPO_PUBLIC_DEMO_*; REAL server. */
+export function loginDemo(cfg, key, options = {}) {
+  const account = (cfg?.demoAccounts ?? []).find(a => a.key === key);
+  if (!account) return Promise.reject(new LiveLoginError('LIVE_DEMO_ACCOUNT_NOT_CONFIGURED', { key }));
+  return login(account.email, account.password, cfg, options);
+}
+
+/** Signs out (the SDK revokes the token and clears its storage). Never throws. */
 export async function logout(client) {
   try {
     await client?.signOut();
@@ -63,27 +118,26 @@ const patientIdOf = reference => (reference?.startsWith('Patient/') ? reference.
 const nameOf = resource => resource?.name?.[0]?.text ?? ([resource?.name?.[0]?.given?.join(' '), resource?.name?.[0]?.family].filter(Boolean).join(' ') || null);
 
 /**
- * API-03: roles of this account. Patient → one "self" role. RelatedPerson → "delegate" role for
- * RelatedPerson.patient, plus "self" if a Person links the account to its own Patient.
+ * API-03: roles of this account, from auth/me only.
+ * Patient profile → "self". RelatedPerson → "delegate" for RelatedPerson.patient, plus "self" for each
+ * own record auth/me grants ("Paciente (portal)" + exact own-record entries; e.g. Lourdes' "Mi salud").
  * @returns {Promise<Array<{role:'self'|'delegate', patientId:string, displayName:string|null, relationship?:string|null}>>}
  */
-export async function getRoles(client) {
-  const profile = client.getProfile();
-  if (profile?.resourceType === 'Patient') return [{ role: 'self', patientId: profile.id, displayName: nameOf(profile) }];
+export async function getRoles(client, me) {
+  me ??= await getAuthMe(client);
+  const profile = me?.profile ?? client.getProfile();
+  const own = ownPatientIds(me);
+  if (profile?.resourceType === 'Patient') {
+    return own.includes(profile.id) ? [{ role: 'self', patientId: profile.id, displayName: nameOf(profile) }] : [];
+  }
   if (profile?.resourceType !== 'RelatedPerson') return [];
   const roles = [];
   const caredFor = patientIdOf(profile.patient?.reference);
   if (caredFor) {
     roles.push({ role: 'delegate', patientId: caredFor, displayName: profile.patient.display ?? null, relationship: profile.relationship?.[0]?.text ?? null });
   }
-  try {
-    const people = await client.searchResources('Person', { relatedperson: `RelatedPerson/${profile.id}` }, { cache: 'no-cache' });
-    for (const link of people.flatMap(p => p.link ?? [])) {
-      const own = patientIdOf(link.target?.reference);
-      if (own && own !== caredFor && !roles.some(r => r.patientId === own)) roles.push({ role: 'self', patientId: own, displayName: link.target.display ?? nameOf(profile) });
-    }
-  } catch {
-    // No Person visible: a single role is not an error (API-03).
+  for (const id of own) {
+    if (id !== caredFor && !roles.some(r => r.patientId === id)) roles.push({ role: 'self', patientId: id, displayName: nameOf(profile) });
   }
   return roles;
 }

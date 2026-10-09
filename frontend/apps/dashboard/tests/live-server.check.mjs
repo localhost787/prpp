@@ -7,10 +7,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { buildConfig } from '../src/live/config.mjs';
-import { login, logout, getRoles, openLiveSession } from '../src/live/session.mjs';
+import { login, loginDemo, logout, getRoles, openLiveSession } from '../src/live/session.mjs';
 import { loadAccess } from '../src/live/permissions.mjs';
 import { getVisit, getStage, getResults, getNotices } from '../src/live/queries.mjs';
-import { subscribe } from '../src/live/realtime.mjs';
+import { subscribe, closeAll } from '../src/live/realtime.mjs';
 import { setFamilySharing } from '../src/live/sharing.mjs';
 
 const ENV_FILE = process.env.PRPP_ENV_FILE ?? join(homedir(), '.config', 'prpp', 'backend.env');
@@ -31,17 +31,18 @@ const skip = env ? false : 'local env file not found';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 /** Medplum allows 5 logins per minute per IP: wait and retry on "Too Many Requests". */
-async function loginWithRetry(email, password, cfg) {
+async function withRetry(fn) {
   for (let attempt = 1; ; attempt++) {
     try {
-      return await login(email, password, cfg);
+      return await fn();
     } catch (err) {
-      const msg = String(err?.message ?? err);
-      if (attempt >= 4 || !/too many requests/i.test(msg)) throw new Error('login failed for a demo account');
+      const msg = String(err?.cause?.message ?? err?.message ?? err);
+      if (attempt >= 4 || err?.code !== 'LIVE_LOGIN_THROTTLED') throw new Error(`login failed for a demo account (${err?.code ?? 'unknown'})`);
       await sleep(Number(msg.match(/"_msBeforeNext":(\d+)/)?.[1] ?? 60000) + 1000);
     }
   }
 }
+const loginWithRetry = (email, password, cfg) => withRetry(() => login(email, password, cfg));
 
 describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
   let cfg, carmen, lourdes, rafael, carmenId;
@@ -57,7 +58,14 @@ describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
     });
     assert.equal(cfg.live, true, 'env file must define the server and project');
     carmen = await loginWithRetry(env.DEMO_CARMEN_EMAIL, env.DEMO_CARMEN_PASSWORD, cfg);
-    lourdes = await loginWithRetry(env.DEMO_LOURDES_EMAIL, env.DEMO_LOURDES_PASSWORD, cfg);
+    // Lourdes through the one-click demo path (EXPO_PUBLIC_DEMO_* shape; values only from the local env file).
+    const demoCfg = buildConfig({
+      EXPO_PUBLIC_MEDPLUM_BASE_URL: env.MEDPLUM_BASE_URL,
+      EXPO_PUBLIC_MEDPLUM_PROJECT_ID: env.MEDPLUM_PROJECT_ID,
+      EXPO_PUBLIC_DEMO_LOURDES_EMAIL: env.DEMO_LOURDES_EMAIL,
+      EXPO_PUBLIC_DEMO_LOURDES_PASSWORD: env.DEMO_LOURDES_PASSWORD,
+    });
+    lourdes = await withRetry(() => loginDemo(demoCfg, 'lourdes'));
     rafael = await loginWithRetry(env.DEMO_RAFAEL_EMAIL, env.DEMO_RAFAEL_PASSWORD, cfg);
     clients.push(carmen, lourdes, rafael);
     carmenId = carmen.getProfile().id;
@@ -65,7 +73,7 @@ describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
 
   after(async () => {
     for (const c of clients) {
-      try { c.getSubscriptionManager?.().closeWebSocket(); } catch { /* not opened */ }
+      closeAll(c);
       await logout(c);
     }
   });
@@ -98,13 +106,17 @@ describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
     const visit = await getVisit(c);
     assert.equal(visit.status, 'ok');
     assert.ok(visit.data);
+    assert.deepEqual(c.access.permissionsFor(carmenId), { visita: true, medicinas: true, instrucciones: true, estudios: false });
     const own = roles.find(r => r.role === 'self');
-    assert.ok(own, 'second role "Mi salud" via Person');
+    assert.ok(own, 'second role "Mi salud" from auth/me');
+    assert.notEqual(own.patientId, carmenId);
     assert.equal(c.access.canView(own.patientId, 'estudios'), true);
   });
 
-  test('Rafael caring for Carmen: results ok', async () => {
+  test('Rafael caring for Carmen: 4 categories from auth/me, results ok, no own record', async () => {
     const c = await ctx(rafael, carmenId);
+    assert.deepEqual(c.access.permissionsFor(carmenId), { visita: true, medicinas: true, instrucciones: true, estudios: true });
+    assert.deepEqual((await getRoles(rafael)).map(r => r.role), ['delegate']);
     const results = await getResults(c);
     assert.equal(results.status, 'ok');
     assert.ok(results.data.length > 0);

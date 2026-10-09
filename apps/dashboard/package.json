@@ -1,0 +1,24 @@
+{
+  "name": "prpp-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "web": "EXPO_NO_TELEMETRY=1 expo start --web --host localhost --port 3001",
+    "export:web": "EXPO_NO_TELEMETRY=1 expo export --platform web",
+    "test": "node --test tests/*.node.mjs"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@medplum/core": "5.1.42",
+    "@medplum/fhirtypes": "5.1.42",
+    "@medplum/mock": "5.1.42",
+    "expo": "54.0.37",
+    "lucide-react-native": "^1.54.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0"
+  }
+}

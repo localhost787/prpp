@@ -5,9 +5,14 @@
   "description": "PRPP backend: Medplum project setup, demo users, seed, Bots and hospital simulator",
   "type": "module",
   "license": "Apache-2.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "setup": "node scripts/setup-project.mjs",
+    "users": "node scripts/demo-users.mjs",
+    "seed": "node scripts/seed.mjs",
+    "all": "node scripts/setup-project.mjs && node scripts/demo-users.mjs && node scripts/seed.mjs",
     "test": "node --test test/"
   },
   "dependencies": {

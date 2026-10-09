@@ -1,0 +1,111 @@
+{
+  "_comment": "POR-35 fixed data of the demo case. 100% synthetic people and places. No secrets. Each resource is matched by its identifier, so loading twice creates nothing new.",
+  "organization": {
+    "resourceType": "Organization",
+    "identifier": [{ "system": "urn:hospital-demo:org", "value": "hospital-demo" }],
+    "active": true,
+    "name": "Hospital Demo",
+    "type": [{ "text": "Hospital" }],
+    "address": [{ "city": "San Juan", "state": "PR", "country": "US" }]
+  },
+  "locations": [
+    {
+      "resourceType": "Location",
+      "identifier": [{ "system": "urn:hospital-demo:lugar", "value": "sala-de-espera" }],
+      "status": "active",
+      "name": "Sala de espera",
+      "description": "Sala de espera de Emergencias"
+    },
+    {
+      "resourceType": "Location",
+      "identifier": [{ "system": "urn:hospital-demo:lugar", "value": "cubiculo-12" }],
+      "status": "active",
+      "name": "Cubículo 12",
+      "description": "Emergencias, cubículo 12"
+    },
+    {
+      "resourceType": "Location",
+      "identifier": [{ "system": "urn:hospital-demo:lugar", "value": "medicina-304b" }],
+      "status": "active",
+      "name": "Medicina 3er piso · Cama 304-B",
+      "description": "Unidad de Medicina, tercer piso, cama 304-B",
+      "hoursOfOperation": [
+        {
+          "daysOfWeek": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+          "openingTime": "10:00:00",
+          "closingTime": "20:00:00"
+        }
+      ]
+    }
+  ],
+  "practitioners": [
+    {
+      "resourceType": "Practitioner",
+      "identifier": [{ "system": "urn:hospital-demo:personal", "value": "ana-ramos" }],
+      "active": true,
+      "name": [{ "prefix": ["Dra."], "given": ["Ana"], "family": "Ramos", "text": "Dra. Ana Ramos" }],
+      "gender": "female",
+      "qualification": [{ "code": { "text": "Médica de Emergencias" } }]
+    },
+    {
+      "resourceType": "Practitioner",
+      "identifier": [{ "system": "urn:hospital-demo:personal", "value": "marisol-cruz" }],
+      "active": true,
+      "name": [{ "prefix": ["Enf."], "given": ["Marisol"], "family": "Cruz", "text": "Enf. Marisol Cruz" }],
+      "gender": "female",
+      "qualification": [{ "code": { "text": "Enfermera de triaje" } }]
+    },
+    {
+      "resourceType": "Practitioner",
+      "identifier": [{ "system": "urn:hospital-demo:personal", "value": "jose-rivera" }],
+      "active": true,
+      "name": [{ "prefix": ["Enf."], "given": ["José"], "family": "Rivera", "text": "Enf. José Rivera" }],
+      "gender": "male",
+      "qualification": [{ "code": { "text": "Enfermero de Emergencias" } }]
+    },
+    {
+      "resourceType": "Practitioner",
+      "identifier": [{ "system": "urn:hospital-demo:personal", "value": "luis-ortiz" }],
+      "active": true,
+      "name": [{ "prefix": ["Dr."], "given": ["Luis"], "family": "Ortiz", "text": "Dr. Luis Ortiz" }],
+      "gender": "male",
+      "qualification": [{ "code": { "text": "Médico de Medicina Interna" } }]
+    },
+    {
+      "resourceType": "Practitioner",
+      "identifier": [{ "system": "urn:hospital-demo:personal", "value": "ana-colon" }],
+      "active": true,
+      "name": [{ "prefix": ["Dra."], "given": ["Ana"], "family": "Colón", "text": "Dra. Ana Colón" }],
+      "gender": "female",
+      "qualification": [{ "code": { "text": "Médica primaria" } }]
+    }
+  ],
+  "carmen": {
+    "identifier": [{ "system": "urn:hospital-demo:mrn", "value": "MRN-0001" }],
+    "name": [{ "use": "official", "given": ["Carmen"], "family": "Rivera Colón", "text": "Carmen Rivera Colón" }],
+    "gender": "female",
+    "birthDate": "1954-03-12",
+    "communication": [
+      {
+        "language": { "coding": [{ "system": "urn:ietf:bcp:47", "code": "es-PR" }], "text": "Español (PR)" },
+        "preferred": true
+      }
+    ]
+  },
+  "sensitive": {
+    "_comment": "API-18 / POR-50: the one R-labeled test resource. An Observation, so it falls inside the 'estudios' category and the test is real. It is not visit data: the simulator reset keeps it.",
+    "resourceType": "Observation",
+    "identifier": [{ "system": "urn:hospital-demo:orden", "value": "SENSIBLE-0001" }],
+    "meta": {
+      "security": [{ "system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality", "code": "R", "display": "restricted" }],
+      "tag": [{ "system": "urn:portal:origen", "code": "simulado" }]
+    },
+    "status": "final",
+    "category": [
+      { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "laboratory" }] }
+    ],
+    "code": { "text": "Resultado confidencial (dato sensible de prueba)" },
+    "valueString": "Dato sensible de prueba. Solo lo ve la paciente.",
+    "effectiveDateTime": "2026-09-15T10:00:00-04:00"
+  }
+}

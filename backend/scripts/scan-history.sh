@@ -17,7 +17,7 @@ ADMIN_FILE="${PRPP_ADMIN_FILE:-$HOME/hackathon/backend-nube/ADMIN-MEDPLUM.txt}"
 WORDS_FILE="${PRPP_PRIVACY_WORDS:-$HOME/.config/prpp/privacy-words.txt}"
 REFS=(--all "$@")
 OUT="$(mktemp)"
-trap 'rm -f "$OUT"' EXIT
+trap 'rm -f "$OUT" "$OUT.tmp"' EXIT
 # The scanner itself contains the patterns: excluded.
 git log -p --no-color --format='@@COMMIT %h' "${REFS[@]}" -- . ':!backend/scripts/scan-history.sh' ':!backend/scripts/check-secrets.sh' >"$OUT"
 echo "scan: $(git rev-list "${REFS[@]}" | wc -l) commits, $(wc -l <"$OUT") lines of history"
@@ -37,6 +37,7 @@ if [[ -f "$ENV_FILE" ]]; then
     [[ -z "$key" || "$key" =~ ^# || -z "$value" || "$key" == MEDPLUM_BASE_URL ]] && continue
     n=$(grep -cF -- "$value" "$OUT" || true)
     case "$key" in
+      DEMO_*_PASSWORD) type="demo password (public on purpose)" ;;
       *PASSWORD* | *SECRET*) type=secret ;;
       *_EMAIL) type="login e-mail (public if example.com)" ;;
       *) type=id ;;
@@ -60,6 +61,12 @@ if [[ -f "$ADMIN_FILE" ]]; then
 fi
 
 echo "== secret patterns =="
+# Lines holding a fictional demo password (published on purpose) are not findings.
+if [[ -f "$ENV_FILE" ]]; then
+  grep -E '^DEMO_[A-Z]+_PASSWORD=.' "$ENV_FILE" | cut -d= -f2- | while IFS= read -r v; do
+    grep -vF -- "$v" "$OUT" >"$OUT.tmp"; mv "$OUT.tmp" "$OUT"
+  done
+fi
 PATTERNS=(
   'BEGIN [A-Z ]*PRIVATE KEY'
   'AKIA[0-9A-Z]{16}'

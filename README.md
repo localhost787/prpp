@@ -15,6 +15,15 @@ In Puerto Rico, patients can spend hours in the Emergency Department without kno
 3. As Carmen, run the hospital simulator's full tour and watch the visit advance and the blood test result arrive **without reloading**.
 4. As Lourdes, see the lock on Results. As Carmen, share Results with Lourdes — it appears instantly; revoke it — it disappears.
 
+### Demo accounts
+> **These users and passwords are simulated.** Carmen, Lourdes and Rafael are fictional people with synthetic data. Their logins are published here only so anyone can run the demo: they are not real people, they have no admin rights, and they protect nothing real.
+
+| Account | Role | E-mail | Password |
+|---|---|---|---|
+| Carmen Rivera Colón | Patient (MRN-0001) | `carmen@example.com` | `ePUupeeRSpY9VtJwZrdW` |
+| Lourdes Rivera | Daughter: visit, medications, instructions (+ her own record, MRN-0002) | `lourdes@example.com` | `gsDjMOUA5LbdQk65TVMy` |
+| Rafael Rivera | Husband: all 4 categories | `rafael@example.com` | `Xp1O8Jr3DE4MLMLbPoTO` |
+
 ## What is real and what is simulated
 | Real (working in the prototype) | Simulated |
 |---|---|
@@ -32,7 +41,7 @@ Hospital simulator → **HL7 v2** → **Medplum Bots** (`hl7-a-fhir`, `compartir
 ## Run it locally
 - **Backend:** see [`backend/README.md`](backend/README.md) (Node 24, a Medplum 5.1.42 server, idempotent setup / seed / Bot scripts, tests).
 - **Frontend:** _TODO (Saturday): steps from the frontend lead._
-- Configuration lives in local env files outside the repository; `.env.example` lists the variables without values.
+- Configuration lives in local env files outside the repository; `.env.example` lists the variables. The only values filled in are the fictional demo accounts above; admin logins and client secrets are never in the repository.
 
 ## Pre-existing components and credits
 | Component | What it is | License | How we use it |

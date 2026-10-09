@@ -4,10 +4,10 @@ export const DATA_MODES = Object.freeze(['mock', 'live']);
 export const DEFAULT_TIMEOUT_MS = 4000;
 
 /**
- * Demo accounts (team decision): their email/password come ONLY from public env vars
- * EXPO_PUBLIC_DEMO_{CARMEN,LOURDES,RAFAEL}_{EMAIL,PASSWORD}, set in Vercel or in a local .env
- * that git ignores. Accepted risk: the values are visible in the public bundle (synthetic data,
- * non-admin least-privilege accounts, rotated after the hackathon). Never commit the values.
+ * Demo accounts: their email/password come ONLY from public env vars
+ * EXPO_PUBLIC_DEMO_{CARMEN,LOURDES,RAFAEL}_{EMAIL,PASSWORD}, set in Vercel or in a local .env.
+ * These users and passwords are simulated (fictional people, synthetic data, non-admin
+ * least-privilege accounts) and published on purpose in .env.example so anyone can run the demo.
  */
 export const DEMO_ACCOUNTS = Object.freeze([
   Object.freeze({ key: 'carmen', envKey: 'CARMEN', label: Object.freeze({ es: 'Carmen (paciente)', en: 'Carmen (patient)' }) }),

@@ -16,8 +16,8 @@ By default the dashboard runs on synthetic mock data. To read from your own Medp
 | `EXPO_PUBLIC_MEDPLUM_BASE_URL` | Base URL of your Medplum server |
 | `EXPO_PUBLIC_MEDPLUM_PROJECT_ID` | Project id (required; without it login fails) |
 | `EXPO_PUBLIC_BOT_COMPARTIR_ID` | Optional: id of the `compartir-familia` Bot, only if the session cannot search Bots |
-| `EXPO_PUBLIC_DEMO_{CARMEN,LOURDES,RAFAEL}_{EMAIL,PASSWORD}` | Optional one-click demo accounts; leave empty to hide the buttons |
+| `EXPO_PUBLIC_DEMO_{CARMEN,LOURDES,RAFAEL}_{EMAIL,PASSWORD}` | One-click demo accounts (filled in `.env.example`); leave empty to hide the buttons |
 
-Every `EXPO_PUBLIC_*` value is embedded in the public JavaScript bundle. Use only synthetic, least-privilege demo accounts there, never admin credentials. The server, accounts and access policies come from `backend/` (see `backend/README.md`).
+**The demo users and passwords are simulated.** Carmen, Lourdes and Rafael are fictional people with synthetic data and no admin rights; their logins are published in `.env.example` and in the root README only so anyone can run the demo. Every `EXPO_PUBLIC_*` value is embedded in the public JavaScript bundle, so put only these demo accounts there, never admin credentials, client secrets or tokens. The server, accounts and access policies come from `backend/` (see `backend/README.md`).
 
 If the server is unreachable the app shows an error and offers the demo mode; it never mixes mock and server data. `npm test` runs offline. Server checks run by hand: `node --test tests/live-server.check.mjs` (temporarily changes what the demo patient shares, then restores it).

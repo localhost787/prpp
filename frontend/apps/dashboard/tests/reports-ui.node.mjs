@@ -6,7 +6,7 @@ import { resultFixtures } from '../src/result-fixtures.mjs';
 const api = await import('../src/reports/scope.mjs').catch(() => ({}));
 test('unmount uses synchronous layout cleanup, not a deferred passive cleanup', async () => {
  const source=await readFile(new URL('../src/ResultsPanel.jsx',import.meta.url),'utf8');
- assert.match(source,/useLayoutEffect\(\(\) => reportScope.mount\(\), \[reportScope\]\)/);
+ assert.match(source,/useLayoutEffect\(\(\) => session.mode === 'live' \? undefined : reportScope.mount\(\), \[reportScope, session\]\)/);
 });
 test('live report listing never retrieves restricted titles/counts; language uses existing rows', async () => {
  const h=harness();const scope=api.createReportScope(h.store);const stop=scope.mount();

@@ -1,10 +1,11 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Platform, TextInput, View } from 'react-native';
 import { createResultsController, filterResults, interpretationLabel, interpretationKey, statusLabel, statusKey, resultPresentation } from './results.mjs';
 
 import { useLanguage, accessibilityLanguageProps } from './Language.jsx';
 import { listReports, reportCopy } from './reports/index.mjs';
 import Disclosure from './ui/Disclosure.jsx';
+import { liveResultsCopy } from './live/results-copy.mjs';
 
 function ResultCard({ item, expanded, controller, Label, Action, styles, wide, scale }) {
   const { t, language } = useLanguage();
@@ -37,10 +38,12 @@ function ResultCard({ item, expanded, controller, Label, Action, styles, wide, s
 }
 export default function ResultsPanel({ session, reportScope, Label, Action, styles, wide, scale }) {
   const { t, language } = useLanguage();
-  const [controller] = useState(() => createResultsController());
+  const controller = useMemo(() => createResultsController(session.resultsSource), [session]);
+  const liveCopy = liveResultsCopy[language];
   const [query, setQuery] = useState('');
   const [downloadNotice, setDownloadNotice] = useState(null);
-  useLayoutEffect(() => reportScope.mount(), [reportScope]);
+  useLayoutEffect(() => session.mode === 'live' ? undefined : reportScope.mount(), [reportScope, session]);
+  useLayoutEffect(() => () => controller.close(), [controller]);
   const heading = useRef(null);
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   useEffect(() => { controller.open(session); return () => controller.close(); }, [controller, session]);
@@ -51,11 +54,17 @@ export default function ResultsPanel({ session, reportScope, Label, Action, styl
     }
   }, [state.status]);
   // Gate render before counts, titles, or details; fixture source is separately gated.
+  if (session.mode === 'live' && session.permissions.estudios !== true && session.permissions.estudios !== false) return <Label>{liveCopy.permissionUnknown}</Label>;
   if (session.permissions.estudios !== true || state.status === 'restricted') return <Label>{t('restrictedResults')}</Label>;
-  if (state.status === 'error') return <View><Label>{t('resultsError')}</Label><Action label={t('retryResults')} onPress={() => controller.open(session)}>{t('retry')}</Action></View>;
-  if (state.status !== 'ready') return <Label>{t('resultsLoading')}</Label>;
+  if (state.status === 'error') return <View><Label>{session.mode === 'live' ? liveCopy.error : t('resultsError')}</Label><Action label={t('retryResults')} onPress={() => controller.open(session)}>{t('retry')}</Action></View>;
+  if (state.status !== 'ready') return <Label>{session.mode === 'live' ? liveCopy.loading : t('resultsLoading')}</Label>;
   const visible = filterResults(state.items, state.filter).filter(item => resultPresentation(item, language).title.toLocaleLowerCase(language).includes(query.trim().toLocaleLowerCase(language)));
   const filters = ['all', ...new Set(state.items.map(statusKey))];
+  if (session.mode === 'live') return <View testID="results-panel" style={{ gap: 20 }}>
+    <Label ref={heading} tabIndex={-1} testID="section-heading" accessibilityRole="header" style={{ fontSize: 30 * scale, lineHeight: 38 * scale, fontWeight: '700' }}>{t('results')}</Label>
+    <Label>{liveCopy.notice}</Label>
+    {!state.items.length ? <Label>{liveCopy.empty}</Label> : <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>{state.items.map(item => <ResultCard key={item.id} {...{item, controller, Label, Action, styles, scale, wide}} expanded={state.detail === item.id} />)}</View>}
+  </View>;
   const context = reportScope.getContext();
   const reports = listReports(context, language, { source: () => state.items }).reports;
   const copy = reportCopy[language];

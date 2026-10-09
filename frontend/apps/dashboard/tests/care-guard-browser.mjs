@@ -1,0 +1,33 @@
+import {chromium,expect} from '../../../node_modules/@playwright/test/index.mjs';
+import {build} from 'vite';import {createRequire} from 'node:module';import {writeFile} from 'node:fs/promises';
+const require=createRequire(import.meta.url);
+let instrumented=false;
+const bundle=await build({configFile:false,envDir:false,root:process.cwd(),logLevel:'warn',resolve:{alias:{'react-native':require.resolve('react-native-web').replace('/dist/cjs/index.js','/dist/index.js')}},plugins:[{name:'care-source-observer',transform(code,id){if(id.endsWith('/care/adapter.mjs')){instrumented=true;return code.replace('function fixtureCategory(patientId, category) {',`async function fixtureCategory(patientId, category) { window.careCalls.push({patientId,category}); if(window.carePause) await new Promise(resolve=>window.careRelease=resolve);`);}}}],define:{'process.env.NODE_ENV':'"production"'},build:{write:false,minify:false,lib:{entry:'tests/care-harness.jsx',name:'CareHarness',formats:['iife']}}});
+expect(instrumented).toBe(true);
+const browser=await chromium.launch({channel:'chrome',headless:true});const evidence={errors:[],cases:[]};
+try{
+ const page=await browser.newPage();page.on('pageerror',e=>evidence.errors.push(e.message));
+ await page.setContent('<div id="root"></div>');await page.evaluate(()=>window.careCalls=[]);
+ await page.addScriptTag({content:(Array.isArray(bundle)?bundle[0]:bundle).output.find(x=>x.type==='chunk').code});
+ await expect(page.getByTestId('care-panel')).toContainText('Ceftriaxone');
+ await page.evaluate(()=>window.careCalls=[]);
+ await page.getByRole('button',{name:'Medicines restricted',exact:true}).click();
+ await expect(page.getByTestId('care-medicines-section')).toContainText('private');
+ let calls=await page.evaluate(()=>window.careCalls);expect(calls.map(x=>x.category)).toEqual(['team','instructions']);
+ await expect(page.getByTestId('care-panel')).not.toContainText(/Ceftriax|Acetamin|10:15/);evidence.cases.push({name:'denied UI before source',calls});
+ await page.evaluate(()=>{window.careCalls=[];window.careSwitch('carmen',{});});
+ await expect(page.getByTestId('care-medicines-section')).toContainText('Access has not been confirmed');expect(await page.evaluate(()=>window.careCalls)).toEqual([]);
+ evidence.cases.push({name:'missing permissions',calls:[]});
+ await page.evaluate(()=>{window.carePause=true;window.careCalls=[];window.careSwitch('carmen',{visita:true,medicinas:true});});
+ await expect.poll(()=>page.evaluate(()=>window.careCalls.length)).toBe(1);
+ await page.evaluate(()=>{window.careSwitch('lourdes',{});window.carePause=false;window.careRelease();});
+ await expect(page.getByTestId('care-panel')).not.toContainText(/Ceftriax|Ana Ramos|10:15/);
+ expect(await page.evaluate(()=>window.careCalls.map(x=>x.category))).toEqual(['team']);
+ evidence.cases.push({name:'live-context pending category invalidated',calls:await page.evaluate(()=>window.careCalls)});
+ await page.evaluate(()=>{window.carePause=true;window.careCalls=[];window.careSwitch('carmen',{visita:true,medicinas:true});});
+ await expect.poll(()=>page.evaluate(()=>window.careCalls.length)).toBe(1);
+ await page.evaluate(()=>{window.careClose();window.carePause=false;window.careRelease();});
+ await expect(page.getByTestId('care-panel')).toHaveCount(0);expect(await page.evaluate(()=>window.careCalls.length)).toBe(1);
+ evidence.cases.push({name:'unmount pending category invalidated'});expect(evidence.errors).toEqual([]);
+}finally{await writeFile('../../docs/evidence/AYO-89/guard-browser.json',JSON.stringify(evidence,null,2));await browser.close();}
+console.log(JSON.stringify(evidence));

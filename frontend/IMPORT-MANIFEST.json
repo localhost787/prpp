@@ -1,0 +1,713 @@
+{
+  "source_commit": "ec5ff7b46ee048974aead378d84e051906a6bdfb",
+  "base_commit": "67e791b6e265c4676ee5add0ba215acce01ebeb9",
+  "files": [
+    {
+      "source_path": "LICENSE.txt",
+      "target_path": "frontend/LICENSE.txt",
+      "source_sha256": "0477dcb7f150cb9de1a9f4f6cfa0e1eb7f6ba3d3920cf6636b7876abdfc6486c",
+      "prepared_sha256": "0477dcb7f150cb9de1a9f4f6cfa0e1eb7f6ba3d3920cf6636b7876abdfc6486c",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/.gitignore",
+      "target_path": "frontend/apps/dashboard/.gitignore",
+      "source_sha256": "03ef471063109b3ffc26df8a2c9f3d3075400b2eea1f26b19fe6d53059955ae5",
+      "prepared_sha256": "03ef471063109b3ffc26df8a2c9f3d3075400b2eea1f26b19fe6d53059955ae5",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/App.jsx",
+      "target_path": "frontend/apps/dashboard/App.jsx",
+      "source_sha256": "f3ef806003c4d352e0c6fe0d58672950411c37eba6399843f10b962671327571",
+      "prepared_sha256": "f3ef806003c4d352e0c6fe0d58672950411c37eba6399843f10b962671327571",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/README.md",
+      "target_path": "frontend/apps/dashboard/README.md",
+      "source_sha256": "3586e86ea10adf24a303c812cf9c72edceff6a688fb2c79d7faa5d6c2684c7e7",
+      "prepared_sha256": "1d311954f93f8888de4535bf34ea7ea9dc6e7d8a7d2a60682249dd498c1f6037",
+      "identical": false
+    },
+    {
+      "source_path": "apps/dashboard/app.json",
+      "target_path": "frontend/apps/dashboard/app.json",
+      "source_sha256": "e319e3e45051e89254895841c9f73ad3ee2d3fee079251842de69988802c46d0",
+      "prepared_sha256": "e319e3e45051e89254895841c9f73ad3ee2d3fee079251842de69988802c46d0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/assets/prpp-coqui.png",
+      "target_path": "frontend/apps/dashboard/assets/prpp-coqui.png",
+      "source_sha256": "a8058241e89543c9580247b73114091cf0d7a32019d11137bbe29833829228c9",
+      "prepared_sha256": "a8058241e89543c9580247b73114091cf0d7a32019d11137bbe29833829228c9",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/index.js",
+      "target_path": "frontend/apps/dashboard/index.js",
+      "source_sha256": "af10e01cf5fa6d399a83829926cc80d935c1dca8fb01313ab7cb54aab84c028b",
+      "prepared_sha256": "af10e01cf5fa6d399a83829926cc80d935c1dca8fb01313ab7cb54aab84c028b",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/metro.config.cjs",
+      "target_path": "frontend/apps/dashboard/metro.config.cjs",
+      "source_sha256": "0cce01e46da58da422accfd666366e748796a6a05915c77e30f7cd6771951709",
+      "prepared_sha256": "0cce01e46da58da422accfd666366e748796a6a05915c77e30f7cd6771951709",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/package-lock.json",
+      "target_path": "frontend/apps/dashboard/package-lock.json",
+      "source_sha256": "77c52dc0d5ff9505ecefed31efa25ba6b2333252353c1109575629da19ca7419",
+      "prepared_sha256": "77c52dc0d5ff9505ecefed31efa25ba6b2333252353c1109575629da19ca7419",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/package.json",
+      "target_path": "frontend/apps/dashboard/package.json",
+      "source_sha256": "026fdaa18475d2511dde161f7baab2d8fb159825b958f4e082ed2bbeddf5d809",
+      "prepared_sha256": "026fdaa18475d2511dde161f7baab2d8fb159825b958f4e082ed2bbeddf5d809",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/public/index.html",
+      "target_path": "frontend/apps/dashboard/public/index.html",
+      "source_sha256": "9399265552c174b6b305690d7c8dbe3bc5a287847bc2c2351b17e6864328d6c0",
+      "prepared_sha256": "9399265552c174b6b305690d7c8dbe3bc5a287847bc2c2351b17e6864328d6c0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/Language.jsx",
+      "target_path": "frontend/apps/dashboard/src/Language.jsx",
+      "source_sha256": "779972875522c7cc57f16e2f0265d9711fdc460f0264762dcd6b103310594fe0",
+      "prepared_sha256": "779972875522c7cc57f16e2f0265d9711fdc460f0264762dcd6b103310594fe0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/ResultsPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/ResultsPanel.jsx",
+      "source_sha256": "4e1cb0ecbd271ce66d1e2be308930b963a9308bc56f6798fe8dfa8e45c6ef67a",
+      "prepared_sha256": "4e1cb0ecbd271ce66d1e2be308930b963a9308bc56f6798fe8dfa8e45c6ef67a",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/StudiesPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/StudiesPanel.jsx",
+      "source_sha256": "bf3564a191a6d429bdc6979a486f478e85b67efac425bada89b5f16ed608a67a",
+      "prepared_sha256": "bf3564a191a6d429bdc6979a486f478e85b67efac425bada89b5f16ed608a67a",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/VisitPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/VisitPanel.jsx",
+      "source_sha256": "ed83912dcc32a14570983f3ebd3a3a75e8e6c4556e47a88be0679b3d23f8155c",
+      "prepared_sha256": "ed83912dcc32a14570983f3ebd3a3a75e8e6c4556e47a88be0679b3d23f8155c",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/care/CarePanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/care/CarePanel.jsx",
+      "source_sha256": "a814d78b4cb20e76822e6c2fa1e632e84d2cfa02a87f7e2548e11565c4536561",
+      "prepared_sha256": "a814d78b4cb20e76822e6c2fa1e632e84d2cfa02a87f7e2548e11565c4536561",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/care/CareSection.jsx",
+      "target_path": "frontend/apps/dashboard/src/care/CareSection.jsx",
+      "source_sha256": "5f48831a3223e012981a1843110ae81105ff06e35fd4d07ba1d074b6cfa2e784",
+      "prepared_sha256": "5f48831a3223e012981a1843110ae81105ff06e35fd4d07ba1d074b6cfa2e784",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/care/adapter.mjs",
+      "target_path": "frontend/apps/dashboard/src/care/adapter.mjs",
+      "source_sha256": "2743108f2a238b77ab7f1c90af1ec52d5e357cd110085a3cd28ae87279565b1b",
+      "prepared_sha256": "2743108f2a238b77ab7f1c90af1ec52d5e357cd110085a3cd28ae87279565b1b",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/care/care.mjs",
+      "target_path": "frontend/apps/dashboard/src/care/care.mjs",
+      "source_sha256": "31904f70f6235e6aaee15dbf380e06a2fe448946e0f75f95fe31e023a36f5f73",
+      "prepared_sha256": "31904f70f6235e6aaee15dbf380e06a2fe448946e0f75f95fe31e023a36f5f73",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/care/controller.mjs",
+      "target_path": "frontend/apps/dashboard/src/care/controller.mjs",
+      "source_sha256": "f69106d0249e93733bf6c2c5f4349f903f7bd518678c37ea71fc4be5dcbfa4e3",
+      "prepared_sha256": "f69106d0249e93733bf6c2c5f4349f903f7bd518678c37ea71fc4be5dcbfa4e3",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/context.mjs",
+      "target_path": "frontend/apps/dashboard/src/context.mjs",
+      "source_sha256": "f1461e312cbe643425ec753aef145aba42046ed331d0f0313b964ec6014a5aba",
+      "prepared_sha256": "f1461e312cbe643425ec753aef145aba42046ed331d0f0313b964ec6014a5aba",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/discharge/DischargePanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/discharge/DischargePanel.jsx",
+      "source_sha256": "ca996b22e03e2f16f9c055887f25416e00012f03d66514f370826175ae0a5f1d",
+      "prepared_sha256": "ca996b22e03e2f16f9c055887f25416e00012f03d66514f370826175ae0a5f1d",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/discharge/discharge.mjs",
+      "target_path": "frontend/apps/dashboard/src/discharge/discharge.mjs",
+      "source_sha256": "5b5133133bc41f3e3b9aea0b425ee2275624188e97174e699ca8651157e3e1fe",
+      "prepared_sha256": "5b5133133bc41f3e3b9aea0b425ee2275624188e97174e699ca8651157e3e1fe",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/family/FamilyPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/family/FamilyPanel.jsx",
+      "source_sha256": "a47199a7cf2f9eff8cad1547e5a06bdb5fc9b082983336072a5bc688aea2aa5a",
+      "prepared_sha256": "a47199a7cf2f9eff8cad1547e5a06bdb5fc9b082983336072a5bc688aea2aa5a",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/family/FamilySection.jsx",
+      "target_path": "frontend/apps/dashboard/src/family/FamilySection.jsx",
+      "source_sha256": "4f167f56635d9b9d18a063c0e83fd3643eb3775112034f49612b6d1734e7e90a",
+      "prepared_sha256": "4f167f56635d9b9d18a063c0e83fd3643eb3775112034f49612b6d1734e7e90a",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/family/family.mjs",
+      "target_path": "frontend/apps/dashboard/src/family/family.mjs",
+      "source_sha256": "17a4d001a6294758a496e3a2b9a65f1e3f5a3c79674db3dc0c9b1885471595df",
+      "prepared_sha256": "17a4d001a6294758a496e3a2b9a65f1e3f5a3c79674db3dc0c9b1885471595df",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/i18n.mjs",
+      "target_path": "frontend/apps/dashboard/src/i18n.mjs",
+      "source_sha256": "09780e361d7868adef8fea228460dd975bbce5a36fd90eef9a9e8f089bd333b8",
+      "prepared_sha256": "09780e361d7868adef8fea228460dd975bbce5a36fd90eef9a9e8f089bd333b8",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/mock-session.mjs",
+      "target_path": "frontend/apps/dashboard/src/mock-session.mjs",
+      "source_sha256": "59e30539b35834602286af71674ebd896b0f174b6b16b8fd85188fa44e399c8e",
+      "prepared_sha256": "59e30539b35834602286af71674ebd896b0f174b6b16b8fd85188fa44e399c8e",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/notices/NoticesPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/notices/NoticesPanel.jsx",
+      "source_sha256": "81bcba33eafcec5859b9fb1512a94c5ebf924bda2d60e405a9fe860935b20ca3",
+      "prepared_sha256": "81bcba33eafcec5859b9fb1512a94c5ebf924bda2d60e405a9fe860935b20ca3",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/notices/notices.mjs",
+      "target_path": "frontend/apps/dashboard/src/notices/notices.mjs",
+      "source_sha256": "e67724da5ac62da9ce2ee0cf5ba1ad14cdd44115d08901765bc16967f116b775",
+      "prepared_sha256": "e67724da5ac62da9ce2ee0cf5ba1ad14cdd44115d08901765bc16967f116b775",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/FONT-LICENSE.txt",
+      "target_path": "frontend/apps/dashboard/src/reports/FONT-LICENSE.txt",
+      "source_sha256": "6f405e2514c699c86d1796ce41ac6680268ec9fdf8d8ab5ce201cbfd19c4d1a6",
+      "prepared_sha256": "6f405e2514c699c86d1796ce41ac6680268ec9fdf8d8ab5ce201cbfd19c4d1a6",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/generate.py",
+      "target_path": "frontend/apps/dashboard/src/reports/generate.py",
+      "source_sha256": "da0083165b4009cd1b91b8369815f2441b7399ef6b8817cf195974cfdea90902",
+      "prepared_sha256": "da0083165b4009cd1b91b8369815f2441b7399ef6b8817cf195974cfdea90902",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/index.mjs",
+      "target_path": "frontend/apps/dashboard/src/reports/index.mjs",
+      "source_sha256": "8269a5438087e8492f06cebc54e21dfb16b3c2e267f3009fb844818792033e8c",
+      "prepared_sha256": "8269a5438087e8492f06cebc54e21dfb16b3c2e267f3009fb844818792033e8c",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/manifest.json",
+      "target_path": "frontend/apps/dashboard/src/reports/manifest.json",
+      "source_sha256": "f9efd2bb5c94b5734d79d74a56c67847b5f23cd612d8690ecf563ec026a809ee",
+      "prepared_sha256": "f9efd2bb5c94b5734d79d74a56c67847b5f23cd612d8690ecf563ec026a809ee",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/pdf-assets.mjs",
+      "target_path": "frontend/apps/dashboard/src/reports/pdf-assets.mjs",
+      "source_sha256": "3c8c83eff760b542e28119ad2e0f57e7c26b21b52faedaefd9d5a7d4e34bd508",
+      "prepared_sha256": "3c8c83eff760b542e28119ad2e0f57e7c26b21b52faedaefd9d5a7d4e34bd508",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/scope.mjs",
+      "target_path": "frontend/apps/dashboard/src/reports/scope.mjs",
+      "source_sha256": "78a0e0cd71d565c93142de477476cdc0fd35b98b927a46280cd6be3e7711a1d1",
+      "prepared_sha256": "78a0e0cd71d565c93142de477476cdc0fd35b98b927a46280cd6be3e7711a1d1",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/reports/verify_layout.py",
+      "target_path": "frontend/apps/dashboard/src/reports/verify_layout.py",
+      "source_sha256": "20aeb48f6511272dd0e98f69bf62b6f276791641b9056d417fecc14e4ebb7670",
+      "prepared_sha256": "20aeb48f6511272dd0e98f69bf62b6f276791641b9056d417fecc14e4ebb7670",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/result-fixtures.mjs",
+      "target_path": "frontend/apps/dashboard/src/result-fixtures.mjs",
+      "source_sha256": "5bb6fd67f7524994f366966f6e032b039d5125145b423921b906cbd995cfb2ab",
+      "prepared_sha256": "5bb6fd67f7524994f366966f6e032b039d5125145b423921b906cbd995cfb2ab",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/results.mjs",
+      "target_path": "frontend/apps/dashboard/src/results.mjs",
+      "source_sha256": "175c43ad3758decab9c871146a202e323c6e07e7aff44ee64789aab11120cbd9",
+      "prepared_sha256": "175c43ad3758decab9c871146a202e323c6e07e7aff44ee64789aab11120cbd9",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/services/ServicesPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/services/ServicesPanel.jsx",
+      "source_sha256": "f4dc4f6f38173c25d1d24d27c02705d25ad568037a35f8df0f15001b8275752f",
+      "prepared_sha256": "f4dc4f6f38173c25d1d24d27c02705d25ad568037a35f8df0f15001b8275752f",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/services/services.mjs",
+      "target_path": "frontend/apps/dashboard/src/services/services.mjs",
+      "source_sha256": "c6b212c8813e2eccdaa4e55dfc41fd28af427313dcf1deebae418db2d9b89612",
+      "prepared_sha256": "c6b212c8813e2eccdaa4e55dfc41fd28af427313dcf1deebae418db2d9b89612",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/studies.mjs",
+      "target_path": "frontend/apps/dashboard/src/studies.mjs",
+      "source_sha256": "07f5174749490ad61ec27ecaacaa229da7d0fe9014ea06411de9e8b33574bebb",
+      "prepared_sha256": "07f5174749490ad61ec27ecaacaa229da7d0fe9014ea06411de9e8b33574bebb",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/ui-copy.mjs",
+      "target_path": "frontend/apps/dashboard/src/ui-copy.mjs",
+      "source_sha256": "1006f9c8e4a201a9df4e6bef41f580f7b42597e1a1ad3b272b1cf79896417e3f",
+      "prepared_sha256": "1006f9c8e4a201a9df4e6bef41f580f7b42597e1a1ad3b272b1cf79896417e3f",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/ui.mjs",
+      "target_path": "frontend/apps/dashboard/src/ui.mjs",
+      "source_sha256": "3b0c7bf5f730ad9ade5af228b2933cf7fb3cc702c099cab687a31b5ddfc23759",
+      "prepared_sha256": "3b0c7bf5f730ad9ade5af228b2933cf7fb3cc702c099cab687a31b5ddfc23759",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/ui/Action.jsx",
+      "target_path": "frontend/apps/dashboard/src/ui/Action.jsx",
+      "source_sha256": "d76ef99dad024f4a12e254a234625887762ca010e86e3d6d2369e0b192aa9ab3",
+      "prepared_sha256": "d76ef99dad024f4a12e254a234625887762ca010e86e3d6d2369e0b192aa9ab3",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/ui/Disclosure.jsx",
+      "target_path": "frontend/apps/dashboard/src/ui/Disclosure.jsx",
+      "source_sha256": "9e8473ba5f82777f838b98ae653933fcfa4df7e632c454c5886dd7e5e7f43687",
+      "prepared_sha256": "9e8473ba5f82777f838b98ae653933fcfa4df7e632c454c5886dd7e5e7f43687",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/visit.mjs",
+      "target_path": "frontend/apps/dashboard/src/visit.mjs",
+      "source_sha256": "142d21453de98ab9a9d4a5b372123eefdbc214be9973e43943bc7afbd46167c0",
+      "prepared_sha256": "142d21453de98ab9a9d4a5b372123eefdbc214be9973e43943bc7afbd46167c0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/wait/WaitPanel.jsx",
+      "target_path": "frontend/apps/dashboard/src/wait/WaitPanel.jsx",
+      "source_sha256": "9edad38d6f465526b255595da23123ef9819b4a9523a26e398d097278c405dbd",
+      "prepared_sha256": "9edad38d6f465526b255595da23123ef9819b4a9523a26e398d097278c405dbd",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/src/wait/wait.mjs",
+      "target_path": "frontend/apps/dashboard/src/wait/wait.mjs",
+      "source_sha256": "eb47667c7c8257d6d4e3c2f88bbc006ee4ffbecceeb49901400672691949bfda",
+      "prepared_sha256": "eb47667c7c8257d6d4e3c2f88bbc006ee4ffbecceeb49901400672691949bfda",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/action-gallery.jsx",
+      "target_path": "frontend/apps/dashboard/tests/action-gallery.jsx",
+      "source_sha256": "1e76c32ff5aaa6edae0903a455bd54c470576f75c59a76b6c9fbb76304f14269",
+      "prepared_sha256": "1e76c32ff5aaa6edae0903a455bd54c470576f75c59a76b6c9fbb76304f14269",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/action.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/action.node.mjs",
+      "source_sha256": "fbf8bda441a05b5287a10d72f19b1ec72205f2a6b1a8657c1664baf5af103e24",
+      "prepared_sha256": "fbf8bda441a05b5287a10d72f19b1ec72205f2a6b1a8657c1664baf5af103e24",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/actions-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/actions-browser.mjs",
+      "source_sha256": "09874ec7cd5a7af8a7f2dac80a75f9b0d4b02856316d834793f847346e4b670c",
+      "prepared_sha256": "09874ec7cd5a7af8a7f2dac80a75f9b0d4b02856316d834793f847346e4b670c",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/browser.mjs",
+      "source_sha256": "dd44933c5a62a740bea6e4178feb3fefff3f65a84bd30bb3ee5f0f8bf1910214",
+      "prepared_sha256": "dd44933c5a62a740bea6e4178feb3fefff3f65a84bd30bb3ee5f0f8bf1910214",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/care-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/care-browser.mjs",
+      "source_sha256": "7531062b2d21204d7bd5642ea7ba8c98c7844dd19443ca95522e475f14a87dd8",
+      "prepared_sha256": "7531062b2d21204d7bd5642ea7ba8c98c7844dd19443ca95522e475f14a87dd8",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/care-guard-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/care-guard-browser.mjs",
+      "source_sha256": "5ff6775a273e376ac569725e26c88deb4adb62f87b89e82d061a1a76bc9b51f7",
+      "prepared_sha256": "5ff6775a273e376ac569725e26c88deb4adb62f87b89e82d061a1a76bc9b51f7",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/care-harness.jsx",
+      "target_path": "frontend/apps/dashboard/tests/care-harness.jsx",
+      "source_sha256": "45339a845cdbd6f5c78e2d4a2b67af240679091aebd20301338e106c235f1f4a",
+      "prepared_sha256": "45339a845cdbd6f5c78e2d4a2b67af240679091aebd20301338e106c235f1f4a",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/care-integration.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/care-integration.node.mjs",
+      "source_sha256": "2a2bd69cf918f00b43f4a36a3f3b7a53591583da2b5b2210ecba61515db9d90c",
+      "prepared_sha256": "2a2bd69cf918f00b43f4a36a3f3b7a53591583da2b5b2210ecba61515db9d90c",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/care.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/care.node.mjs",
+      "source_sha256": "891effe653bcd168c1c81d22ef4b921b8da9dd9054716e018d630a26f8e9c039",
+      "prepared_sha256": "891effe653bcd168c1c81d22ef4b921b8da9dd9054716e018d630a26f8e9c039",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/context.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/context.node.mjs",
+      "source_sha256": "10b718a1de6bdbf424b17539ce0b277aa9aacf62364ca68c28550f06a46bef60",
+      "prepared_sha256": "10b718a1de6bdbf424b17539ce0b277aa9aacf62364ca68c28550f06a46bef60",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/discharge-component.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/discharge-component.node.mjs",
+      "source_sha256": "f448c1959f1c80a5171c5e5c929a2d8e56b2d5b25c2a51758f398ffcae076f81",
+      "prepared_sha256": "f448c1959f1c80a5171c5e5c929a2d8e56b2d5b25c2a51758f398ffcae076f81",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/discharge-harness.jsx",
+      "target_path": "frontend/apps/dashboard/tests/discharge-harness.jsx",
+      "source_sha256": "d30d40a6022409428d676d26e3f11c3c3620c6c5b0cc10a312f290c0510a71e0",
+      "prepared_sha256": "d30d40a6022409428d676d26e3f11c3c3620c6c5b0cc10a312f290c0510a71e0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/discharge.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/discharge.node.mjs",
+      "source_sha256": "c3791d2bba05153e3268ebb9f8ab5b3a4c2933c8696c7fa1a5ba21dcadea9caf",
+      "prepared_sha256": "c3791d2bba05153e3268ebb9f8ab5b3a4c2933c8696c7fa1a5ba21dcadea9caf",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/entry-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/entry-browser.mjs",
+      "source_sha256": "5d6f5ddb576230c684226bf9412a6d34fc5e7c11e5320246435d81c43223536f",
+      "prepared_sha256": "5d6f5ddb576230c684226bf9412a6d34fc5e7c11e5320246435d81c43223536f",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/entry-helpers.mjs",
+      "target_path": "frontend/apps/dashboard/tests/entry-helpers.mjs",
+      "source_sha256": "b470f2a6dfbd2b198fdcb5758e1c7ee88c5753bc1c2e8a1d38a062648ea32afe",
+      "prepared_sha256": "b470f2a6dfbd2b198fdcb5758e1c7ee88c5753bc1c2e8a1d38a062648ea32afe",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/entry.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/entry.node.mjs",
+      "source_sha256": "80595f6033b2dcab38bd24876d6ebc2845a39eb1e5ec2596d1685decb8e2708f",
+      "prepared_sha256": "80595f6033b2dcab38bd24876d6ebc2845a39eb1e5ec2596d1685decb8e2708f",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-component.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/family-component.node.mjs",
+      "source_sha256": "af4220d3afb8a855e9410deeb4a276841dd6962728c0673ab9dd2f405e0a8b89",
+      "prepared_sha256": "af4220d3afb8a855e9410deeb4a276841dd6962728c0673ab9dd2f405e0a8b89",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-delegate.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/family-delegate.node.mjs",
+      "source_sha256": "18d7bf065e96092398a18bd9b741a0994c50933e7b10a755ecec878b3fefb779",
+      "prepared_sha256": "18d7bf065e96092398a18bd9b741a0994c50933e7b10a755ecec878b3fefb779",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-harness.jsx",
+      "target_path": "frontend/apps/dashboard/tests/family-harness.jsx",
+      "source_sha256": "9a27231fa76a4bb69e07928ad4991b3bf8dff3bf8c793dff725620e2445cad58",
+      "prepared_sha256": "9a27231fa76a4bb69e07928ad4991b3bf8dff3bf8c793dff725620e2445cad58",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-integration-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/family-integration-browser.mjs",
+      "source_sha256": "3af0cc34ed2bb15e8955ec86aff0b134ff3c35301b852f61b97c6b9347252619",
+      "prepared_sha256": "3af0cc34ed2bb15e8955ec86aff0b134ff3c35301b852f61b97c6b9347252619",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-multiple.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/family-multiple.node.mjs",
+      "source_sha256": "4ca194b743fe3859b276e1b321bffc527fa3517ca13d426dbb7857283d166056",
+      "prepared_sha256": "4ca194b743fe3859b276e1b321bffc527fa3517ca13d426dbb7857283d166056",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-owner.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/family-owner.node.mjs",
+      "source_sha256": "fdbccee44a01639f5931fa99b40e0f4a68dba39d60ad82bed95f835672e697ef",
+      "prepared_sha256": "fdbccee44a01639f5931fa99b40e0f4a68dba39d60ad82bed95f835672e697ef",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/family-render.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/family-render.node.mjs",
+      "source_sha256": "ba78d5632a806e0257031324b55c62801f7a57db5ef9d8b69b97ff64618c74b7",
+      "prepared_sha256": "ba78d5632a806e0257031324b55c62801f7a57db5ef9d8b69b97ff64618c74b7",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/i18n.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/i18n.node.mjs",
+      "source_sha256": "2f2398b01edd62c33b867c56f733f2089166742bdf433d7d501e2b6b0726d9b0",
+      "prepared_sha256": "2f2398b01edd62c33b867c56f733f2089166742bdf433d7d501e2b6b0726d9b0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/languages-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/languages-browser.mjs",
+      "source_sha256": "187629a7891b659bb0d0381698d0fb3340198101cb2f0fb1766f0311261d9220",
+      "prepared_sha256": "187629a7891b659bb0d0381698d0fb3340198101cb2f0fb1766f0311261d9220",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/legacy-width.mjs",
+      "target_path": "frontend/apps/dashboard/tests/legacy-width.mjs",
+      "source_sha256": "10eee31bc66caff670afee5475963a97036f6e8cc6f92b4a6c792ccd24f4619b",
+      "prepared_sha256": "10eee31bc66caff670afee5475963a97036f6e8cc6f92b4a6c792ccd24f4619b",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/notices-component.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/notices-component.node.mjs",
+      "source_sha256": "37af230f112e7f1a45bded5807d7bf81f12a5e3d128a5a5059a07fbb62f005de",
+      "prepared_sha256": "37af230f112e7f1a45bded5807d7bf81f12a5e3d128a5a5059a07fbb62f005de",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/notices-harness.jsx",
+      "target_path": "frontend/apps/dashboard/tests/notices-harness.jsx",
+      "source_sha256": "afc2c189dac7bc4723e8161dc9eebd87a9fd37baef6cd6ef085f78dbd3caa2d5",
+      "prepared_sha256": "afc2c189dac7bc4723e8161dc9eebd87a9fd37baef6cd6ef085f78dbd3caa2d5",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/notices.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/notices.node.mjs",
+      "source_sha256": "b81fe16c51b51ff0fbf644074d9dd41eb187fed8cf93cde5aea98734e08404a4",
+      "prepared_sha256": "b81fe16c51b51ff0fbf644074d9dd41eb187fed8cf93cde5aea98734e08404a4",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/reference-component-styles.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/reference-component-styles.node.mjs",
+      "source_sha256": "8019097b0ddf68025cfb6727e9dc7c86d2424a75c8f3bbbc30fd3c8e8250ee3b",
+      "prepared_sha256": "8019097b0ddf68025cfb6727e9dc7c86d2424a75c8f3bbbc30fd3c8e8250ee3b",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/reference-sections-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/reference-sections-browser.mjs",
+      "source_sha256": "4c21d71fd69c35566a7afca721544e376064248eca027b5a56abf5ad109f9dfc",
+      "prepared_sha256": "4c21d71fd69c35566a7afca721544e376064248eca027b5a56abf5ad109f9dfc",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/reference-shell-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/reference-shell-browser.mjs",
+      "source_sha256": "67e7d02abf54e7bf4cd295300afc9a196bb2521c4c125f0e40df32493ef22b1e",
+      "prepared_sha256": "67e7d02abf54e7bf4cd295300afc9a196bb2521c4c125f0e40df32493ef22b1e",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/reports-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/reports-browser.mjs",
+      "source_sha256": "15e803275f1ec999d94a02925e6cfb0ccc01f7515a76ecc3495178db2b30b768",
+      "prepared_sha256": "15e803275f1ec999d94a02925e6cfb0ccc01f7515a76ecc3495178db2b30b768",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/reports-ui.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/reports-ui.node.mjs",
+      "source_sha256": "3bda63c9e5453377187fb6dabbb8b745a5704f1f8cb238afc5f53c791c4344d9",
+      "prepared_sha256": "3bda63c9e5453377187fb6dabbb8b745a5704f1f8cb238afc5f53c791c4344d9",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/reports.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/reports.node.mjs",
+      "source_sha256": "f2d1e4b444cae36881675abbb55d75c15d70443de80589d41815134271c9dc9d",
+      "prepared_sha256": "f2d1e4b444cae36881675abbb55d75c15d70443de80589d41815134271c9dc9d",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/results-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/results-browser.mjs",
+      "source_sha256": "845f73bd74fa095bef2437b94024d5d803999bf6d664bd5b024943454ccb2e19",
+      "prepared_sha256": "845f73bd74fa095bef2437b94024d5d803999bf6d664bd5b024943454ccb2e19",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/results.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/results.node.mjs",
+      "source_sha256": "9e5a7bc7622bd819867de99221bc2c5df29061104012c4f46d975a3ea7375700",
+      "prepared_sha256": "9e5a7bc7622bd819867de99221bc2c5df29061104012c4f46d975a3ea7375700",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/services-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/services-browser.mjs",
+      "source_sha256": "ca05d95ba51eeac59e5358cb6e213c4db273fea5e207d35661fbc2673317c534",
+      "prepared_sha256": "ca05d95ba51eeac59e5358cb6e213c4db273fea5e207d35661fbc2673317c534",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/services-harness.jsx",
+      "target_path": "frontend/apps/dashboard/tests/services-harness.jsx",
+      "source_sha256": "3a0ad4e923ff32857f517b6b470bc4724ec0b44daeb043cea8b3fabe071da09a",
+      "prepared_sha256": "3a0ad4e923ff32857f517b6b470bc4724ec0b44daeb043cea8b3fabe071da09a",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/services-states-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/services-states-browser.mjs",
+      "source_sha256": "89626d4c0b8e872e87b066174edc0099ad1fd988e99b577ff69be65cb86ca9af",
+      "prepared_sha256": "89626d4c0b8e872e87b066174edc0099ad1fd988e99b577ff69be65cb86ca9af",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/services.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/services.node.mjs",
+      "source_sha256": "2e0b7a48b0d785d4058addb7fe1ba713dbfd6c6e240d84116d895031d3d9ead0",
+      "prepared_sha256": "2e0b7a48b0d785d4058addb7fe1ba713dbfd6c6e240d84116d895031d3d9ead0",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/studies-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/studies-browser.mjs",
+      "source_sha256": "ce2fa9c260cb12d76aeae0187ee4f72a10e12262bc6e260dc4d4815e61b79b0b",
+      "prepared_sha256": "ce2fa9c260cb12d76aeae0187ee4f72a10e12262bc6e260dc4d4815e61b79b0b",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/studies.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/studies.node.mjs",
+      "source_sha256": "1901dba6b769b204cdda7a707d3a07fdb2d9b6979b6af6c882ec722b18324263",
+      "prepared_sha256": "1901dba6b769b204cdda7a707d3a07fdb2d9b6979b6af6c882ec722b18324263",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/ui-copy.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/ui-copy.node.mjs",
+      "source_sha256": "d77f2f8b183105cf48a1a4e19aa069b76e5b8820acb0b86b5644d7b6a9fd3df2",
+      "prepared_sha256": "d77f2f8b183105cf48a1a4e19aa069b76e5b8820acb0b86b5644d7b6a9fd3df2",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/visit-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/visit-browser.mjs",
+      "source_sha256": "53a07ce22d55fbde7d3c042b62db173dbc90e4c06e7592a148a2eecd0fc2a3d6",
+      "prepared_sha256": "53a07ce22d55fbde7d3c042b62db173dbc90e4c06e7592a148a2eecd0fc2a3d6",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/visit.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/visit.node.mjs",
+      "source_sha256": "dceb325280f0cce41b9170a4c0accd4a1cbe810ee4ef88779449949e9688d965",
+      "prepared_sha256": "dceb325280f0cce41b9170a4c0accd4a1cbe810ee4ef88779449949e9688d965",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/visual-browser.mjs",
+      "target_path": "frontend/apps/dashboard/tests/visual-browser.mjs",
+      "source_sha256": "871124f11227f565d7a37086a66bb422b282238e90bc0e451cc64dc3314ce7c3",
+      "prepared_sha256": "871124f11227f565d7a37086a66bb422b282238e90bc0e451cc64dc3314ce7c3",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/visual.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/visual.node.mjs",
+      "source_sha256": "8d48264701bd563d64f31bfdc7443d649546ae8a23cc2bffcf01578880307eb4",
+      "prepared_sha256": "8d48264701bd563d64f31bfdc7443d649546ae8a23cc2bffcf01578880307eb4",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/wait-component.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/wait-component.node.mjs",
+      "source_sha256": "792634c300cc8c1e1f49c9868efd970d86996f9f59acb331f8f4a3a4d17d152e",
+      "prepared_sha256": "792634c300cc8c1e1f49c9868efd970d86996f9f59acb331f8f4a3a4d17d152e",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/wait-functional-2-render.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/wait-functional-2-render.node.mjs",
+      "source_sha256": "b19f38ebc003d747893390b342eaf38ad5ff2bb6de418fe3effb2251c822749e",
+      "prepared_sha256": "b19f38ebc003d747893390b342eaf38ad5ff2bb6de418fe3effb2251c822749e",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/wait-harness.jsx",
+      "target_path": "frontend/apps/dashboard/tests/wait-harness.jsx",
+      "source_sha256": "3a996332e4c0279eeb72b537775df19910fdc467ce766190b796be9e12a0b0dc",
+      "prepared_sha256": "3a996332e4c0279eeb72b537775df19910fdc467ce766190b796be9e12a0b0dc",
+      "identical": true
+    },
+    {
+      "source_path": "apps/dashboard/tests/wait.node.mjs",
+      "target_path": "frontend/apps/dashboard/tests/wait.node.mjs",
+      "source_sha256": "0ec14d0a64f5747f96df2e00d00e9a9cdcb068aed7d35fcfb6c031c47b33db33",
+      "prepared_sha256": "0ec14d0a64f5747f96df2e00d00e9a9cdcb068aed7d35fcfb6c031c47b33db33",
+      "identical": true
+    }
+  ]
+}

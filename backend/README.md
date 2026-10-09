@@ -23,6 +23,7 @@ Contract: `docs/contrato-api.md` of the team kit (API-01…API-28).
 | `node scripts/check-visit.mjs` | — | Read-only summary of Carmen's visit on the server |
 | `node scripts/test-permissions.mjs` | POR-47/48/50 | Permission matrix with the real demo accounts |
 | `node scripts/test-sharing.mjs` | POR-48/49 | Share / revoke with `compartir-familia` (restores the seed at the end) |
+| `node scripts/test-identidad-cuidadores.mjs` | POR-98/99/101 | Email login + MRN, two caregivers with independent sharing, one account with two roles (restores the seed at the end) |
 | `node scripts/test-live.mjs`, `test-live-family.mjs` | API-11 | WebSocket notifications for each account, before and after revoke |
 
 ## Bots

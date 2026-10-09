@@ -3,7 +3,7 @@
 // Idempotent. Accounts (synthetic people, example.com addresses):
 //   Carmen Rivera Colón  · Patient (MRN-0001)            · policy "Paciente (portal)"
 //   Lourdes Rivera       · RelatedPerson of Carmen (hija) · visita + medicinas + instrucciones for Carmen,
-//                          and her own Patient (MRN-0002, "Mi salud") linked through Person
+//                          and her own Patient (MRN-0002, "Mi salud", with her own appointment) linked through Person
 //   Rafael Rivera        · RelatedPerson of Carmen (esposo) · the 4 categories
 //   simulador-hospital   · ClientApplication, minimal policy (run hl7-a-fhir, create/delete visit data)
 // Passwords and the client secret are generated once and stored only in the local env file.
@@ -81,6 +81,8 @@ async function ensureCarmen(admin, projectId, patientPolicy) {
   return { profile, membership };
 }
 
+const OWN_APPOINTMENT = { system: 'urn:hospital-demo:cita', value: 'MRN-0002-chequeo' };
+
 /** Patient record of Lourdes ("Mi salud"). Not an account by itself: her login is the RelatedPerson. */
 async function ensureLourdesPatient(admin) {
   const person = PEOPLE.lourdes;
@@ -95,6 +97,22 @@ async function ensureLourdesPatient(admin) {
   );
   saveEnv('DEMO_LOURDES_PATIENT_ID', patient.id);
   log('ok', `Lourdes Patient/${patient.id} (MRN-0002)`);
+  // Her own appointment (POR-101): visible in "Mi salud" even when Carmen stops sharing with her.
+  // Not visit data of Carmen, so the simulator reset never deletes it.
+  const appointment = await admin.createResourceIfNoneExist(
+    {
+      resourceType: 'Appointment',
+      identifier: [{ system: OWN_APPOINTMENT.system, value: OWN_APPOINTMENT.value }],
+      status: 'booked',
+      serviceType: [{ text: 'Medicina de familia' }],
+      description: 'Chequeo anual (Mi salud)',
+      start: '2026-11-12T09:30:00-04:00',
+      end: '2026-11-12T10:00:00-04:00',
+      participant: [{ actor: { reference: `Patient/${patient.id}`, display: `${person.firstName} ${person.lastName}` }, status: 'accepted' }],
+    },
+    `identifier=${OWN_APPOINTMENT.system}|${OWN_APPOINTMENT.value}`
+  );
+  log('ok', `Lourdes Appointment/${appointment.id} (Mi salud)`);
   return patient;
 }
 

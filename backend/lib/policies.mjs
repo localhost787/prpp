@@ -132,6 +132,10 @@ const PATIENT_COMPARTMENT_TYPES = [
   'ImagingStudy',
 ];
 
+function fhirpath(expressions) {
+  return expressions.map((expression) => ({ language: 'text/fhirpath', expression }));
+}
+
 /** "Paciente (portal)": the patient reads her whole record; creates only what the contract lists. */
 export const PATIENT_POLICY = {
   resourceType: 'AccessPolicy',
@@ -155,17 +159,34 @@ export const PATIENT_POLICY = {
       resourceType: 'AppointmentResponse',
       criteria: 'AppointmentResponse?actor=%patient',
       interaction: ['create', 'read', 'search', 'vread', 'history'],
+      writeConstraint: fhirpath(["actor.reference = '%patient'"]),
     },
     {
       resourceType: 'QuestionnaireResponse',
       criteria: 'QuestionnaireResponse?subject=%patient',
       interaction: ['create', 'read', 'search', 'vread', 'history'],
+      writeConstraint: fhirpath([
+        "subject.reference = '%patient'",
+        "author.exists().not() or author.reference = '%patient'",
+        "source.exists().not() or source.reference = '%patient'",
+        'encounter.exists().not() and basedOn.exists().not() and partOf.exists().not()',
+      ]),
     },
     // API-25: non-urgent question to the nurse. Only about herself and only with category "pregunta".
+    // Write constraints (FHIRPath, checked by the server on every write): exactly one category "pregunta",
+    // about herself, sent by herself, only to staff. Without them she could forge hospital notices
+    // ("visita"/"resultado" categories, another sender) or drop a message into another patient's record.
     {
       resourceType: 'Communication',
       criteria: `Communication?subject=%patient&category=${SYSTEMS.notice}|pregunta`,
       interaction: ['create', 'read', 'search', 'vread'],
+      writeConstraint: fhirpath([
+        "subject.reference = '%patient'",
+        `category.count() = 1 and category.coding.count() = 1 and category.coding.system = '${SYSTEMS.notice}' and category.coding.code = 'pregunta'`,
+        "sender.exists().not() or sender.reference = '%patient'",
+        "recipient.all(reference.startsWith('Practitioner/'))",
+        'about.exists().not() and partOf.exists().not() and inResponseTo.exists().not() and basedOn.exists().not() and encounter.exists().not()',
+      ]),
     },
     ...ALWAYS_READABLE,
     OWN_SUBSCRIPTION,

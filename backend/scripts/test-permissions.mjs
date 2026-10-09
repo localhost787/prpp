@@ -183,6 +183,36 @@ const q = await rawRequest(carmen, 'POST', 'fhir/R4/Communication', {
   payload: [{ contentString: 'Prueba automática de permisos (se borra).' }],
 });
 check('carmen crea Communication "pregunta" (API-25) -> 201', q.status === 201, `${q.status}`);
+const question = (extra) => ({
+  resourceType: 'Communication',
+  status: 'completed',
+  subject: { reference: P },
+  category: [{ coding: [{ system: SYSTEMS.notice, code: 'pregunta' }] }],
+  payload: [{ contentString: 'x' }],
+  ...extra,
+});
+const forged = [
+  ['con categoría extra "resultado" (aviso falso)', question({ category: [{ coding: [{ system: SYSTEMS.notice, code: 'pregunta' }] }, { coding: [{ system: SYSTEMS.notice, code: 'resultado' }] }] })],
+  ['con remitente = una médica', question({ sender: { reference: `Practitioner/${sample.Encounter.participant?.[0]?.individual?.reference?.split('/')[1] ?? 'x'}` } })],
+  ['con destinatario = otro paciente', question({ recipient: [{ reference: `Patient/${LP}` }] })],
+];
+for (const [label, body] of forged) {
+  const r = await rawRequest(carmen, 'POST', 'fhir/R4/Communication', body);
+  check(`carmen crea Communication ${label} -> rechazado`, r.status === 403 || r.status === 400, `${r.status}`);
+  if (r.status === 201) {
+    await admin.deleteResource('Communication', r.body.id);
+  }
+}
+const qrForged = await rawRequest(carmen, 'POST', 'fhir/R4/QuestionnaireResponse', {
+  resourceType: 'QuestionnaireResponse',
+  status: 'completed',
+  subject: { reference: P },
+  author: { reference: `Patient/${LP}` },
+});
+check('carmen crea QuestionnaireResponse con autor = otro paciente -> rechazado', qrForged.status === 403 || qrForged.status === 400, `${qrForged.status}`);
+if (qrForged.status === 201) {
+  await admin.deleteResource('QuestionnaireResponse', qrForged.body.id);
+}
 for (const path of [`Consent?patient=${P}`, `RelatedPerson?patient=${P}`, `AuditEvent?entity=${P}`, 'HealthcareService', 'Condition?patient=' + P, 'AllergyIntolerance?patient=' + P, 'Immunization?patient=' + P]) {
   const r = await get(carmen, path);
   check(`carmen lee ${path.split('?')[0]} -> 200`, r.status === 200, `${r.status}, ${count(r)}`);

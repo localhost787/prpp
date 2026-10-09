@@ -1,21 +1,21 @@
 # Puerto Rico Patient Portal (PRPP)
 
-Prototipo creado durante el hackathon del Caribbean AI Summit (8–10 de octubre de 2026). Un portal para que el paciente y la familia que él autorice puedan seguir la visita a Emergencias.
+Prototype built during the Caribbean AI Summit hackathon (October 8–10, 2026). A portal where patients, and the family members they authorize, can follow an Emergency Department visit.
 
-> **Solo datos sintéticos.** Este repositorio no contiene ni debe contener datos reales de pacientes. El portal informa; no diagnostica ni recomienda tratamientos.
+> **Synthetic data only.** This repository does not and must not contain real patient data. The portal informs; it does not diagnose or recommend treatment.
 
-## Estado
+## Status
 
-En construcción durante el evento. Las instrucciones para correrlo localmente se añadirán aquí.
+Under construction during the event. Instructions to run it locally will be added here.
 
-## Créditos
+## Credits
 
-- [Medplum](https://github.com/medplum/medplum) (Apache 2.0): servidor FHIR y librerías.
+- [Medplum](https://github.com/medplum/medplum) (Apache 2.0): FHIR server and libraries.
 
-## Uso de IA
+## Use of AI
 
-Parte del trabajo se hizo con agentes de IA: **Claude Code** (Claudio, backend) y **Hermes** (Ady, frontend). Las instrucciones de trabajo de los agentes se escribieron antes del evento; el código del producto se escribe durante el evento.
+Part of this work was done with AI agents: **Claude Code** (Claudio, backend) and **Hermes** (Ady, frontend). The agents' working instructions were written before the event; the product code is written during the event.
 
-## Licencia
+## License
 
 [Apache 2.0](LICENSE).

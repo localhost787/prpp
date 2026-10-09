@@ -377,7 +377,10 @@ async function handleAdt(ctx, msg, event) {
     throw hl7Error(`Evento ADT no soportado: ${event}`);
   }
 
-  const existing = await findOne(ctx, 'Encounter', { identifier: `${SYS.visit}|${ctx.visitNumber}` });
+  let existing = await findOne(ctx, 'Encounter', { identifier: `${SYS.visit}|${ctx.visitNumber}` });
+  if (!existing && event === 'A04') {
+    existing = await adoptPlannedVisit(ctx);
+  }
   if (!existing && event !== 'A04') {
     throw hl7Error(`No hay visita ${ctx.visitNumber}: falta el A04`);
   }
@@ -438,6 +441,20 @@ async function handleAdt(ctx, msg, event) {
     await notice(ctx, 'A03', ['visita'], STAGES[7].text());
     await updateStage(ctx, { stage: 7, queue: 'clear' });
   }
+}
+
+/** POR-55: the patient's pre-registered (planned) ER visit becomes this visit, keeping its Encounter id. */
+async function adoptPlannedVisit(ctx) {
+  const planned = await findOne(ctx, 'Encounter', { identifier: `urn:portal:prerregistro|${ctx.patient.id}`, status: 'planned' });
+  if (!planned) {
+    return undefined;
+  }
+  const adopted = await ctx.medplum.updateResource(
+    { ...planned, identifier: ident(SYS.visit, ctx.visitNumber) },
+    { headers: { 'If-Match': `W/"${planned.meta.versionId}"` } }
+  );
+  ctx.touched.push(adopted);
+  return adopted;
 }
 
 /** A06/A01: new inpatient Encounter (IMP), part of the ER visit (PV1-50), which is finished. */

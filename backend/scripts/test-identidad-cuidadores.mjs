@@ -41,8 +41,10 @@ const tracked = execFileSync('git', ['ls-files'], { cwd: repoRoot, encoding: 'ut
 const thisFile = fileURLToPath(import.meta.url);
 // Built from pieces so this file does not match itself.
 const ssnPattern = new RegExp(['seguro' + ' social', '\\bs' + 'sn\\b', 'social' + ' security'].join('|'), 'i');
+// The fictional demo passwords (DEMO_*_PASSWORD) are public by decision and listed in the root README,
+// so they are skipped here, same rule as check-secrets.sh.
 const secrets = Object.entries(env)
-  .filter(([k, v]) => /PASSWORD|SECRET/.test(k) && v && v.length >= 8)
+  .filter(([k, v]) => /PASSWORD|SECRET/.test(k) && !/^DEMO_[A-Z]+_PASSWORD$/.test(k) && v && v.length >= 8)
   .map(([, v]) => v);
 const ssnHits = [];
 const secretHits = [];
@@ -67,7 +69,7 @@ for (const file of tracked) {
 
 console.log('== POR-98 · identidad y login ==');
 check('ningún archivo del repo menciona seguro social / SSN', ssnHits.length === 0, ssnHits.join(', '));
-check(`las contraseñas y secretos del demo no están en el repo (${tracked.length} archivos)`, secretHits.length === 0, secretHits.join(', '));
+check(`los secretos (no las contraseñas demo públicas) no están en el repo (${tracked.length} archivos)`, secretHits.length === 0, secretHits.join(', '));
 
 const admin = await loginUser(required('MEDPLUM_PROJECT_ADMIN_EMAIL'), required('MEDPLUM_PROJECT_ADMIN_PASSWORD'), projectId);
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);

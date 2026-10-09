@@ -24,6 +24,7 @@ const POLICY_NAMES = {
 };
 const MAX_ATTEMPTS = 3;
 const NO_CACHE = { cache: 'no-cache' };
+const FHIR_ID = /^[A-Za-z0-9-]{1,64}$/;
 
 function badInput(message) {
   const err = new Error(message);
@@ -176,12 +177,13 @@ async function applySharing(medplum, { patientRef, relatedPersonId, share, polic
 
 async function handler(medplum, event) {
   const requester = event.requester?.reference;
-  if (!requester || !requester.startsWith('Patient/')) {
+  if (!requester || !/^Patient\/[A-Za-z0-9-]{1,64}$/.test(requester)) {
     throw badInput('Solo la paciente puede cambiar lo que comparte');
   }
   const input = typeof event.input === 'string' ? JSON.parse(event.input) : event.input;
   const familiar = String(input?.familiar ?? '').replace(/^RelatedPerson\//, '');
-  if (!familiar) {
+  // Strict FHIR id: the value goes into a URL path and a search parameter, so no "/", "?", "," or "..".
+  if (!FHIR_ID.test(familiar)) {
     throw badInput('Falta el familiar');
   }
   let relatedPerson;
@@ -191,10 +193,15 @@ async function handler(medplum, event) {
     relatedPerson = undefined;
   }
   // Same message for "does not exist" and "not yours": never reveal other patients' family.
-  if (relatedPerson?.patient?.reference !== requester) {
+  if (!relatedPerson || relatedPerson.id !== familiar || relatedPerson.patient?.reference !== requester) {
     throw badInput('Ese familiar no está en su lista');
   }
-  const result = await applySharing(medplum, { patientRef: requester, relatedPersonId: familiar, share: input?.compartir });
+  // From here on, only the id the server returned is used.
+  const result = await applySharing(medplum, {
+    patientRef: requester,
+    relatedPersonId: relatedPerson.id,
+    share: input?.compartir,
+  });
   const name = relatedPerson.name?.[0];
   return {
     ok: true,

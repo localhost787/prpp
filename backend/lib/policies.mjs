@@ -127,6 +127,9 @@ const PATIENT_COMPARTMENT_TYPES = [
   'Claim',
   'ClaimResponse',
   'Provenance',
+  'Goal',
+  'CareTeam',
+  'ImagingStudy',
 ];
 
 /** "Paciente (portal)": the patient reads her whole record; creates only what the contract lists. */
@@ -157,6 +160,12 @@ export const PATIENT_POLICY = {
       resourceType: 'QuestionnaireResponse',
       criteria: 'QuestionnaireResponse?subject=%patient',
       interaction: ['create', 'read', 'search', 'vread', 'history'],
+    },
+    // API-25: non-urgent question to the nurse. Only about herself and only with category "pregunta".
+    {
+      resourceType: 'Communication',
+      criteria: `Communication?subject=%patient&category=${SYSTEMS.notice}|pregunta`,
+      interaction: ['create', 'read', 'search', 'vread'],
     },
     ...ALWAYS_READABLE,
     OWN_SUBSCRIPTION,

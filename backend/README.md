@@ -22,7 +22,8 @@ Contract: `docs/contrato-api.md` of the team kit (API-01…API-28).
 | `npm test` | POR-39 | Unit tests of the Bot, discharge and reset with MockClient (no server, no env file) |
 | `node scripts/send-hl7.mjs tour` | API-27 | Sends the case messages as the simulator client |
 | `node scripts/check-visit.mjs` | — | Read-only summary of Carmen's visit on the server |
-| `node scripts/test-permissions.mjs` | POR-47/48/50 | Permission matrix with the real demo accounts |
+| `node scripts/test-permissions.mjs [--table]` | POR-47/48/50 | Permission matrix with the real demo accounts, plus missing / invalid token -> 401; `--table` prints one sanitized row per request (account, method and path, filter, HTTP, body type, policy entry that explains it) |
+| `node scripts/test-auth-session.mjs [--examples <file>] [--expiry-probe <file>]` | AYO-113 | Session contract: login variants, processCode, getProfile, reload (stored tokens / refresh token), `auth/revoke`, `signOut` (`oauth2/logout`), 401 cases, and the auth/me context of the four portal views. Both files must be outside the repo |
 | `node scripts/test-sharing.mjs` | POR-48/49 | Share / revoke with `compartir-familia` (restores the seed at the end) |
 | `node scripts/test-identidad-cuidadores.mjs` | POR-98/99/101 | Email login + MRN, two caregivers with independent sharing, one account with two roles (restores the seed at the end) |
 | `node scripts/test-live.mjs`, `test-live-family.mjs` | API-11 | WebSocket notifications for each account, before and after revoke |

@@ -6,7 +6,7 @@ Prototype built during the Caribbean AI Summit Healthcare Hackathon (October 8�
 > **Synthetic data only.** No real patients, staff or hospitals. The portal informs; it does not diagnose or recommend treatment.
 
 ## The problem and our solution
-In Puerto Rico, patients can spend hours in the Emergency Department without knowing what is happening, why they are waiting, or what their results mean — and their families outside know even less. PRPP shows the visit in real time on the patient's phone: each stage, tests and results explained in plain Spanish, and clear discharge instructions. The patient decides, person by person, what each family member can see, and can revoke access instantly.
+Puerto Rico does not currently have a live patient-facing platform connected to PRHIE where people can access their medical results in one place. PRPP addresses that gap with a synthetic-data prototype for patients and the family members they authorize; it is not currently connected to PRHIE. For the hackathon, the Emergency Department is the demonstration scenario: PRPP shows each stage, tests and results explained in plain Spanish, and clear discharge instructions. The patient decides, person by person, what each family member can see, and can revoke access instantly.
 
 ## Try it in 2 minutes
 > _TODO (Saturday): live demo URL, backup video URL._
@@ -54,7 +54,7 @@ Hospital simulator → **HL7 v2** → **Medplum Bots** (`hl7-a-fhir`, `compartir
 **Done during the event:** all the code in this repository (see the commit history).
 
 ## Use of AI
-Built with AI agents, following instructions written before the event: backend with **OpenClaw** and **Claude Code**; frontend with **Hermes Agent** and **Codex**. The portal itself does not use AI to diagnose: result explanations are fixed, reviewed texts.
+Built with AI agents: backend with **OpenClaw** and **Claude Code**; frontend with **Hermes Agent** and **Codex**. The portal itself does not use AI to diagnose: result explanations are fixed, reviewed texts.
 
 ## License
 [Apache 2.0](LICENSE). Medplum notices are kept in any files derived from Medplum examples.

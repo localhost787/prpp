@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simulador del hospital</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; background: #f4f4f5; color: #18181b; }
+      header { background: #7c2d12; color: #fff; padding: 1.2rem 1.5rem; }
+      h1 { margin: 0; font-size: 2.4rem; }
+      header p { margin: 0.3rem 0 0; font-size: 1.1rem; }
+      main { max-width: 860px; margin: 1.5rem auto; padding: 0 1rem; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+      button { font-size: 1.05rem; padding: 0.7rem 1.1rem; border-radius: 8px; border: 1px solid #a1a1aa; background: #fff; cursor: pointer; }
+      button.primary { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+      button.danger { border-color: #b91c1c; color: #b91c1c; }
+      button:disabled { opacity: 0.5; cursor: wait; }
+      #status { padding: 0.7rem 1rem; background: #fff; border-radius: 8px; margin-bottom: 1rem; min-height: 1.4rem; }
+      #status.busy { background: #fef9c3; }
+      table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+      th, td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid #e4e4e7; }
+      td.check { width: 2rem; font-size: 1.2rem; }
+      .extra td { color: #52525b; font-style: italic; }
+      code { font-size: 0.85rem; color: #52525b; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Simulador del hospital</h1>
+      <p>Esto es un SIMULADOR: manda mensajes de un hospital inventado (Hospital Demo). Datos 100% ficticios.</p>
+    </header>
+    <main>
+      <div class="buttons">
+        <button class="primary" data-action="siguiente">Siguiente evento</button>
+        <button class="primary" data-action="tour">Tour completo (uno cada 3 s)</button>
+        <button data-action="alta">Dar de alta (recetas, cita, instrucciones)</button>
+        <button data-action="ingreso">Ingresar (otra versión)</button>
+        <button class="danger" data-action="reiniciar">Reiniciar…</button>
+      </div>
+      <div id="status" role="status" aria-live="polite">Cargando…</div>
+      <table>
+        <thead><tr><th></th><th>Hora</th><th>Evento</th><th>Mensaje</th><th>Respuesta</th></tr></thead>
+        <tbody id="events"></tbody>
+      </table>
+    </main>
+    <script>
+      // This page only talks to the small local server. It never sees any key or token.
+      const statusBox = document.getElementById('status');
+      const tbody = document.getElementById('events');
+      const buttons = [...document.querySelectorAll('button[data-action]')];
+
+      function render(state) {
+        statusBox.textContent = state.busy ? 'Ocupado: enviando…' : state.last;
+        statusBox.className = state.busy ? 'busy' : '';
+        buttons.forEach((b) => (b.disabled = state.busy));
+        tbody.replaceChildren(
+          ...state.events.map((e) => {
+            const tr = document.createElement('tr');
+            if (!e.tour) tr.className = 'extra';
+            for (const text of [e.enviado ? '✓' : '', e.hora, e.titulo, e.tipo, e.ack ?? '']) {
+              const td = document.createElement('td');
+              td.textContent = text;
+              tr.append(td);
+            }
+            tr.firstChild.className = 'check';
+            return tr;
+          })
+        );
+      }
+
+      async function refresh() {
+        try {
+          render(await (await fetch('/estado')).json());
+        } catch {
+          statusBox.textContent = 'El servidor del simulador no responde.';
+        }
+      }
+
+      async function act(action) {
+        let body;
+        if (action === 'reiniciar') {
+          const ok = confirm('Reiniciar BORRA los datos de la visita de Carmen (no las cuentas ni los datos fijos). ¿Seguro?');
+          if (!ok) return;
+          body = JSON.stringify({ confirmar: true });
+        }
+        const res = await fetch('/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Simulador': '1' }, body });
+        const data = await res.json();
+        if (res.status === 409) statusBox.textContent = 'Ocupado: espere a que termine.';
+        else if (!res.ok) statusBox.textContent = 'Error: ' + (data.error ?? res.status);
+        else render(data);
+      }
+
+      buttons.forEach((b) => b.addEventListener('click', () => act(b.dataset.action)));
+      refresh();
+      setInterval(refresh, 1000);
+    </script>
+  </body>
+</html>

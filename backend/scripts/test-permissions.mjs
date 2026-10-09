@@ -83,7 +83,7 @@ function explain(who, method, path, notice) {
     return 'no valid access token: rejected before any AccessPolicy is applied';
   }
   if (path === 'auth/me') {
-    return 'auth/me: the membership access[] entries and the resolved AccessPolicy';
+    return 'auth/me: the AccessPolicy the server resolved from the membership (access[] itself is not returned)';
   }
   const type = path.replace(/^fhir\/R4\//, '').split(/[/?]/)[0];
   const write = method !== 'GET';

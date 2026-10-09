@@ -4,8 +4,7 @@ import FamilyPanel from './FamilyPanel.jsx';
 import {
   FAMILY_COPY,
   FAMILY_PERMISSION_FIXTURE,
-  changeFamilyPermission,
-  removeFamilyAccess,
+  createFamilyMutationQueue,
 } from './family.mjs';
 
 const cloneFixture = () => FAMILY_PERMISSION_FIXTURE.map(caregiver => ({
@@ -28,7 +27,8 @@ const STATUS_COPY = Object.freeze({
 
 export default function FamilySection({ language = 'en', textScale = 1, patient, save = async () => {} }) {
   const resolvedLanguage = Object.hasOwn(FAMILY_COPY, language) ? language : 'en';
-  const [caregivers, setCaregivers] = useState(cloneFixture);
+  const [mutationQueue] = useState(() => createFamilyMutationQueue(cloneFixture(), save));
+  const [caregivers, setCaregivers] = useState(() => mutationQueue.getCaregivers());
   const [saveStatus, setSaveStatus] = useState(null);
   const revision = useRef(0);
 
@@ -43,14 +43,14 @@ export default function FamilySection({ language = 'en', textScale = 1, patient,
   const toggleCategory = async ({ caregiverId, category, enabled }) => {
     const request = ++revision.current;
     setSaveStatus('saving');
-    const result = await changeFamilyPermission({ caregivers, caregiverId, category, enabled, save });
+    const result = await mutationQueue.change({ caregiverId, category, enabled });
     finish(request, result);
   };
 
   const turnOffAccess = async ({ caregiverId }) => {
     const request = ++revision.current;
     setSaveStatus('saving');
-    const result = await removeFamilyAccess({ caregivers, caregiverId, language: resolvedLanguage, save });
+    const result = await mutationQueue.remove({ caregiverId, language: resolvedLanguage });
     finish(request, result);
   };
 

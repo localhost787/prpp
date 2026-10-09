@@ -9,7 +9,9 @@ import { createReportScope } from './src/reports/scope.mjs';
 import VisitPanel from './src/VisitPanel.jsx';
 import CareSection from './src/care/CareSection.jsx';
 import ServicesPanel from './src/services/ServicesPanel.jsx';
+import FamilyPanel from './src/family/FamilyPanel.jsx';
 import FamilySection from './src/family/FamilySection.jsx';
+import { FAMILY_PERMISSION_FIXTURE } from './src/family/family.mjs';
 import { createVisitController } from './src/visit.mjs';
 
 import { Action, Label, Scale } from './src/ui/Action.jsx';
@@ -68,7 +70,8 @@ function Portal({ onLanguageChange }) {
   };
   const ready = state.status === 'ready';
   const entering = false;
-  const ownerFamily = ready && state.section === 'family' && state.account === 'carmen' && state.role === 'self';
+  const ownerFamily = ready && state.section === 'family' && state.account === 'carmen' && state.role === 'self' && state.session.patient.id === 'carmen';
+  const delegateFamily = ready && state.section === 'family' && state.account === 'lourdes' && state.role === 'delegate' && state.session.patient.id === 'carmen';
   const roleText = state.role === 'self' ? t('selfRole') : t('delegateRole');
 
   const navigation = <View accessibilityRole="navigation" accessibilityLabel={t('sections')} style={{ flexDirection: desktop ? 'column' : 'row', flexWrap: 'wrap', gap: desktop ? 8 : 4 }}>
@@ -139,8 +142,12 @@ function Portal({ onLanguageChange }) {
                   <View style={styles.familyNotice}><Label style={{ color: palette.muted }}>{copy('familyNotice')}</Label></View>
                   <FamilySection key={`${state.account}:${state.role}:${state.session.patient.id}`} language={language} textScale={scale} patient={{ id: state.session.patient.id, name: state.session.patient.name?.[0]?.text }} />
                 </View>}
+                {delegateFamily && <View testID="section-card" style={{ gap: 20 }}>
+                  <Label testID="section-heading" accessibilityRole="header" style={styles.sectionHeading}>{t('family')}</Label>
+                  <FamilyPanel language={language} textScale={scale} viewer={{ kind: 'delegate', caregiverId: state.account }} patient={{ id: state.session.patient.id, name: state.session.patient.name?.[0]?.text }} permissions={FAMILY_PERMISSION_FIXTURE} state={{ status: 'ready' }} />
+                </View>}
                 {ready && state.section === 'more' && <MoreSection key={`${state.account}:${state.role}`} language={language} scale={scale} />}
-                {ready && !ownerFamily && !['results', 'visit', 'care', 'more'].includes(state.section) && <View testID="section-card" style={styles.card}>
+                {ready && !ownerFamily && !delegateFamily && !['results', 'visit', 'care', 'more'].includes(state.section) && <View testID="section-card" style={styles.card}>
                   <Label testID="section-heading" accessibilityRole="header" style={styles.sectionHeading}>{t(state.section)}</Label>
                   <Label accessibilityRole="header" style={styles.cardHeading}>{t(`${state.section}Title`)}</Label>
                   <Label>{t(`${state.section}Description`)}</Label>

@@ -46,6 +46,10 @@ try {
   check('Carmen comparte solo "visita" -> ok', r.status === 200 && r.body?.ok === true, `${r.status} ${JSON.stringify(r.body)}`);
   let meds = await lourdesSees('MedicationAdministration');
   check('Lourdes: MedicationAdministration -> Bundle vacío en la siguiente lectura', meds.status === 200 && meds.n === 0, `${meds.status}, ${meds.n}, ${Date.now() - t0} ms desde la orden`);
+  for (const type of ['MedicationRequest', 'CarePlan', 'Appointment']) {
+    const x = await lourdesSees(type);
+    check(`Lourdes solo con "visita": ${type} -> Bundle vacío`, x.status === 200 && x.n === 0, `${x.status}, ${x.n}`);
+  }
   const enc = await lourdesSees('Encounter');
   check('Lourdes sigue viendo la visita', enc.n === 1);
   const notices = entries(await rawRequest(lourdes, 'GET', `fhir/R4/Communication?subject=${P}&_count=100`));

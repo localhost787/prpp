@@ -213,6 +213,25 @@ check('carmen crea QuestionnaireResponse con autor = otro paciente -> rechazado'
 if (qrForged.status === 201) {
   await admin.deleteResource('QuestionnaireResponse', qrForged.body.id);
 }
+const appt = await one('Appointment', { patient: P });
+if (appt) {
+  const answer = (client) =>
+    rawRequest(client, 'POST', 'fhir/R4/AppointmentResponse', {
+      resourceType: 'AppointmentResponse',
+      appointment: { reference: `Appointment/${appt.id}` },
+      actor: { reference: P },
+      participantStatus: 'accepted',
+    });
+  const ar = await answer(carmen);
+  check('carmen confirma su cita: AppointmentResponse (API-20) -> 201', ar.status === 201, `${ar.status}`);
+  const arL = await answer(lourdes);
+  check('lourdes confirma la cita de Carmen -> 403', arL.status === 403, `${arL.status}`);
+  for (const r of [ar, arL]) {
+    if (r.status === 201) {
+      await admin.deleteResource('AppointmentResponse', r.body.id);
+    }
+  }
+}
 for (const path of [`Consent?patient=${P}`, `RelatedPerson?patient=${P}`, `AuditEvent?entity=${P}`, 'HealthcareService', 'Condition?patient=' + P, 'AllergyIntolerance?patient=' + P, 'Immunization?patient=' + P]) {
   const r = await get(carmen, path);
   check(`carmen lee ${path.split('?')[0]} -> 200`, r.status === 200, `${r.status}, ${count(r)}`);

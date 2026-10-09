@@ -83,7 +83,7 @@
           if (!ok) return;
           body = JSON.stringify({ confirmar: true });
         }
-        const res = await fetch('/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+        const res = await fetch('/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Simulador': '1' }, body });
         const data = await res.json();
         if (res.status === 409) statusBox.textContent = 'Ocupado: espere a que termine.';
         else if (!res.ok) statusBox.textContent = 'Error: ' + (data.error ?? res.status);

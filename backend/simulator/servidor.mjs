@@ -18,6 +18,8 @@ import { resetVisit } from './reiniciar.mjs';
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.PORT ?? 5181);
 const TOUR_DELAY_MS = 3000;
+const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
+const ALLOWED_ORIGINS = new Set([...ALLOWED_HOSTS].map((h) => `http://${h}`));
 const PAGE = readFileSync(new URL('./pagina.html', import.meta.url), 'utf8');
 
 const state = {
@@ -169,6 +171,21 @@ const server = createServer(async (req, res) => {
   if (req.socket.remoteAddress !== '127.0.0.1' && req.socket.remoteAddress !== '::ffff:127.0.0.1') {
     res.writeHead(403).end();
     return;
+  }
+  // DNS rebinding: a foreign domain resolving to 127.0.0.1 still sends its own Host header.
+  if (!ALLOWED_HOSTS.has(req.headers.host ?? '')) {
+    res.writeHead(403).end();
+    return;
+  }
+  // CSRF: another site open in the same browser could POST here. POSTs must carry our own header
+  // (a cross-site page cannot add it without a CORS preflight, which this server never approves)
+  // and, when the browser sends an Origin, it must be this page.
+  if (req.method !== 'GET') {
+    const origin = req.headers.origin;
+    if (req.headers['x-simulador'] !== '1' || (origin && !ALLOWED_ORIGINS.has(origin))) {
+      res.writeHead(403).end();
+      return;
+    }
   }
   const path = new URL(req.url, `http://${HOST}`).pathname;
   if (req.method === 'GET' && (path === '/' || path === '/index.html')) {

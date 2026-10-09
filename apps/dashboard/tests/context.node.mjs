@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 const api = await import('../src/context.mjs').catch(() => ({}));
+test('el dashboard no importa código de producción fuera de apps/dashboard', async () => {
+  const source = await readFile(new URL('../src/context.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /from\s+['"]\.\.\/\.\.\/\.\.\//);
+});
+
 test('adapta la identidad existente y conserva paciente, roles y permisos explícitos', async () => {
   assert.equal(typeof api.openContext, 'function', 'falta el adaptador de identidad');
   const own = await api.openContext('lourdes', 'self');

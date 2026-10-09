@@ -1,13 +1,9 @@
-// Reuse the provisional identity factory, not the Vite UI or its React/Mantine stack.
-import { createMockSession, accounts, accountNames, roles } from '../../../src/mock/session.ts';
+import { createMockSession, accounts, accountNames, roles } from './mock-session.mjs';
 export { accounts, accountNames, roles };
 
 export async function openContext(account, role) {
   const session = await createMockSession(account, role);
-  // The legacy fixture returns RelatedPerson for Lourdes even in her own context.
-  // Normalize both SDK and UI profiles without modifying the preserved Vite fixture.
   // Mock profile selection is not authentication or server authorization.
-  if (role === 'self') session.client.mock.setProfile(session.patient);
   const profile = session.client.getProfile();
   return { ...session, account, role, profile };
 }

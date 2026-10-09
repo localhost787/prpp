@@ -31,17 +31,21 @@ export async function upsertAccessPolicy(medplum, policy) {
 }
 
 /** Membership whose profile is `profileRef`, pointed at `policy`. */
-export async function ensureMembershipPolicy(medplum, profileRef, policy) {
+export async function ensureMembershipPolicy(medplum, profileRef, policy, admin = false) {
   const membership = await medplum.searchOne('ProjectMembership', { profile: profileRef });
   if (!membership) {
     throw new Error(`No ProjectMembership for ${profileRef}`);
   }
-  if (membership.accessPolicy?.reference === `AccessPolicy/${policy.id}` && !membership.access?.length) {
+  if (
+    membership.accessPolicy?.reference === `AccessPolicy/${policy.id}` &&
+    !membership.access?.length &&
+    !!membership.admin === admin
+  ) {
     return membership;
   }
   const { access: _access, ...rest } = membership;
-  const updated = await medplum.updateResource({ ...rest, accessPolicy: createReference(policy) });
-  log('fix', `${profileRef} membership -> AccessPolicy ${policy.name}`);
+  const updated = await medplum.updateResource({ ...rest, accessPolicy: createReference(policy), admin });
+  log('fix', `${profileRef} membership -> AccessPolicy ${policy.name}${admin ? ' + admin' : ''}`);
   return updated;
 }
 
@@ -63,7 +67,7 @@ export async function upsertClient(medplum, projectId, name, description, policy
 }
 
 /** Bot by exact name, with its membership on `policy`. */
-export async function upsertBot(medplum, projectId, name, description, policy, extra = {}) {
+export async function upsertBot(medplum, projectId, name, description, policy, extra = {}, admin = false) {
   let bot = await medplum.searchOne('Bot', { 'name:exact': name });
   if (!bot) {
     bot = await medplum.post(`admin/projects/${projectId}/bot`, {
@@ -81,6 +85,6 @@ export async function upsertBot(medplum, projectId, name, description, policy, e
     bot = await medplum.updateResource({ ...bot, ...wanted });
     log('fix', `Bot/${bot.id} ${name} fields`);
   }
-  await ensureMembershipPolicy(medplum, `Bot/${bot.id}`, policy);
+  await ensureMembershipPolicy(medplum, `Bot/${bot.id}`, policy, admin);
   return bot;
 }

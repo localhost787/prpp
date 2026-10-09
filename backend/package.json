@@ -13,9 +13,13 @@
     "users": "node scripts/demo-users.mjs",
     "seed": "node scripts/seed.mjs",
     "all": "node scripts/setup-project.mjs && node scripts/demo-users.mjs && node scripts/seed.mjs",
-    "test": "node --test test/"
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@medplum/core": "5.1.42"
+  },
+  "devDependencies": {
+    "@medplum/definitions": "5.1.42",
+    "@medplum/mock": "5.1.42"
   }
 }

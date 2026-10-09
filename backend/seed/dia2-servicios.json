@@ -1,0 +1,101 @@
+{
+  "_comment": "POR-56 services-data (API-23). 4 invented services for 'Servicios cerca de usted'. 100% synthetic, distances and waits are fixed demo text (the app never asks for the phone location). Matched by identifier (urn:portal:directorio), so loading twice creates nothing new. Hospital Demo is the existing Organization of the fixed seed.",
+  "organizations": [
+    {
+      "resourceType": "Organization",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "org-cdt-demo" }],
+      "active": true,
+      "name": "CDT Demo",
+      "type": [{ "text": "Centro de Diagnóstico y Tratamiento" }]
+    },
+    {
+      "resourceType": "Organization",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "org-plan-demo" }],
+      "active": true,
+      "name": "Plan médico Demo",
+      "type": [{ "text": "Plan médico" }]
+    },
+    {
+      "resourceType": "Organization",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "org-consultorio-ana-colon" }],
+      "active": true,
+      "name": "Consultorio de la Dra. Ana Colón",
+      "type": [{ "text": "Médico primario" }]
+    }
+  ],
+  "locations": [
+    {
+      "key": "loc-emergencias",
+      "resourceType": "Location",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "loc-emergencias" }],
+      "status": "active",
+      "name": "Emergencias del Hospital Demo",
+      "description": "Entrada de Emergencias, abierta 24 horas",
+      "organization": "hospital-demo"
+    },
+    {
+      "key": "loc-cdt-demo",
+      "resourceType": "Location",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "loc-cdt-demo" }],
+      "status": "active",
+      "name": "CDT Demo",
+      "description": "Centro de Diagnóstico y Tratamiento",
+      "organization": "org-cdt-demo"
+    },
+    {
+      "key": "loc-consultorio-ana-colon",
+      "resourceType": "Location",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "loc-consultorio-ana-colon" }],
+      "status": "active",
+      "name": "Consultorio de la Dra. Ana Colón",
+      "description": "Médico primario",
+      "organization": "org-consultorio-ana-colon"
+    }
+  ],
+  "services": [
+    {
+      "resourceType": "HealthcareService",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "svc-emergencias" }],
+      "active": true,
+      "name": "Emergencias del Hospital Demo",
+      "type": [{ "text": "Emergencias" }],
+      "characteristic": [{ "text": "Acepta su plan" }, { "text": "Abierto 24 horas" }],
+      "extraDetails": "3.2 km · espera estimada (simulada) 40 min",
+      "organization": "hospital-demo",
+      "location": "loc-emergencias"
+    },
+    {
+      "resourceType": "HealthcareService",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "svc-cdt-demo" }],
+      "active": true,
+      "name": "CDT Demo",
+      "type": [{ "text": "CDT" }],
+      "characteristic": [{ "text": "Acepta su plan" }],
+      "extraDetails": "14.8 km · espera estimada (simulada) 20 min",
+      "organization": "org-cdt-demo",
+      "location": "loc-cdt-demo"
+    },
+    {
+      "resourceType": "HealthcareService",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "svc-telemedicina" }],
+      "active": true,
+      "name": "Telemedicina del plan",
+      "type": [{ "text": "Telemedicina" }],
+      "characteristic": [{ "text": "Acepta su plan" }, { "text": "Desde su casa" }],
+      "extraDetails": "Por video desde su casa · espera estimada (simulada) 15 min",
+      "organization": "org-plan-demo",
+      "_comment": "Telemedicine has no place of its own: no location."
+    },
+    {
+      "resourceType": "HealthcareService",
+      "identifier": [{ "system": "urn:portal:directorio", "value": "svc-ana-colon" }],
+      "active": true,
+      "name": "Dra. Ana Colón, médico primario",
+      "type": [{ "text": "Médico primario" }],
+      "characteristic": [{ "text": "Acepta su plan" }],
+      "extraDetails": "2.1 km · cita más cercana (simulada) en 2 días",
+      "organization": "org-consultorio-ana-colon",
+      "location": "loc-consultorio-ana-colon"
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // API-11 / POR-83 evidence: a NON-admin portal account subscribes over WebSocket (like useSubscription)
 // and we measure how long a change takes to arrive after the simulator sends an HL7 message.
-// Usage: node scripts/test-live.mjs [carmen|lourdes|rafael] [criteria-type] [message-id]
+// Usage: node scripts/test-live.mjs [carmen|lourdes] [criteria-type] [message-id]
 //   default: carmen DiagnosticReport correccion
 import { env, required } from '../lib/env.mjs';
 import { log, loginClient, loginUser } from '../lib/medplum.mjs';
 import { buildMessages, todayPR } from '../simulator/mensajes.mjs';
 import { sendHl7 } from '../simulator/core.mjs';
 
-const [who = 'carmen', type = 'DiagnosticReport', messageId = 'correccion'] = process.argv.slice(2);
+const [who = 'carmen', type = 'DiagnosticReport', messageIdArg] = process.argv.slice(2);
 const KEY = who.toUpperCase();
 const projectId = required('MEDPLUM_PROJECT_ID');
 const carmenRef = `Patient/${required('DEMO_CARMEN_PATIENT_ID')}`;
@@ -16,6 +16,16 @@ const criteria = `${type}?${type === 'Communication' ? 'subject' : 'patient'}=${
 
 const user = await loginUser(required(`DEMO_${KEY}_EMAIL`), required(`DEMO_${KEY}_PASSWORD`), projectId);
 log('ok', `${who} login`);
+
+// Re-sending the exact same correction creates no new version, so no notification is sent.
+// Without an explicit message id, alternate between "correccion" and "correccion-alt" based on the stored text.
+let messageId = messageIdArg;
+if (!messageId) {
+  const current = await user.search('DiagnosticReport', `patient=${carmenRef}&_include=DiagnosticReport:result`);
+  messageId = JSON.stringify(current).includes('pulmón derecho (confirmada)') ? 'correccion' : 'correccion-alt';
+  log('info', `message ${messageId} (differs from the stored report)`);
+}
+let failed = false;
 
 let sub;
 try {
@@ -71,10 +81,13 @@ const result = await new Promise((resolve) => {
 ws.close();
 if (result.ok) {
   const label = result.changed.code?.text ?? result.changed.payload?.[0]?.contentString ?? '';
-  log(result.ms < 5000 ? 'ok' : 'FAIL', `${who} got ${type}/${result.changed.id} "${label}" status ${result.changed.status} in ${result.ms} ms`);
+  failed = result.ms >= 5000;
+  log(failed ? 'FAIL' : 'ok', `${who} got ${type}/${result.changed.id} "${label}" status ${result.changed.status} in ${result.ms} ms`);
 } else {
-  log(type === 'DiagnosticReport' && who === 'lourdes' ? 'ok' : 'FAIL', `${who}: ${result.why}`);
+  // Lourdes has no "estudios": receiving nothing for DiagnosticReport is the expected result.
+  failed = !(type === 'DiagnosticReport' && who === 'lourdes');
+  log(failed ? 'FAIL' : 'ok', `${who}: ${result.why}`);
 }
 await user.deleteResource('Subscription', sub.id).catch(() => undefined);
 void env;
-process.exit(0);
+process.exit(failed ? 1 : 0);

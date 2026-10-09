@@ -3,3 +3,4 @@
 !.env.example
 medplum-link
 node_modules/
+.secrets.json

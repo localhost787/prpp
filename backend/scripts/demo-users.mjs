@@ -3,39 +3,31 @@
 // Idempotent. Accounts (synthetic people, example.com addresses):
 //   Carmen Rivera Colón  · Patient (MRN-0001)            · policy "Paciente (portal)"
 //   Lourdes Rivera       · RelatedPerson of Carmen (hija) · visita + medicinas + instrucciones for Carmen,
-//                          and her own Patient (MRN-0002, "Mi salud") linked through Person
-//   Rafael Rivera        · RelatedPerson of Carmen (esposo) · the 4 categories
+//                          and her own Patient (MRN-0002, "Mi salud", with her own appointment) linked through Person
 //   simulador-hospital   · ClientApplication, minimal policy (run hl7-a-fhir, create/delete visit data)
-// Passwords and the client secret are generated once and stored only in the local env file.
+// The demo passwords are fictional and published on purpose (README) so anyone can run the demo.
+// The simulator client secret is generated once and stored only in the local env file.
 // Usage: node scripts/demo-users.mjs
 
-import { randomBytes } from 'node:crypto';
 import { createReference } from '@medplum/core';
 import { env, required, saveEnv } from '../lib/env.mjs';
 import { log, loginClient, loginUser, rawRequest } from '../lib/medplum.mjs';
-import { ALL_PORTAL_POLICIES, CATEGORIES, SYSTEMS } from '../lib/policies.mjs';
+import { ALL_PORTAL_POLICIES, SYSTEMS } from '../lib/policies.mjs';
 import { upsertAccessPolicy, upsertClient } from '../lib/project.mjs';
 import { setSharing } from '../lib/sharing.mjs';
 import { SIMULATOR_POLICY } from '../lib/simulator-policy.mjs';
 
 export const PEOPLE = {
-  carmen: { key: 'CARMEN', email: 'carmen@example.com', firstName: 'Carmen', lastName: 'Rivera Colón', mrn: 'MRN-0001' },
+  carmen: { key: 'CARMEN', email: 'carmen@example.com', password: 'ePUupeeRSpY9VtJwZrdW', firstName: 'Carmen', lastName: 'Rivera Colón', mrn: 'MRN-0001' },
   lourdes: {
     key: 'LOURDES',
     email: 'lourdes@example.com',
+    password: 'gsDjMOUA5LbdQk65TVMy',
     firstName: 'Lourdes',
     lastName: 'Rivera',
     mrn: 'MRN-0002',
     relationship: 'hija',
     shares: ['visita', 'medicinas', 'instrucciones'],
-  },
-  rafael: {
-    key: 'RAFAEL',
-    email: 'rafael@example.com',
-    firstName: 'Rafael',
-    lastName: 'Rivera',
-    relationship: 'esposo',
-    shares: [...CATEGORIES],
   },
 };
 
@@ -43,7 +35,7 @@ function password(person) {
   const key = `DEMO_${person.key}_PASSWORD`;
   if (!env[key]) {
     saveEnv(`DEMO_${person.key}_EMAIL`, person.email);
-    saveEnv(key, randomBytes(15).toString('base64url'));
+    saveEnv(key, person.password);
   }
   return env[key];
 }
@@ -81,6 +73,8 @@ async function ensureCarmen(admin, projectId, patientPolicy) {
   return { profile, membership };
 }
 
+const OWN_APPOINTMENT = { system: 'urn:hospital-demo:cita', value: 'MRN-0002-chequeo' };
+
 /** Patient record of Lourdes ("Mi salud"). Not an account by itself: her login is the RelatedPerson. */
 async function ensureLourdesPatient(admin) {
   const person = PEOPLE.lourdes;
@@ -95,6 +89,22 @@ async function ensureLourdesPatient(admin) {
   );
   saveEnv('DEMO_LOURDES_PATIENT_ID', patient.id);
   log('ok', `Lourdes Patient/${patient.id} (MRN-0002)`);
+  // Her own appointment (POR-101): visible in "Mi salud" even when Carmen stops sharing with her.
+  // Not visit data of Carmen, so the simulator reset never deletes it.
+  const appointment = await admin.createResourceIfNoneExist(
+    {
+      resourceType: 'Appointment',
+      identifier: [{ system: OWN_APPOINTMENT.system, value: OWN_APPOINTMENT.value }],
+      status: 'booked',
+      serviceType: [{ text: 'Medicina de familia' }],
+      description: 'Chequeo anual (Mi salud)',
+      start: '2026-11-12T09:30:00-04:00',
+      end: '2026-11-12T10:00:00-04:00',
+      participant: [{ actor: { reference: `Patient/${patient.id}`, display: `${person.firstName} ${person.lastName}` }, status: 'accepted' }],
+    },
+    `identifier=${OWN_APPOINTMENT.system}|${OWN_APPOINTMENT.value}`
+  );
+  log('ok', `Lourdes Appointment/${appointment.id} (Mi salud)`);
   return patient;
 }
 
@@ -154,7 +164,6 @@ async function main() {
     parameter: [{ name: 'patient', valueReference: createReference(lourdesPatient) }],
   };
   const lourdes = await ensureCaregiver(admin, projectId, PEOPLE.lourdes, carmen.profile, [ownRecord]);
-  const rafael = await ensureCaregiver(admin, projectId, PEOPLE.rafael, carmen.profile, []);
 
   // Person links Lourdes' two roles (API-03): RelatedPerson (caregiver) + Patient ("Mi salud").
   const person = await admin.createResourceIfNoneExist(
@@ -167,19 +176,14 @@ async function main() {
   );
   log('ok', `Person/${person.id} links RelatedPerson/${lourdes.profile.id} + Patient/${lourdesPatient.id}`);
 
-  // Approved seed (POR-35): Lourdes visita+medicinas+instrucciones, Rafael the 4 categories.
-  for (const [who, caregiver] of [
-    [PEOPLE.lourdes, lourdes],
-    [PEOPLE.rafael, rafael],
-  ]) {
-    const result = await setSharing(admin, {
-      patient: carmen.profile,
-      relatedPerson: caregiver.profile,
-      share: who.shares,
-      policies,
-    });
-    log(result.changed ? 'fix' : 'same', `${who.firstName} shares for Carmen = ${result.share.join(', ')}`);
-  }
+  // Approved seed (POR-35): Lourdes visita+medicinas+instrucciones (results stay private until Carmen shares them).
+  const result = await setSharing(admin, {
+    patient: carmen.profile,
+    relatedPerson: lourdes.profile,
+    share: PEOPLE.lourdes.shares,
+    policies,
+  });
+  log(result.changed ? 'fix' : 'same', `Lourdes shares for Carmen = ${result.share.join(', ')}`);
 
   // Simulator client (API-27): minimal policy.
   const simPolicy = await upsertAccessPolicy(admin, SIMULATOR_POLICY);
@@ -195,7 +199,6 @@ async function verify(admin, projectId, carmen, lourdesPatient) {
   const expected = [
     [PEOPLE.carmen, `Patient/${carmen.id}`],
     [PEOPLE.lourdes, `RelatedPerson/${env.DEMO_LOURDES_RELATEDPERSON_ID}`],
-    [PEOPLE.rafael, `RelatedPerson/${env.DEMO_RAFAEL_RELATEDPERSON_ID}`],
   ];
   for (const [person, profileRef] of expected) {
     const medplum = await loginUser(person.email, password(person), projectId);
@@ -214,7 +217,7 @@ async function verify(admin, projectId, carmen, lourdesPatient) {
   const carmens = await admin.searchResources('Patient', { name: 'Carmen' });
   log(carmens.length === 1 ? 'ok' : 'FAIL', `Patient?name=Carmen -> ${carmens.length}`);
   const rps = await admin.searchResources('RelatedPerson', { patient: `Patient/${carmen.id}` });
-  log(rps.length === 2 ? 'ok' : 'FAIL', `RelatedPerson?patient=Carmen -> ${rps.length} (${rps.map((r) => r.relationship?.[0]?.text).join(', ')})`);
+  log(rps.length === 1 ? 'ok' : 'FAIL', `RelatedPerson?patient=Carmen -> ${rps.length} (${rps.map((r) => r.relationship?.[0]?.text).join(', ')})`);
   const lourdesPatients = await admin.searchResources('Patient', { identifier: `${SYSTEMS.mrn}|MRN-0002` });
   log(lourdesPatients.length === 1 && lourdesPatients[0].id === lourdesPatient.id ? 'ok' : 'FAIL', `Patient MRN-0002 -> ${lourdesPatients.length}`);
   for (const person of Object.values(PEOPLE)) {
@@ -223,8 +226,8 @@ async function verify(admin, projectId, carmen, lourdesPatient) {
   }
   const consents = await admin.searchResources('Consent', { patient: `Patient/${carmen.id}` });
   const classes = consents.map((c) => `${c.provision?.actor?.[0]?.reference?.reference}:${(c.provision?.class ?? []).map((x) => x.code).join('+')}`);
-  log(consents.length === 2 ? 'ok' : 'FAIL', `Consent?patient=Carmen -> ${consents.length} (one per person) ${classes.join(' ')}`);
-  for (const key of ['carmen', 'lourdes', 'rafael']) {
+  log(consents.length === 1 ? 'ok' : 'FAIL', `Consent?patient=Carmen -> ${consents.length} (one per caregiver) ${classes.join(' ')}`);
+  for (const key of ['carmen', 'lourdes']) {
     const resourceType = key === 'carmen' ? 'Patient' : 'RelatedPerson';
     const { membership } = await findMember(admin, resourceType, PEOPLE[key].email);
     const n = membership.access?.length ?? 0;

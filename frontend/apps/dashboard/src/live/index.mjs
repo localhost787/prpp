@@ -1,4 +1,4 @@
-// Live data layer (real Medplum server). Import from here; see docs/CONEXION-LIVE.md.
+// Live data layer (real Medplum server). Import from here.
 export { buildConfig, readConfig, demoButtons, DATA_MODES, DEMO_ACCOUNTS } from './config.mjs';
 export { login, loginDemo, logout, getProfile, getAuthMe, getRoles, openLiveSession, createClient, resolveLoginResponse, LiveLoginError } from './session.mjs';
 export {

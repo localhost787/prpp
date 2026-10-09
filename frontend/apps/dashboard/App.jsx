@@ -27,7 +27,7 @@ export default function App() {
 }
 function Portal({ onLanguageChange }) {
   const { t, language } = useLanguage();
-  // Integrated mode (real server) vs demonstration mode (mock): explicit, see docs/CONEXION-LIVE.md.
+  // Integrated mode (real server) vs demonstration mode (mock): explicit, never mixed.
   const [portal] = useState(() => createIntegratedPortal({ cfg: readConfig(), openMock: openContext }));
   const mode = useSyncExternalStore(portal.subscribe, portal.getSnapshot, portal.getSnapshot);
   const integrated = mode.mode === 'integrado';

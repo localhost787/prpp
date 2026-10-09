@@ -17,7 +17,7 @@ const MOTHER = 'p-1111';
 const DAUGHTER_OWN = 'p-2222';
 const NO_MATCH = '00000000-0000-0000-0000-000000000000';
 const NOT_R = '_security:not=http://terminology.hl7.org/CodeSystem/v3-Confidentiality|R';
-// Shapes copied from the live auth/me (sanitized): see docs/CONEXION-LIVE.md.
+// Shapes copied from the live auth/me (sanitized).
 const basedOn = (...names) => names.map((display, i) => ({ reference: `AccessPolicy/ap-${i}`, display }));
 const own = id => [
   { resourceType: 'Patient', readonly: true, criteria: `Patient?_id=${id}` },

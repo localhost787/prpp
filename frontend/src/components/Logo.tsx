@@ -6,7 +6,7 @@ export interface LogoProps {
   readonly width: number;
 }
 
-// Artwork supplied by Beto; provenance and derivation documented in docs/PRPP-logo.md.
+// Artwork supplied by Alberto Arias (frontend lead).
 export function Logo({ width }: LogoProps): JSX.Element {
   return (
     <span

@@ -14,7 +14,7 @@ Under construction during the event. Instructions to run it locally will be adde
 
 ## Use of AI
 
-Part of this work was done with AI agents: **Claude Code** (Claudio, backend) and **Hermes** (Ady, frontend). The agents' working instructions were written before the event; the product code is written during the event.
+Part of this work was done with AI agents: **Claude Code** (backend) and **Hermes** (frontend). The agents' working instructions were written before the event; the product code is written during the event.
 
 ## License
 

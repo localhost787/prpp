@@ -39,7 +39,7 @@ try {
    await expect(page.getByTestId('patient-name')).toHaveText('Lourdes');await expect(page.getByTestId('visit-panel')).toContainText(t('visitEmpty'));
    await changeRole(page,'delegate',language);await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');await expect(button(t('goTo',{section:t('results')}))).toBeDisabled();
    await button(t('changeAccount')).click();await clean();await expect(button(t('accountLabel',{name:'Carmen'}))).toBeFocused();
-   for(const [account,role,roleCount] of [['Carmen','self',1],['Rafael','delegate',1],['Lourdes','self',2],['Lourdes','delegate',2]]) {
+   for(const [account,role,roleCount] of [['Carmen','self',1],['Lourdes','self',2],['Lourdes','delegate',2]]) {
     await button(t('accountLabel',{name:account})).click();await clean();
     await expect(page.getByTestId('account-chooser').getByRole('button',{name:language==='en'?/^Role:/:/^Rol:/})).toHaveCount(roleCount);
     await button(t('roleLabel',{role:t(role==='self'?'myHealth':'delegatedCarmen')})).click();
@@ -49,11 +49,11 @@ try {
     await capture(`dashboard-${language}-${account}-${role}`);
     await button(t('close')).click();await clean();
    }
-   await button(t('accountLabel',{name:'Rafael'})).click();await button(t('backAccounts')).focus();await page.keyboard.press('Enter');await clean();
+   await button(t('accountLabel',{name:'Lourdes'})).click();await button(t('backAccounts')).focus();await page.keyboard.press('Enter');await clean();
   }
   await page.reload();await enterContext(page,'Carmen','self','en');await page.goBack();await clean();await expect(button('Account: Carmen')).toBeFocused();
   await page.goForward();await clean();
-  await enterContext(page,'Rafael','delegate','en');await page.reload();await clean();await expect(page.locator('html')).toHaveAttribute('lang','en');
+  await enterContext(page,'Lourdes','delegate','en');await page.reload();await clean();await expect(page.locator('html')).toHaveAttribute('lang','en');
   const storage=await page.evaluate(async()=>[localStorage.length,sessionStorage.length,(await caches.keys()).length,(await indexedDB.databases()).length]);expect(storage).toEqual([0,0,0,0]);
   report.cases.push({width,height:844,roles:4,languages:['en','es'],scales:[1,1.5],initialNoClinical:true,directLourdesSelf:true,keyboard:true,backForwardClean:true,refreshClean:true,storage});await context.close();
  }

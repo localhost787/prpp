@@ -24,8 +24,8 @@ test('returning to account/role selection clears the client synchronously and di
  assert.equal(store.getSnapshot().status,'closed');assert.ok(cleared.includes('late-delegate'));
 });
 
-test('all four allowed selections load only their explicitly chosen account and role', async()=>{
- for(const [account,role] of [['carmen','self'],['lourdes','self'],['lourdes','delegate'],['rafael','delegate']]) {
+test('all allowed selections load only their explicitly chosen account and role', async()=>{
+ for(const [account,role] of [['carmen','self'],['lourdes','self'],['lourdes','delegate']]) {
   const calls=[];const store=createPortalStore(async(a,r)=>{calls.push([a,r]);return {client:{clear(){}},patient:{id:a},permissions:{}};});
   store.selectAccount(account);assert.deepEqual(calls,[]);await store.selectRole(role);assert.deepEqual(calls,[[account,role]]);store.close();
  }

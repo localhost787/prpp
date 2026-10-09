@@ -2,12 +2,12 @@ import { ClientStorage, MemoryStorage } from '@medplum/core';
 import type { Patient, RelatedPerson } from '@medplum/fhirtypes';
 import { MockClient } from '@medplum/mock';
 
-export const accounts = ['carmen', 'lourdes', 'rafael'] as const;
+export const accounts = ['carmen', 'lourdes'] as const;
 export type Account = (typeof accounts)[number];
 export type Role = 'self' | 'delegate';
-export const accountNames: Record<Account, string> = { carmen: 'Carmen', lourdes: 'Lourdes', rafael: 'Rafael' };
+export const accountNames: Record<Account, string> = { carmen: 'Carmen', lourdes: 'Lourdes' };
 export const roles: Record<Account, readonly Role[]> = {
-  carmen: ['self'], lourdes: ['delegate', 'self'], rafael: ['delegate'],
+  carmen: ['self'], lourdes: ['delegate', 'self'],
 };
 export const categories = {
   visita: 'Estado en Emergencias', medicinas: 'Medicinas',

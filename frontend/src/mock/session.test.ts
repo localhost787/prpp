@@ -15,12 +15,12 @@ test('Lourdes own health and delegated Carmen are separate sessions with explici
   expect((await delegated.client.searchResources('Patient')).map(p => p.id)).toEqual(['carmen']);
 });
 
-test('Rafael has only delegated Carmen; unknown accounts and roles fail closed', async () => {
-  const session = await createMockSession('rafael', 'delegate');
-  expect(session.client.getProfile()).toMatchObject({ resourceType: 'RelatedPerson', id: 'rafael' });
+test('Lourdes has delegated Carmen without studies; unknown accounts and roles fail closed', async () => {
+  const session = await createMockSession('lourdes', 'delegate');
+  expect(session.client.getProfile()).toMatchObject({ resourceType: 'RelatedPerson', id: 'lourdes' });
   expect(session.patient.id).toBe('carmen');
-  expect(session).toMatchObject({ permissions: { visita: true, medicinas: true, instrucciones: true, estudios: true } });
-  await expect(createMockSession('rafael', 'self')).rejects.toThrow();
+  expect(session).toMatchObject({ permissions: { visita: true, medicinas: true, instrucciones: true, estudios: false } });
+  await expect(createMockSession('rafael', 'self')).rejects.toThrow(); // cuenta eliminada del demo: fail-closed sigue
   await expect(createMockSession('unknown', 'self')).rejects.toThrow();
   await expect(createMockSession('carmen', 'delegate')).rejects.toThrow();
 });

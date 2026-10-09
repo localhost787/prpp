@@ -170,14 +170,14 @@ try {
   await page.getByRole('combobox', { name: /^Rol/ }).selectOption('self');
   await expect(page.getByRole('heading', { name: 'Lourdes', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Carmen Rivera Colón' })).toHaveCount(0);
-  await page.getByRole('combobox', { name: /^Cuenta de/ }).selectOption('rafael');
+  await page.getByRole('combobox', { name: /^Cuenta de/ }).selectOption('lourdes');
   await expect(page.getByRole('heading', { name: 'Carmen Rivera Colón' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Resultados', exact: true })).toBeEnabled();
   await expect(page.locator('input[type=password]')).toHaveCount(0);
   const second = await context.newPage();
   await second.goto('http://127.0.0.1:3001/');
   await expect(second.getByRole('combobox', { name: /^Cuenta de/ })).toHaveValue('carmen');
-  await expect(page.getByRole('combobox', { name: /^Cuenta de/ })).toHaveValue('rafael');
+  await expect(page.getByRole('combobox', { name: /^Cuenta de/ })).toHaveValue('lourdes');
   await page.reload();
   await expect(page.getByRole('combobox', { name: /^Cuenta de/ })).toHaveValue('carmen');
   const storage = await page.evaluate(() => ({ local: Object.keys(localStorage), session: Object.keys(sessionStorage) }));

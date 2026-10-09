@@ -14,7 +14,7 @@ import { subscribe, closeAll } from '../src/live/realtime.mjs';
 import { setFamilySharing } from '../src/live/sharing.mjs';
 
 const ENV_FILE = process.env.PRPP_ENV_FILE ?? join(homedir(), '.config', 'prpp', 'backend.env');
-const ALLOWED = ['MEDPLUM_BASE_URL', 'MEDPLUM_PROJECT_ID', 'DEMO_CARMEN_EMAIL', 'DEMO_CARMEN_PASSWORD', 'DEMO_LOURDES_EMAIL', 'DEMO_LOURDES_PASSWORD', 'DEMO_RAFAEL_EMAIL', 'DEMO_RAFAEL_PASSWORD', 'BOT_COMPARTIR_ID'];
+const ALLOWED = ['MEDPLUM_BASE_URL', 'MEDPLUM_PROJECT_ID', 'DEMO_CARMEN_EMAIL', 'DEMO_CARMEN_PASSWORD', 'DEMO_LOURDES_EMAIL', 'DEMO_LOURDES_PASSWORD', 'BOT_COMPARTIR_ID'];
 const SEED = ['visita', 'medicinas', 'instrucciones'];
 
 function readEnv() {
@@ -45,7 +45,7 @@ async function withRetry(fn) {
 const loginWithRetry = (email, password, cfg) => withRetry(() => login(email, password, cfg));
 
 describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
-  let cfg, carmen, lourdes, rafael, carmenId;
+  let cfg, carmen, lourdes, carmenId;
   const clients = [];
   const ctx = async (client, patientId) => ({ client, patientId, access: await loadAccess(client) });
 
@@ -66,8 +66,7 @@ describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
       EXPO_PUBLIC_DEMO_LOURDES_PASSWORD: env.DEMO_LOURDES_PASSWORD,
     });
     lourdes = await withRetry(() => loginDemo(demoCfg, 'lourdes'));
-    rafael = await loginWithRetry(env.DEMO_RAFAEL_EMAIL, env.DEMO_RAFAEL_PASSWORD, cfg);
-    clients.push(carmen, lourdes, rafael);
+    clients.push(carmen, lourdes);
     carmenId = carmen.getProfile().id;
   });
 
@@ -113,14 +112,7 @@ describe('live server (demo accounts)', { skip, timeout: 300000 }, () => {
     assert.equal(c.access.canView(own.patientId, 'estudios'), true);
   });
 
-  test('Rafael caring for Carmen: 4 categories from auth/me, results ok, no own record', async () => {
-    const c = await ctx(rafael, carmenId);
-    assert.deepEqual(c.access.permissionsFor(carmenId), { visita: true, medicinas: true, instrucciones: true, estudios: true });
-    assert.deepEqual((await getRoles(rafael)).map(r => r.role), ['delegate']);
-    const results = await getResults(c);
-    assert.equal(results.status, 'ok');
-    assert.ok(results.data.length > 0);
-  });
+
 
   test('realtime: Carmen binds a subscription over the WebSocket', async () => {
     let sub;

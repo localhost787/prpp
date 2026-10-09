@@ -18,7 +18,7 @@ try{
   const t=(k,p)=>translate(language,k,p),button=name=>page.getByRole('button',{name,exact:true});
   await page.goto('http://127.0.0.1:3001');
   if(language==='es')await button('Switch language to Spanish').click();
-  for(const [account,role] of [['Carmen','self'],['Lourdes','delegate'],['Lourdes','self'],['Rafael','delegate']]){
+  for(const [account,role] of [['Carmen','self'],['Lourdes','delegate'],['Lourdes','self']]){
    await enterContext(page,account,role,language);
    await expect(page.getByTestId('services-panel')).toHaveCount(0);
    await button(t('goTo',{section:t('more')})).click();
@@ -34,7 +34,7 @@ try{
      expect(text).toMatch(language==='en'?/General fictional directory/:/Directorio general ficticio/);
      expect(text).toMatch(language==='en'?/example origin/:/origen de ejemplo/);
      expect(text.match(language==='en'?/Not documented/g:/No documentado/g)).toHaveLength(8);
-     expect(text).not.toMatch(/Carmen|Lourdes|Rafael|Ceftriax|Ana Ramos/);
+     expect(text).not.toMatch(/Carmen|Lourdes|Ceftriax|Ana Ramos/);
      expect(await page.getByRole('button',{name:language==='en'?/^Go to /:/^Ir a /}).count()).toBe(5);
      const metrics=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,clipped:[...document.querySelectorAll('[dir="auto"]')].filter(e=>{const r=e.getBoundingClientRect();return r.left<-.5||r.right>innerWidth+.5;}).map(e=>e.textContent),targets:[...document.querySelectorAll('[role="button"]')].every(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;})}));
      expect(metrics).toEqual({overflow:false,clipped:[],targets:true});

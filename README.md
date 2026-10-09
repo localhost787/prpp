@@ -1,7 +1,7 @@
 # Puerto Rico Patient Portal (PRPP)
 
 **Know where your ER visit stands, in real time — you and the family members you choose.**
-Prototype built during the Caribbean AI Summit Healthcare Hackathon (October 8–10, 2026) by Team PRPP.
+Prototype built during the Caribbean AI Summit Healthcare Hackathon (October 8–10, 2026) by Team PRPP: Edwin Rodriguez (backend lead) and Alberto Arias (frontend lead).
 
 > **Synthetic data only.** No real patients, staff or hospitals. The portal informs; it does not diagnose or recommend treatment.
 

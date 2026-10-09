@@ -1,8 +1,8 @@
 # Contrato backend ↔ frontend
 
-_Borrador v1 · 7 oct 2026 · para aprobar en POR-31 (contract), jueves 8 en la noche. Lo escribe el kit (antes del evento) para el líder de backend/Claudio (backend) y el líder de frontend/Ady (frontend). Fuente de verdad: `DECISIONES-CANON.md`; después, SPEC, `DISENO-cuidadores-y-login.md` y el backlog. Sin código: aquí solo van rutas, búsquedas, nombres de campos y tablas._
+_Borrador v1 · 7 oct 2026 · para aprobar en POR-31 (contract), jueves 8 en la noche. Lo escribe el kit (antes del evento) para el líder de backend y el líder de frontend (y sus agentes). Fuente de verdad: `DECISIONES-CANON.md`; después, SPEC, `DISENO-cuidadores-y-login.md` y el backlog. Sin código: aquí solo van rutas, búsquedas, nombres de campos y tablas._
 
-**Cómo se usa (skill contrato-y-mock):** cada entrada API-xx es un acuerdo. El líder de frontend (Ady) construye la pantalla contra el mock con lo que dice la columna "Mock"; el líder de backend (Claudio) construye el servidor para que responda lo mismo. Si algo cambia: subir la versión (v2), avisar en el hilo ANTES de tocarlo y decir qué se rompe. Lo marcado **(no probado)** pasa a "pasa/falla" solo con una prueba contra el Medplum real del evento. Lo marcado **(propuesto)** se confirma en POR-31.
+**Cómo se usa (skill contrato-y-mock):** cada entrada API-xx es un acuerdo. El líder de frontend construye la pantalla contra el mock con lo que dice la columna "Mock"; el líder de backend construye el servidor para que responda lo mismo. Si algo cambia: subir la versión (v2), avisar en el hilo ANTES de tocarlo y decir qué se rompe. Lo marcado **(no probado)** pasa a "pasa/falla" solo con una prueba contra el Medplum real del evento. Lo marcado **(propuesto)** se confirma en POR-31.
 
 **Lo que se aprendió en la práctica** (`practica-app/`, ensayo que NO se copia): sirve para saber qué funcionó; aquí se describe en palabras.
 
@@ -634,7 +634,7 @@ Issues que no se pudieron mapear a un dueño backend: **POR-76** (API-25) y **PO
 ---
 
 ## 4. Qué falta decidir (corto)
-1. **Búsqueda de un tipo sin permiso:** si Medplum 5.1.42 responde error (como en la práctica) y no Bundle vacío, ¿se añaden a las políticas de familia entradas que no devuelven nada, o se acepta esa excepción a canon §4? — el líder de backend (Claudio lo prueba el jueves).
+1. **Búsqueda de un tipo sin permiso:** si Medplum 5.1.42 responde error (como en la práctica) y no Bundle vacío, ¿se añaden a las políticas de familia entradas que no devuelven nada, o se acepta esa excepción a canon §4? — el líder de backend (se prueba en el servidor del evento).
 2. Nombres de §1.5 (sistemas `urn:…`, ids del mock, variable `MEDPLUM_USE_MOCK`) y etapas 1–7 vs 0–6 — el líder de backend y el líder de frontend en POR-31.
 3. Aviso al familiar cuando le quitan acceso: ¿basta consultar auth/me cada 5 s o se quiere un evento propio? — el líder de backend y el líder de frontend.
 4. Valor crítico: ¿habrá un campo de "confirmación real del hospital"? Si no, siempre texto neutral — el líder de backend.

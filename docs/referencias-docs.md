@@ -1,6 +1,6 @@
 # Documentación por proyecto y SDK
 
-_Borrador v1 · 7 oct 2026 · acompaña a `contrato-api.md`. Para Claudio (backend), Ady (frontend), el líder de backend y el líder de frontend._
+_Borrador v1 · 7 oct 2026 · acompaña a `contrato-api.md`. Para el líder de backend, el líder de frontend._
 
 **Cómo usar esta lista:** cada enlace dice **cuándo leerlo**. Primero se lee la copia local (no gasta internet ni falla si se cae el WiFi); el enlace público es para confirmar. Las copias locales vienen del paquete (`02-Documentacion-tecnica/`) y se copian a `kit-listo/docs/` (POR-21); en el repo del evento quedan en `docs/` (POR-30):
 - `kit-listo/docs/medplum-docs/…` = copia de la documentación de Medplum (la dirección pública es `https://www.medplum.com/docs/` + la misma ruta sin `.md`/`.mdx`).
@@ -168,9 +168,9 @@ Los hooks de React (`useSubscription`, `useMedplumProfile`, etc.) **no tienen p�
 ## 12. Trabajo con agentes
 | Enlace | Cuándo leerlo | Copia local |
 |---|---|---|
-| [Building with AI coding assistants](https://www.medplum.com/docs/building-with-ai-coding-assistants) | Antes de empezar: cómo darle a Claudio/Ady la documentación correcta de Medplum (y cuidar R4 vs R5) | `kit-listo/docs/medplum-docs/building-with-ai-coding-assistants.md` |
+| [Building with AI coding assistants](https://www.medplum.com/docs/building-with-ai-coding-assistants) | Antes de empezar: cómo darle a los agentes la documentación correcta de Medplum (y cuidar R4 vs R5) | `kit-listo/docs/medplum-docs/building-with-ai-coding-assistants.md` |
 | [Medplum MCP](https://www.medplum.com/docs/ai/mcp) | Conectar el MCP de Medplum (docs y datos); sustituye al `llms.txt` de Medplum, que no existe | `kit-listo/docs/medplum-docs/ai/mcp.md` |
-| [Mantine llms.txt](https://mantine.dev/llms.txt) | Resumen de Mantine para Ady | `kit-listo/docs/llms/mantine-llms.txt` |
+| [Mantine llms.txt](https://mantine.dev/llms.txt) | Resumen de Mantine para el agente de frontend | `kit-listo/docs/llms/mantine-llms.txt` |
 | [React llms.txt](https://react.dev/llms.txt) | Resumen de React | `kit-listo/docs/llms/react-llms.txt` |
 | [Vite llms.txt](https://vite.dev/llms.txt) | Resumen de Vite | `kit-listo/docs/llms/vite-llms.txt` |
 | [Vercel llms.txt](https://vercel.com/llms.txt) | Índice de Vercel (la copia local es muy grande: buscar dentro, no leerla entera) | `kit-listo/docs/llms/vercel-llms.txt` |

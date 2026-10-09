@@ -14,7 +14,7 @@ export const palette = Object.freeze({
   pale: '#EDF3FF',
   palePressed: '#DFEAFE',
   disabled: '#EDF1F6',
-  disabledText: '#718198',
+  disabledText: '#52657D',
   notice: '#FFF4CE',
   success: '#176044',
   warning: '#784D00',

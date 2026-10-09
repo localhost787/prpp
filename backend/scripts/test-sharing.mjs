@@ -11,7 +11,6 @@ const projectId = required('MEDPLUM_PROJECT_ID');
 const C = required('DEMO_CARMEN_PATIENT_ID');
 const P = `Patient/${C}`;
 const LOURDES_RP = required('DEMO_LOURDES_RELATEDPERSON_ID');
-const RAFAEL_RP = required('DEMO_RAFAEL_RELATEDPERSON_ID');
 const SEED = ['visita', 'medicinas', 'instrucciones'];
 
 let pass = 0;
@@ -25,7 +24,6 @@ const entries = (r) => (r.body?.entry ?? []).map((e) => e.resource);
 const admin = await loginUser(required('MEDPLUM_PROJECT_ADMIN_EMAIL'), required('MEDPLUM_PROJECT_ADMIN_PASSWORD'), projectId);
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
 
 // Like the portal: find the Bot by name with the patient's own session.
 const bot = (await carmen.searchResources('Bot', { name: 'compartir-familia' }))[0];
@@ -81,13 +79,11 @@ try {
   const before = JSON.stringify(carmenEntries(await membership()));
   r = await execute(lourdes, { familiar: LOURDES_RP, compartir: ['visita', 'medicinas', 'instrucciones', 'estudios'] });
   check('Lourdes ejecuta el Bot -> rechazado', r.status >= 400, `${r.status} ${JSON.stringify(r.body?.issue?.[0]?.details?.text ?? r.body)}`);
-  r = await execute(rafael, { familiar: RAFAEL_RP, compartir: ['estudios'] });
-  check('Rafael ejecuta el Bot -> 403', r.status === 403, `${r.status}`);
   r = await execute(carmen, { familiar: LOURDES_RP, compartir: ['radiografias'] });
   check('categoría desconocida -> OperationOutcome', r.status >= 400, `${r.status} ${JSON.stringify(r.body?.issue?.[0]?.details?.text ?? '')}`);
   r = await execute(carmen, { familiar: '00000000-0000-0000-0000-000000000000', compartir: ['visita'] });
   check('familiar que no es suyo -> OperationOutcome', r.status >= 400, `${r.status} ${JSON.stringify(r.body?.issue?.[0]?.details?.text ?? '')}`);
-  r = await execute(carmen, { familiar: `${LOURDES_RP}/../${RAFAEL_RP}`, compartir: ['visita'] });
+  r = await execute(carmen, { familiar: `${LOURDES_RP}/../00000000-0000-0000-0000-000000000000`, compartir: ['visita'] });
   check('familiar con "/.." -> rechazado', r.status >= 400, `${r.status}`);
   check('nada cambió tras los intentos rechazados', JSON.stringify(carmenEntries(await membership())) === before);
 
@@ -120,8 +116,8 @@ try {
   );
   const own = await rawRequest(lourdes, 'GET', `fhir/R4/Patient/${required('DEMO_LOURDES_PATIENT_ID')}`);
   check('la cuenta de Lourdes y su "Mi salud" siguen intactas', own.status === 200, `${own.status}`);
-  const raf = await rawRequest(rafael, 'GET', `fhir/R4/DiagnosticReport?patient=${P}`);
-  check('Rafael (otro cuidador) sigue viendo sus 4 categorías', entries(raf).length > 0, `${entries(raf).length} reportes`);
+  const ownReports = await rawRequest(carmen, 'GET', `fhir/R4/DiagnosticReport?patient=${P}`);
+  check('Carmen sigue viendo sus propios resultados (quitar acceso a Lourdes no la afecta)', ownReports.status === 200 && entries(ownReports).length > 0, `${ownReports.status}, ${entries(ownReports).length} reportes`);
   r = await execute(lourdes, { familiar: LOURDES_RP, compartir: ['visita'] });
   check('Lourdes no puede devolverse el acceso', r.status >= 400, `${r.status}`);
 

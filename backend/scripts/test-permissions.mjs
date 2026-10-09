@@ -16,7 +16,6 @@ const C = required('DEMO_CARMEN_PATIENT_ID');
 const P = `Patient/${C}`;
 const LP = required('DEMO_LOURDES_PATIENT_ID');
 const LOURDES_RP = required('DEMO_LOURDES_RELATEDPERSON_ID');
-const RAFAEL_RP = required('DEMO_RAFAEL_RELATEDPERSON_ID');
 const R_SYSTEM = `${SYSTEMS.confidentiality}|R`;
 const TABLE = process.argv.includes('--table');
 
@@ -33,7 +32,6 @@ function sanitize(text) {
     [C, '<Patient:carmen>'],
     [LP, '<Patient:lourdes>'],
     [LOURDES_RP, '<RelatedPerson:lourdes>'],
-    [RAFAEL_RP, '<RelatedPerson:rafael>'],
   ]) {
     out = id ? out.replaceAll(id, label) : out;
   }
@@ -114,7 +112,7 @@ function explain(who, method, path, notice) {
     return 'every family policy entry is readonly';
   }
   if (type === 'Consent') {
-    return 'Consent only via "Paciente (portal)" for her own Patient (Lourdes) / absent (Rafael)';
+    return 'Consent only via "Paciente (portal)" for her own Patient (Lourdes)';
   }
   let category = CATEGORY_OF[type];
   if (type === 'Communication') {
@@ -191,10 +189,11 @@ sensitiveId = sensitive?.id;
 
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
-WHO.set(carmen, 'carmen').set(lourdes, 'lourdes').set(rafael, 'rafael');
+WHO.set(carmen, 'carmen').set(lourdes, 'lourdes');
 
-// Category of each type, and who has it (approved seed: Lourdes v+m+i, Rafael all 4).
+// Category of each type, and who has it (approved seed: Lourdes v+m+i).
+// A family member WITH "estudios" (R data still hidden) is covered by scripts/test-negativa.mjs section 4,
+// which turns the 4 categories on for Lourdes and restores the seed; this script stays read-only.
 const TYPES = {
   Encounter: 'visita',
   Task: 'visita',
@@ -210,9 +209,8 @@ const TYPES = {
 const SHARES = {
   carmen: ['visita', 'medicinas', 'instrucciones', 'estudios'],
   lourdes: ['visita', 'medicinas', 'instrucciones'],
-  rafael: ['visita', 'medicinas', 'instrucciones', 'estudios'],
 };
-const CLIENTS = { carmen, lourdes, rafael };
+const CLIENTS = { carmen, lourdes };
 
 console.log('\n== Búsquedas y lecturas por id (canon §4) ==');
 for (const [who, client] of Object.entries(CLIENTS)) {
@@ -249,7 +247,7 @@ const lm = await rawRequest(lourdes, 'GET', `fhir/R4/Communication/${medNotice.i
 check('lourdes lee por id un aviso "medicina" (compartido) -> 200', lm.status === 200, `${lm.status}`);
 
 console.log('\n== Ficha de Carmen vista por la familia (campos ocultos) ==');
-for (const who of ['lourdes', 'rafael']) {
+for (const who of ['lourdes']) {
   const r = await get(CLIENTS[who], `Patient/${C}`);
   check(
     `${who} lee Patient de Carmen sin identifier/address/telecom`,
@@ -272,13 +270,10 @@ for (const [who, client] of Object.entries(CLIENTS)) {
     check(`${who} lee el dato sensible por id -> 404`, byId.status === 404, `${byId.status}`);
   }
 }
-const rafCount = await get(rafael, `Observation?patient=${P}&_summary=count`);
-const carCount = await get(carmen, `Observation?patient=${P}&_summary=count`);
-check('conteo de Rafael = conteo de Carmen − 1 (el R no se cuenta)', rafCount.body?.total === carCount.body?.total - 1, `rafael ${rafCount.body?.total}, carmen ${carCount.body?.total}`);
 const lourCount = await get(lourdes, `Observation?patient=${P}&_summary=count`);
 check('conteo de Lourdes (sin estudios) = 0', lourCount.body?.total === 0, `${lourCount.body?.total}`);
-const rev = await get(rafael, `Patient?_id=${C}&_revinclude=Observation:subject&_count=200`);
-check('Rafael: Patient + _revinclude=Observation no trae el dato R', !entries(rev).some((o) => o.id === sensitive.id), `${count(rev)} entradas`);
+const rev = await get(lourdes, `Patient?_id=${C}&_revinclude=Observation:subject&_count=200`);
+check('Lourdes: Patient + _revinclude=Observation no trae estudios ni el dato R', rev.status === 200 && !entries(rev).some((o) => o.resourceType === 'Observation'), `${count(rev)} entradas`);
 const revL = await get(lourdes, `Encounter?patient=${P}&_revinclude=Observation:encounter&_revinclude=DiagnosticReport:encounter`);
 const leaked = entries(revL).filter((x) => x.resourceType !== 'Encounter');
 check('Lourdes: Encounter + _revinclude de Observation/DiagnosticReport no trae estudios', revL.status === 200 && leaked.length === 0, `${revL.status}, ${leaked.length} extra`);
@@ -308,8 +303,8 @@ const w3 = await rawRequest(carmen, 'POST', 'fhir/R4/Communication', {
   category: [{ coding: [{ system: SYSTEMS.notice, code: 'pregunta' }] }],
 });
 check('carmen crea Communication de OTRO paciente -> 403', w3.status === 403, `${w3.status}`);
-const w4 = await rawRequest(rafael, 'PUT', `fhir/R4/Encounter/${sample.Encounter.id}`, { ...sample.Encounter, status: 'cancelled' });
-check('rafael modifica la visita -> 403', w4.status === 403, `${w4.status}`);
+const w4 = await rawRequest(lourdes, 'PUT', `fhir/R4/Encounter/${sample.Encounter.id}`, { ...sample.Encounter, status: 'cancelled' });
+check('lourdes modifica la visita (compartida, solo lectura) -> 403', w4.status === 403, `${w4.status}`);
 
 console.log('\n== Paciente (POR-47) ==');
 const other1 = await get(carmen, `Patient?_id=${LP}`);
@@ -334,7 +329,7 @@ const q = await rawRequest(carmen, 'POST', 'fhir/R4/Communication', {
   payload: [{ contentString: 'Prueba automática de permisos (se borra).' }],
 });
 check('carmen crea Communication "pregunta" (API-25) -> 201', q.status === 201, `${q.status}`);
-for (const who of ['lourdes', 'rafael']) {
+for (const who of ['lourdes']) {
   const seen = entries(await get(CLIENTS[who], `Communication?subject=${P}&_count=200`)).some((c) => c.id === q.body?.id);
   check(`${who} NO ve la pregunta de Carmen al enfermero (API-25)`, q.status === 201 && !seen);
 }
@@ -404,7 +399,7 @@ check('lourdes busca los Consent de Carmen -> Bundle vacío', lc.status === 200 
 
 console.log('\n== Candados desde auth/me (regla de API-02) ==');
 const REPRESENTATIVE = { visita: 'Encounter', medicinas: 'MedicationRequest', instrucciones: 'CarePlan', estudios: 'DiagnosticReport' };
-for (const who of ['lourdes', 'rafael']) {
+for (const who of ['lourdes']) {
   const meRes = await rawRequest(CLIENTS[who], 'GET', 'auth/me');
   const resources = meRes.body?.accessPolicy?.resource ?? [];
   const allowed = Object.entries(REPRESENTATIVE)

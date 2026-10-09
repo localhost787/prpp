@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // POR-85 · prueba negativa EN VIVO (API-02, API-16, API-17, API-18), with the real demo accounts.
 // Lourdes (family) must NOT see what Carmen did not share, nor ever the R-labeled data, by search,
-// by id, by count, by _include and by WebSocket; Rafael (4 categories) sees results but never R;
+// by id, by count, by _include and by WebSocket; with all 4 categories on she sees results but never R;
 // revoking with the Bot compartir-familia takes effect in < 10 s.
 //   1. Only "visita" for Lourdes
 //   2. From the seed (visita + medicinas + instrucciones), turn off only "medicinas"
 //   3. Remove all access (timed) + no new notification reaches her
-//   4. Everything on (Lourdes and Rafael): the R data is still hidden; Carmen sees it
+//   4. Everything on for Lourdes: the R data is still hidden (search, id, count, includes, WebSocket); Carmen sees it
 //   5. Family writes -> 403
-// Temporary test data (2 Observations, 2 notices, created by the admin as "the hospital") is deleted at the
+// Temporary test data (4 Observations, 2 notices, created by the admin as "the hospital") is deleted at the
 // end, and Lourdes' approved seed (visita + medicinas + instrucciones) is ALWAYS restored.
 // Search of a type outside the policy: Medplum 5.1.42 answers 403, the contract wants 200 empty; this
 // test accepts "200 empty OR 403" as "does not see" and PRINTS which one (open decision, §1.3).
@@ -66,7 +66,6 @@ async function listen(client, criteria, label) {
 const admin = await loginUser(required('MEDPLUM_PROJECT_ADMIN_EMAIL'), required('MEDPLUM_PROJECT_ADMIN_PASSWORD'), projectId);
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
 const bot = (await carmen.searchResources('Bot', { name: 'compartir-familia' }))[0];
 const execute = (client, compartir) => rawRequest(client, 'POST', `fhir/R4/Bot/${bot.id}/$execute`, { familiar: LOURDES_RP, compartir }, 'application/json');
 
@@ -140,9 +139,8 @@ try {
   console.log('\n== 1b · Tiempo real: un resultado nuevo y un dato R nuevo ==');
   const crit = `Observation?patient=${P}`;
   const lObs = await listen(lourdes, crit, 'lourdes-obs');
-  const rObs = await listen(rafael, crit, 'rafael-obs');
   const cObs = await listen(carmen, crit, 'carmen-obs');
-  listeners.push(lObs, rObs, cObs);
+  listeners.push(lObs, cObs);
   await sleep(1500);
   const sent = Date.now();
   const normal = await tempObservation('normal');
@@ -150,8 +148,6 @@ try {
   await sleep(8000);
   const got = (l, x) => l.got.find((g) => g.id === x.id);
   check('carmen recibe el resultado nuevo y el dato R (control)', !!got(cObs, normal) && !!got(cObs, restricted), `${got(cObs, normal) ? got(cObs, normal).at - sent : '-'} ms`);
-  check('rafael (estudios) recibe el resultado nuevo en < 5 s', !!got(rObs, normal) && got(rObs, normal).at - sent < 5000, `${got(rObs, normal) ? got(rObs, normal).at - sent : '-'} ms`);
-  check('rafael NO recibe el dato R', !got(rObs, restricted), `${rObs.got.length} notificaciones`);
   check('lourdes (sin estudios) NO recibe nada (8 s esperando)', lObs.got.length === 0, `${lObs.got.length} notificaciones`);
 
   // ---------- 2 ----------
@@ -206,7 +202,7 @@ try {
   // ---------- 4 ----------
   console.log('\n== 4 · Encender TODO: el dato R sigue oculto ==');
   await execute(carmen, ['visita', 'medicinas', 'instrucciones', 'estudios']);
-  for (const [who, client] of [['lourdes', lourdes], ['rafael', rafael]]) {
+  for (const [who, client] of [['lourdes', lourdes]]) {
     const s = entries(await get(client, `Observation?patient=${P}&_count=200`));
     check(`${who}: ve resultados (estudios encendido)`, s.length > 0 && s.some((o) => o.id === wbc.id), `${s.length}`);
     check(`${who}: el dato R NO aparece en la búsqueda`, !s.some((o) => o.id === sensitive.id || o.id === restricted.id));
@@ -224,8 +220,18 @@ try {
   }
   const cs = entries(await get(carmen, `Observation?patient=${P}&_security=${R}`));
   check('carmen SÍ ve su dato R (búsqueda y por id)', cs.some((o) => o.id === sensitive.id) && (await get(carmen, `Observation/${sensitive.id}`)).status === 200);
-  const rafNotSensitive = await get(rafael, `Observation?patient=${P}&${NOT_SENSITIVE.replace('_security:not', '_security')}`);
-  check('rafael: búsqueda explícita _security=R -> vacío', rafNotSensitive.status === 200 && entries(rafNotSensitive).length === 0, `${rafNotSensitive.status}, ${entries(rafNotSensitive).length}`);
+  const lNotSensitive = await get(lourdes, `Observation?patient=${P}&${NOT_SENSITIVE.replace('_security:not', '_security')}`);
+  check('lourdes: búsqueda explícita _security=R -> vacío', lNotSensitive.status === 200 && entries(lNotSensitive).length === 0, `${lNotSensitive.status}, ${entries(lNotSensitive).length}`);
+  // WebSocket with "estudios" on: a new normal result arrives, a new R result does not.
+  const lObs4 = await listen(lourdes, crit, 'lourdes-obs-estudios');
+  listeners.push(lObs4);
+  await sleep(1500);
+  const sent4 = Date.now();
+  const normal4 = await tempObservation('normal (estudios encendido)');
+  const restricted4 = await tempObservation('R (estudios encendido)', true);
+  await sleep(8000);
+  check('lourdes (estudios) recibe el resultado nuevo en < 5 s', !!got(lObs4, normal4) && got(lObs4, normal4).at - sent4 < 5000, `${got(lObs4, normal4) ? got(lObs4, normal4).at - sent4 : '-'} ms`);
+  check('lourdes (estudios) NO recibe el dato R nuevo', !got(lObs4, restricted4), `${lObs4.got.length} notificaciones`);
 
   // ---------- 5 ----------
   console.log('\n== 5 · Escrituras de la familia ==');

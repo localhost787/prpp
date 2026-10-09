@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // POR-52 (API-24) with the real demo accounts.
 // 1. Real source? Lourdes reads Carmen's visit; then (as admin) look for AuditEvents of reads created since.
-// 2. Simulated list: seed twice (idempotent), then Carmen's search, Lourdes' and Rafael's.
+// 2. Simulated list: seed twice (idempotent), then Carmen's search and Lourdes'.
 // Read-only except the 2 simulated AuditEvents (kept: they are the list the screen shows).
 // Usage: node scripts/test-auditoria.mjs
 import { required } from '../lib/env.mjs';
@@ -23,7 +23,6 @@ const entries = (r) => (r.body?.entry ?? []).map((e) => e.resource);
 const admin = await loginUser(required('MEDPLUM_PROJECT_ADMIN_EMAIL'), required('MEDPLUM_PROJECT_ADMIN_PASSWORD'), projectId);
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
 
 console.log('== ¿Medplum guarda AuditEvent de lecturas en este servidor? ==');
 const since = new Date(Date.now() - 1000).toISOString();
@@ -68,8 +67,6 @@ if (w.status === 201) {
 console.log('\n== Familia (solo la paciente ve su auditoría) ==');
 const lr = await get(lourdes, `AuditEvent?entity=${P}&_sort=-date&_count=20`);
 check('lourdes: la misma búsqueda -> Bundle vacío', lr.status === 200 && entries(lr).length === 0, `${lr.status}, ${entries(lr).length}`);
-const rr = await get(rafael, `AuditEvent?entity=${P}&_sort=-date&_count=20`);
-check('rafael: la misma búsqueda -> no ve nada (vacío o 403)', (rr.status === 200 && entries(rr).length === 0) || rr.status === 403, `${rr.status}`);
 const lid = await get(lourdes, `AuditEvent/${sim[0]?.id}`);
 check('lourdes lee una entrada por id -> no la ve (404 o 403)', lid.status === 404 || lid.status === 403, `${lid.status}`);
 

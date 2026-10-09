@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// POR-98 (identidad y login), POR-99 (varios cuidadores) y POR-101 (una cuenta, dos roles),
-// con las cuentas reales del demo. Cambia lo que Carmen comparte durante la prueba y SIEMPRE
-// restaura el seed aprobado al final (Lourdes: visita + medicinas + instrucciones; Rafael: las 4).
+// POR-98 (identity and login), POR-99 (the caregiver sees only what the patient shares) and
+// POR-101 (one account, two roles), with the real demo accounts. Changes what Carmen shares during the
+// test and ALWAYS restores the approved seed at the end (Lourdes: visita + medicinas + instrucciones).
 // Usage: node scripts/test-identidad-cuidadores.mjs
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -16,8 +16,7 @@ const C = required('DEMO_CARMEN_PATIENT_ID');
 const P = `Patient/${C}`;
 const LP = required('DEMO_LOURDES_PATIENT_ID');
 const LOURDES_RP = required('DEMO_LOURDES_RELATEDPERSON_ID');
-const RAFAEL_RP = required('DEMO_RAFAEL_RELATEDPERSON_ID');
-const SEED = { [LOURDES_RP]: ['visita', 'medicinas', 'instrucciones'], [RAFAEL_RP]: [...CATEGORIES] };
+const SEED = ['visita', 'medicinas', 'instrucciones'];
 const MRN = (value) => `${SYSTEMS.mrn}|${value}`;
 
 let pass = 0;
@@ -74,7 +73,6 @@ check(`los secretos (no las contraseñas demo públicas) no están en el repo ($
 const admin = await loginUser(required('MEDPLUM_PROJECT_ADMIN_EMAIL'), required('MEDPLUM_PROJECT_ADMIN_PASSWORD'), projectId);
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
 
 const bot = (await carmen.searchResources('Bot', { name: 'compartir-familia' }))[0];
 const execute = (client, input) => rawRequest(client, 'POST', `fhir/R4/Bot/${bot.id}/$execute`, input, 'application/json');
@@ -116,7 +114,7 @@ try {
   }
   check('entrar con "MRN-0001" como usuario -> no entra', mrnLogin.status >= 400 && !mrnLogin.body?.code, `${mrnLogin.status}`);
 
-  for (const key of ['CARMEN', 'LOURDES', 'RAFAEL']) {
+  for (const key of ['CARMEN', 'LOURDES']) {
     const user = await admin.searchOne('User', { email: required(`DEMO_${key}_EMAIL`) });
     check(`cuenta ${key.toLowerCase()}: usuario = email, alcance de proyecto`, user?.project?.reference === `Project/${projectId}`);
   }
@@ -174,28 +172,41 @@ try {
   check('idempotente: una sola cita propia de Lourdes (admin)', (await count(admin, `Appointment?patient=Patient/${LP}`)) === 1);
   check('idempotente: un solo Person de Lourdes (admin)', (await admin.searchResources('Person', { relatedperson: `RelatedPerson/${LOURDES_RP}` })).length === 1);
 
-  console.log('\n== POR-99 · varios cuidadores ==');
-  const rps = await admin.searchResources('RelatedPerson', { patient: P });
-  check('RelatedPerson?patient=Carmen -> Lourdes y Rafael (2)', rps.length === 2, rps.map((r) => r.relationship?.[0]?.text).join(', '));
+  console.log('\n== POR-99 · un cuidador (Lourdes): ve solo lo que Carmen comparte ==');
+  // The demo has one caregiver since the scope change of 2026-10-09; independence between two caregivers
+  // is no longer tested. What is tested: shared vs not shared, share more, revoke, and her own record.
+  const rps = await admin.searchResources('RelatedPerson', { patient: P }, { cache: 'no-cache' });
+  check(
+    'RelatedPerson?patient=Carmen -> solo Lourdes (hija)',
+    rps.length === 1 && rps[0].id === LOURDES_RP && rps[0].relationship?.[0]?.text === 'hija',
+    rps.map((x) => `RelatedPerson/${x.id} ${x.relationship?.[0]?.text}`).join(', ')
+  );
+  const consents = await admin.searchResources('Consent', { patient: P }, { cache: 'no-cache' });
+  check(
+    'Consent?patient=Carmen -> uno solo, de Lourdes',
+    consents.length === 1 && consents[0].provision?.actor?.[0]?.reference?.reference === `RelatedPerson/${LOURDES_RP}`,
+    consents.map((c) => c.provision?.actor?.[0]?.reference?.reference).join(', ')
+  );
 
-  // Rafael down to "visita" and back up to the 4: Lourdes' membership must not change.
-  const lBefore = await membershipOf(LOURDES_RP);
-  let r = await execute(carmen, { familiar: RAFAEL_RP, compartir: ['visita'] });
-  check('Carmen deja a Rafael solo con "visita"', r.status === 200 && JSON.stringify(r.body?.compartir) === '["visita"]', `${r.status}`);
-  check('Rafael sin estudios: Observation?patient=Carmen -> Bundle vacío', (await count(rafael, `Observation?patient=${P}`)) === 0);
-  r = await execute(carmen, { familiar: RAFAEL_RP, compartir: [...CATEGORIES] });
-  check('Carmen le comparte las 4 a Rafael', r.status === 200 && r.body?.compartir?.length === 4, `${r.status}`);
-  const obsR = await count(rafael, `Observation?patient=${P}`);
-  check('Rafael ve el hemograma (Observation)', obsR > 0, `${obsR}`);
-  check('Lourdes sigue sin resultados (Observation -> Bundle vacío)', (await count(lourdes, `Observation?patient=${P}`)) === 0);
-  const lAfter = await membershipOf(LOURDES_RP);
-  check('subir a Rafael no tocó la membresía de Lourdes (versionId igual)', lAfter.meta.versionId === lBefore.meta.versionId);
-
-  // Lourdes to "no access": Rafael and Lourdes' own record unchanged.
   const types = ['Encounter', 'Task', 'MedicationRequest', 'CarePlan', 'Observation', 'DiagnosticReport'];
-  const rafaelSees = async () => Promise.all(types.map((t) => count(rafael, `${t}?patient=${P}`)));
-  const rBefore = await rafaelSees();
-  const rMemBefore = await membershipOf(RAFAEL_RP);
+  const lourdesSees = async () => Object.fromEntries(await Promise.all(types.map(async (t) => [t, await count(lourdes, `${t}?patient=${P}`)])));
+  const carmenMemBefore = await admin.searchOne('ProjectMembership', { profile: P }, { cache: 'no-cache' });
+
+  let seen = await lourdesSees();
+  check('seed: Lourdes ve la visita (Encounter y Task)', seen.Encounter > 0 && seen.Task > 0, JSON.stringify(seen));
+  check('seed: Lourdes no ve resultados (Observation y DiagnosticReport -> Bundle vacío)', seen.Observation === 0 && seen.DiagnosticReport === 0);
+
+  let r = await execute(carmen, { familiar: LOURDES_RP, compartir: [...CATEGORIES] });
+  check('Carmen le comparte también "estudios"', r.status === 200 && r.body?.compartir?.length === 4, `${r.status} ${JSON.stringify(r.body?.compartir)}`);
+  seen = await lourdesSees();
+  check('Lourdes ve los resultados (Observation y DiagnosticReport)', seen.Observation > 0 && seen.DiagnosticReport > 0, JSON.stringify(seen));
+  const cL = (await carmen.searchResources('Consent', { patient: P, actor: `RelatedPerson/${LOURDES_RP}`, _sort: '-_lastUpdated', _count: '1' }, { cache: 'no-cache' }))[0];
+  check('el Consent de Lourdes registra las 4 categorías', JSON.stringify((cL?.provision?.class ?? []).map((x) => x.code)) === JSON.stringify(CATEGORIES), JSON.stringify((cL?.provision?.class ?? []).map((x) => x.code)));
+
+  r = await execute(carmen, { familiar: LOURDES_RP, compartir: SEED });
+  seen = await lourdesSees();
+  check('Carmen vuelve al seed: los resultados desaparecen para Lourdes', r.status === 200 && seen.Observation === 0 && seen.DiagnosticReport === 0 && seen.Encounter > 0, JSON.stringify(seen));
+
   r = await execute(carmen, { familiar: LOURDES_RP, compartir: [] });
   check('Carmen le quita todo a Lourdes', r.status === 200 && JSON.stringify(r.body?.compartir) === '[]', `${r.status}`);
   const lNow = await Promise.all([...types.map((t) => count(lourdes, `${t}?patient=${P}`)), count(lourdes, `Communication?subject=${P}`)]);
@@ -206,47 +217,27 @@ try {
     lMem.access?.length > 0 && carmenPolicies(lMem) === 'Familiar sin acceso',
     `${carmenPolicies(lMem)} · ${lMem.access?.length} entradas`
   );
-  const rAfter = await rafaelSees();
-  check('Rafael ve exactamente lo mismo que antes', JSON.stringify(rAfter) === JSON.stringify(rBefore), rAfter.join(','));
-  check('membresía de Rafael sin cambios (versionId igual)', (await membershipOf(RAFAEL_RP)).meta.versionId === rMemBefore.meta.versionId);
+  const cOff = (await carmen.searchResources('Consent', { patient: P, actor: `RelatedPerson/${LOURDES_RP}` }, { cache: 'no-cache' }))[0];
+  check('Consent de Lourdes: inactive + deny tras quitar todo', cOff?.status === 'inactive' && cOff?.provision?.type === 'deny', `${cOff?.status} ${cOff?.provision?.type}`);
   check('POR-101: Lourdes conserva su cita propia sin el acceso de Carmen', (await count(lourdes, `Appointment?patient=Patient/${LP}`)) >= 1);
-  check('POR-101: Encounter?patient=Carmen -> Bundle vacío para Lourdes', (await count(lourdes, `Encounter?patient=${P}`)) === 0);
   check('POR-101: Lourdes sigue leyendo su ficha', (await get(lourdes, `Patient/${LP}`)).status === 200);
+  const carmenMemAfter = await admin.searchOne('ProjectMembership', { profile: P }, { cache: 'no-cache' });
+  check('compartir y quitar no tocan la membresía de Carmen (versionId igual)', carmenMemAfter.meta.versionId === carmenMemBefore.meta.versionId);
 
-  // API-15: one Consent per person, different categories.
-  const consentOf = async (rp) =>
-    (await carmen.searchResources('Consent', { patient: P, actor: `RelatedPerson/${rp}`, _sort: '-_lastUpdated', _count: '1' }, { cache: 'no-cache' }))[0];
-  const cL = await consentOf(LOURDES_RP);
-  const cR = await consentOf(RAFAEL_RP);
-  const classes = (c) => JSON.stringify((c?.provision?.class ?? []).map((x) => x.code));
-  check(
-    'Consent por persona: categorías distintas para Lourdes y Rafael',
-    cL && cR && cL.id !== cR.id && classes(cL) !== classes(cR) && classes(cR) === JSON.stringify(CATEGORIES),
-    `${classes(cL)} vs ${classes(cR)}`
-  );
-
-  // Negatives: caregivers cannot run the Bot; nothing changes.
-  const before = JSON.stringify([(await membershipOf(LOURDES_RP)).meta.versionId, (await membershipOf(RAFAEL_RP)).meta.versionId]);
-  r = await execute(rafael, { familiar: RAFAEL_RP, compartir: ['visita'] });
-  check('Rafael ejecuta el Bot -> rechazado', r.status >= 400, `${r.status}`);
+  // Negatives: the caregiver cannot run the Bot; nothing changes.
+  const before = (await membershipOf(LOURDES_RP)).meta.versionId;
   r = await execute(lourdes, { familiar: LOURDES_RP, compartir: [...CATEGORIES] });
   check('Lourdes ejecuta el Bot -> rechazado', r.status >= 400, `${r.status}`);
   r = await execute(carmen, { compartir: ['visita'] });
   check('Carmen sin "familiar" -> OperationOutcome (el portal siempre lo manda)', r.status >= 400, `${r.status} ${r.body?.issue?.[0]?.details?.text ?? ''}`);
-  const after = JSON.stringify([(await membershipOf(LOURDES_RP)).meta.versionId, (await membershipOf(RAFAEL_RP)).meta.versionId]);
-  check('ninguna membresía cambió tras los intentos rechazados', after === before);
+  check('la membresía de Lourdes no cambió tras los intentos rechazados', (await membershipOf(LOURDES_RP)).meta.versionId === before);
 
   // No membership of the demo is ever left without entries.
-  const carmenMem = await admin.searchOne('ProjectMembership', { profile: P }, { cache: 'no-cache' });
-  const sizes = [carmenMem, await membershipOf(LOURDES_RP), await membershipOf(RAFAEL_RP)].map((m) => m?.access?.length ?? 0);
-  check('ninguna membresía del demo queda sin entradas', sizes.every((n) => n > 0), sizes.join(','));
+  const sizes = [carmenMemAfter, await membershipOf(LOURDES_RP)].map((m) => m?.access?.length ?? 0);
+  check('ninguna membresía del demo queda sin entradas (Carmen, Lourdes)', sizes.every((n) => n > 0), sizes.join(','));
 } finally {
-  const restored = [];
-  for (const [rp, share] of Object.entries(SEED)) {
-    const res = await execute(carmen, { familiar: rp, compartir: share });
-    restored.push(JSON.stringify(res.body?.compartir));
-  }
-  console.log(`\nrestaurado el seed aprobado: Lourdes ${restored[0]} · Rafael ${restored[1]}`);
+  const res = await execute(carmen, { familiar: LOURDES_RP, compartir: SEED });
+  console.log(`\nrestaurado el seed aprobado: Lourdes ${JSON.stringify(res.body?.compartir)}`);
 }
 console.log(`Resultado: ${pass} pasan, ${fail} fallan`);
 process.exit(fail ? 1 : 0);

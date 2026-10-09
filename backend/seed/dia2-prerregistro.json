@@ -57,7 +57,7 @@
       "text": "Contacto de emergencia",
       "item": [
         { "linkId": "contacto-nombre", "type": "string", "text": "Nombre" },
-        { "linkId": "contacto-relacion", "type": "string", "text": "Relación (por ejemplo: hija, esposo)" },
+        { "linkId": "contacto-relacion", "type": "string", "text": "Relación (por ejemplo: hija, hermano)" },
         { "linkId": "contacto-telefono", "type": "string", "text": "Teléfono" }
       ]
     },

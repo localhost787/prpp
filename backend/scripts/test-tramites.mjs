@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // POR-54 (API-20) + POR-57 (API-21) with the real demo accounts (never admin for the checks).
-// Runs the seed twice (idempotence), then checks what Carmen, Lourdes (visita + medicinas + instrucciones)
-// and Rafael (4 categories) can read and write. Creates only AppointmentResponses (deleted at the end).
+// Runs the seed twice (idempotence), then checks what Carmen and Lourdes (visita + medicinas + instrucciones)
+// can read and write. Creates only AppointmentResponses (deleted at the end).
 // Usage: node scripts/test-tramites.mjs
 import { required } from '../lib/env.mjs';
 import { loginUser, rawRequest } from '../lib/medplum.mjs';
@@ -31,7 +31,6 @@ check('cargar dos veces deja los mismos 8 recursos (mismo id)', sameIds);
 
 const carmen = await loginUser(required('DEMO_CARMEN_EMAIL'), required('DEMO_CARMEN_PASSWORD'), projectId);
 const lourdes = await loginUser(required('DEMO_LOURDES_EMAIL'), required('DEMO_LOURDES_PASSWORD'), projectId);
-const rafael = await loginUser(required('DEMO_RAFAEL_EMAIL'), required('DEMO_RAFAEL_PASSWORD'), projectId);
 const TRAMITES = `Task?patient=${P}&code=${SYSTEMS.task}|tramite`;
 
 console.log('\n== API-20 · Mis trámites (Carmen) ==');
@@ -83,12 +82,9 @@ check('carmen confirma su cita -> 201', ar.status === 201, `${ar.status}`);
 const arL = await answer(lourdes);
 created.push(arL);
 check('lourdes confirma la cita de Carmen -> 403', arL.status === 403, `${arL.status}`);
-const arR = await answer(rafael);
-created.push(arR);
-check('rafael confirma la cita de Carmen -> 403', arR.status === 403, `${arR.status}`);
 
 console.log('\n== Familia ==');
-for (const [who, client] of [['lourdes', lourdes], ['rafael', rafael]]) {
+for (const [who, client] of [['lourdes', lourdes]]) {
   const r = await get(client, TRAMITES);
   check(`${who} (con visita) ve los 5 trámites (API-20)`, r.status === 200 && entries(r).length === 5, `${r.status}, ${entries(r).length}`);
   // API-21: family "POR CONFIRMAR"; today no category includes Claim. Expected (contract): empty Bundle.

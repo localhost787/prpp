@@ -7,6 +7,7 @@
 // visit reset never leaves a dangling reference), entity[1].what = the patient (so
 // `AuditEvent?entity=<P>` finds it), meta.tag urn:portal:origen|simulado.
 // AuditEvent has no identifier: idempotent through a second tag urn:portal:auditoria-simulada|<key>.
+// Both entries are Lourdes reading categories Carmen shares with her (visit, medications).
 // Usage: node scripts/seed-auditoria.mjs
 import { required } from '../lib/env.mjs';
 import { log, loginUser } from '../lib/medplum.mjs';
@@ -14,7 +15,7 @@ import { SYSTEMS } from '../lib/policies.mjs';
 
 export const AUDIT_TAG_SYSTEM = 'urn:portal:auditoria-simulada';
 
-export function simulatedEntries({ carmenId, lourdesRpId, rafaelRpId, day = '2026-10-09' }) {
+export function simulatedEntries({ carmenId, lourdesRpId, day = '2026-10-09' }) {
   const entry = (key, who, whoDisplay, whatDisplay, time) => ({
     resourceType: 'AuditEvent',
     meta: { tag: [{ system: SYSTEMS.origin, code: 'simulado' }, { system: AUDIT_TAG_SYSTEM, code: key }] },
@@ -32,7 +33,7 @@ export function simulatedEntries({ carmenId, lourdesRpId, rafaelRpId, day = '202
   });
   return [
     entry('lourdes-visita', lourdesRpId, 'Lourdes (hija)', 'Su visita a Emergencias', '09:12'),
-    entry('rafael-resultados', rafaelRpId, 'Rafael (esposo)', 'Sus resultados de laboratorio', '10:05'),
+    entry('lourdes-medicinas', lourdesRpId, 'Lourdes (hija)', 'Sus medicinas', '10:05'),
   ];
 }
 
@@ -41,7 +42,6 @@ export async function seedAudit(admin) {
   for (const wanted of simulatedEntries({
     carmenId: required('DEMO_CARMEN_PATIENT_ID'),
     lourdesRpId: required('DEMO_LOURDES_RELATEDPERSON_ID'),
-    rafaelRpId: required('DEMO_RAFAEL_RELATEDPERSON_ID'),
   })) {
     const key = wanted.meta.tag[1].code;
     const found = await admin.searchResources('AuditEvent', { _tag: `${AUDIT_TAG_SYSTEM}|${key}` }, { cache: 'no-cache' });

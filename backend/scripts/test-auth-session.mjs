@@ -3,11 +3,11 @@
 //   login variants (auth/method, auth/login -> code | memberships | MFA), processCode, getProfile,
 //   "reload" (new client from the stored tokens, and from the refresh token only), auth/revoke of another
 //   session, signOut (POST oauth2/logout), and 401 for missing / invalid / revoked / expired tokens.
-// It also builds the portal context of the four views from auth/me: Carmen (own record), Lourdes for Carmen,
-// Lourdes "Mi salud" (her own Patient) and Rafael for Carmen.
+// It also builds the portal context of the three views from auth/me: Carmen (own record), Lourdes for Carmen
+// and Lourdes "Mi salud" (her own Patient).
 //
 // Usage: node scripts/test-auth-session.mjs [--examples <file>] [--expiry-probe <file>]
-//   --examples <file>      write the four auth/me examples, sanitized (ids -> placeholders, no tokens,
+//   --examples <file>      write the three auth/me examples, sanitized (ids -> placeholders, no tokens,
 //                          no session IPs), to <file>. The file must be outside the repo.
 //   --expiry-probe <file>  measure a REAL expiry. First run: logs in once more and stores that access token
 //                          and its `exp` in <file> (chmod 600, outside the repo; never printed). A later run,
@@ -30,11 +30,9 @@ const projectId = required('MEDPLUM_PROJECT_ID');
 const C = required('DEMO_CARMEN_PATIENT_ID');
 const LP = required('DEMO_LOURDES_PATIENT_ID');
 const LOURDES_RP = required('DEMO_LOURDES_RELATEDPERSON_ID');
-const RAFAEL_RP = required('DEMO_RAFAEL_RELATEDPERSON_ID');
 const ACCOUNTS = {
   carmen: { email: required('DEMO_CARMEN_EMAIL'), password: required('DEMO_CARMEN_PASSWORD') },
   lourdes: { email: required('DEMO_LOURDES_EMAIL'), password: required('DEMO_LOURDES_PASSWORD') },
-  rafael: { email: required('DEMO_RAFAEL_EMAIL'), password: required('DEMO_RAFAEL_PASSWORD') },
 };
 
 const argValue = (flag) => {
@@ -74,7 +72,6 @@ function sanitize(text) {
     [C, '<Patient:carmen>'],
     [LP, '<Patient:lourdes>'],
     [LOURDES_RP, '<RelatedPerson:lourdes>'],
-    [RAFAEL_RP, '<RelatedPerson:rafael>'],
     [projectId, '<Project:PRPP>'],
   ]) {
     out = out.replaceAll(id, label);
@@ -260,14 +257,11 @@ const stillA = await call('GET', 'auth/me', accessA);
 check('la sesión A sigue viva después de revocar B', stillA.status === 200, `${stillA.status}; auth/me lista ${sessions} sesiones de esta cuenta`);
 
 // =====================================================================================================
-console.log('\n== 5 · Contexto auth/me de las cuatro vistas ==');
+console.log('\n== 5 · Contexto auth/me de las tres vistas ==');
 const l = await login('lourdes');
 variants.lourdes = l.variant;
-const r = await login('rafael');
-variants.rafael = r.variant;
-check('Lourdes y Rafael: auth/login -> "code" directo', l.variant === 'code' && r.variant === 'code', `lourdes=${l.variant} rafael=${r.variant}`);
+check('Lourdes: auth/login -> "code" directo', l.variant === 'code', `lourdes=${l.variant}`);
 const meL = await rawRequest(l.medplum, 'GET', 'auth/me');
-const meR = await rawRequest(r.medplum, 'GET', 'auth/me');
 
 const REPRESENTATIVE = { visita: 'Encounter', medicinas: 'MedicationRequest', instrucciones: 'CarePlan', estudios: 'DiagnosticReport' };
 /**
@@ -312,7 +306,6 @@ const views = [
   ['1 · Carmen, su propia salud', meA.body, C, { role: 'patient', cats: CATEGORIES }],
   ['2 · Lourdes, salud de Carmen (delegada)', meL.body, C, { role: 'family', cats: ['visita', 'medicinas', 'instrucciones'] }],
   ['3 · Lourdes, "Mi salud" (MRN-0002)', meL.body, LP, { role: 'patient', cats: CATEGORIES }],
-  ['4 · Rafael, salud de Carmen (delegada)', meR.body, C, { role: 'family', cats: CATEGORIES }],
 ];
 const examples = [];
 for (const [label, me, patientId, expected] of views) {
@@ -321,8 +314,8 @@ for (const [label, me, patientId, expected] of views) {
   check(`${label}: role=${expected.role}, categorías=${expected.cats.join('+')}`, ctx.role === expected.role && open.join() === expected.cats.join(), `role=${ctx.role} ${open.join('+')} rel=${ctx.relationship}`);
   examples.push({ view: label, context: JSON.parse(sanitize(JSON.stringify(ctx))), authMe: sanitizedMe(me) });
 }
-const none = portalContext(meR.body, LP);
-check('falla cerrado: Rafael con la Patient de Lourdes -> role none, sin categorías', none.role === 'none' && !Object.values(none.categories).some(Boolean), none.role);
+const none = portalContext(meA.body, LP);
+check('falla cerrado: Carmen con la Patient de Lourdes -> role none, sin categorías', none.role === 'none' && !Object.values(none.categories).some(Boolean), none.role);
 
 // =====================================================================================================
 console.log('\n== 6 · signOut() = POST oauth2/logout ==');
@@ -354,7 +347,7 @@ const reloadedAfter = await rawRequest(reloaded, 'GET', 'auth/me');
 check('después de signOut, la pestaña "recargada" con el token guardado -> 401', reloadedAfter.status === 401, `${reloadedAfter.status}`);
 
 // cleanup: close the remaining sessions of this run
-for (const client of [l.medplum, r.medplum]) {
+for (const client of [l.medplum]) {
   await client.signOut().catch(() => undefined);
 }
 
@@ -363,11 +356,11 @@ console.log('\n== 7 · Sesión vencida de verdad ==');
 if (!probeFile) {
   console.log(`info  no probado: hace falta un token con más de ${ttl} s; correr con --expiry-probe <archivo fuera del repo> y repetir después`);
 } else if (!existsSync(probeFile)) {
-  const p = await login('rafael');
+  const p = await login('carmen');
   const token = p.medplum.getAccessToken();
   writeFileSync(probeFile, JSON.stringify({ token, exp: claims(token).exp, savedAt: new Date().toISOString() }), { mode: 0o600 });
   chmodSync(probeFile, 0o600);
-  console.log(`info  token de Rafael guardado; vence ${new Date(claims(token).exp * 1000).toISOString()}. Repetir con --expiry-probe después de esa hora`);
+  console.log(`info  token de Carmen guardado; vence ${new Date(claims(token).exp * 1000).toISOString()}. Repetir con --expiry-probe después de esa hora`);
 } else {
   const probe = JSON.parse(readFileSync(probeFile, 'utf8'));
   const left = probe.exp * 1000 - Date.now();

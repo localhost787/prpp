@@ -9,20 +9,19 @@ Prototype built during the Caribbean AI Summit Healthcare Hackathon (October 8�
 In Puerto Rico, patients can spend hours in the Emergency Department without knowing what is happening, why they are waiting, or what their results mean — and their families outside know even less. PRPP shows the visit in real time on the patient's phone: each stage, tests and results explained in plain Spanish, and clear discharge instructions. The patient decides, person by person, what each family member can see, and can revoke access instantly.
 
 ## Try it in 2 minutes
-> _TODO (Saturday): live demo URL, demo mode (one-click demo accounts, no sign-up), backup video URL._
-1. Open the demo link.
-2. Choose a demo account (all fictional): **Doña Carmen** (patient) · **Lourdes** (daughter — sees visit, medications and instructions, **not** results) · **Rafael** (husband — sees everything shared).
-3. As Carmen, run the hospital simulator's full tour and watch the visit advance and the blood test result arrive **without reloading**.
-4. As Lourdes, see the lock on Results. As Carmen, share Results with Lourdes — it appears instantly; revoke it — it disappears.
+> _TODO (Saturday): live demo URL, backup video URL._
+1. Open the portal. There is no sign-in step: you are **Doña Carmen** (patient, fictional).
+2. As Carmen, run the hospital simulator's full tour and watch the visit advance and the blood test result arrive **without reloading**.
+3. Switch to **Lourdes**, her daughter: she sees the visit, medications and instructions, **not** results (Results shows a lock).
+4. Back as Carmen, share Results with Lourdes — it appears instantly; revoke it — it disappears.
 
 ### Demo accounts
-> **These users and passwords are simulated.** Carmen, Lourdes and Rafael are fictional people with synthetic data. Their logins are published here only so anyone can run the demo: they are not real people, they have no admin rights, and they protect nothing real.
+> **These users and passwords are simulated.** Carmen and Lourdes are fictional people with synthetic data. Their logins are published here only so anyone can run the demo: they are not real people, they have no admin rights, and they protect nothing real.
 
 | Account | Role | E-mail | Password |
 |---|---|---|---|
 | Carmen Rivera Colón | Patient (MRN-0001) | `carmen@example.com` | `ePUupeeRSpY9VtJwZrdW` |
 | Lourdes Rivera | Daughter: visit, medications, instructions (+ her own record, MRN-0002) | `lourdes@example.com` | `gsDjMOUA5LbdQk65TVMy` |
-| Rafael Rivera | Husband: all 4 categories | `rafael@example.com` | `Xp1O8Jr3DE4MLMLbPoTO` |
 
 ## What is real and what is simulated
 | Real (working in the prototype) | Simulated |

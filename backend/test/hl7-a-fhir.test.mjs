@@ -135,6 +135,30 @@ describe('ADT (POR-36)', () => {
     assert.ok(n.some((m) => m.text === 'La van a ingresar. Cuarto 304-B.'));
   });
 
+  test('after an admission, a later message keeps the stage "Ingreso" (not "Alta")', async () => {
+    const x = await newWorld();
+    await send(x.medplum, 'a04');
+    await send(x.medplum, 'ingreso');
+    await send(x.medplum, 'orm');
+    const task = await x.medplum.searchOne('Task', { identifier: 'urn:hospital-demo:etapa|V-0001' }, { cache: 'no-cache' });
+    assert.equal(task.businessStatus.text, 'Ingreso');
+    assert.equal(task.input.find((i) => i.type.text === 'texto-etapa').valueString, 'La van a ingresar. Cuarto 304-B.');
+  });
+
+  test("another patient's message reusing Carmen's visit number -> AE, Carmen's visit untouched", async () => {
+    const x = await newWorld();
+    await x.medplum.createResource({ resourceType: 'Patient', identifier: [{ system: 'urn:hospital-demo:mrn', value: 'MRN-0002' }] });
+    await send(x.medplum, 'a04');
+    for (const id of ['a08', 'orm']) {
+      const other = MSGS[id].texto.replace('MRN-0001', 'MRN-0002');
+      const ack = (await bot.handler(x.medplum, { input: Hl7Message.parse(other) })).toString();
+      assert.match(msa(ack), /^MSA\|AE\|.*otro paciente/, id);
+    }
+    const [visit] = await search(x.medplum, 'Encounter', { identifier: 'urn:hospital-demo:visita|V-0001' });
+    assert.equal(visit.subject.reference, `Patient/${x.carmen.id}`);
+    assert.equal(visit.status, 'arrived');
+  });
+
   test('unknown patient -> ACK AE with a clear error, nothing created', async () => {
     const x = await newWorld();
     const bad = MSGS.a04.texto.replace('MRN-0001', 'MRN-9999');
@@ -257,6 +281,18 @@ describe('ORM (POR-37), ORU (POR-38), RAS (POR-40), stages, queue and notices', 
     assert.equal(all[0].id, before.id);
     assert.notEqual(all[0].meta.versionId, before.meta.versionId);
     assert.equal(all[0].status, 'corrected');
+  });
+
+  test('a late P after F does not move the result back nor add a notice', async () => {
+    const x = await newWorld();
+    for (const id of ['a04', 'orm']) await send(x.medplum, id);
+    await send(x.medplum, 'oru1');
+    const before = (await notices(x.medplum, x.carmen)).length;
+    const late = MSGS.oru1.texto.replace(/\|F\r/g, '|P\r').replace(/\|F\|/g, '|P|');
+    assert.match(msa((await bot.handler(x.medplum, { input: Hl7Message.parse(late) })).toString()), /^MSA\|AA/);
+    const [cbc] = await search(x.medplum, 'DiagnosticReport', { identifier: 'urn:hospital-demo:reporte|O-1001' });
+    assert.equal(cbc.status, 'final');
+    assert.equal((await notices(x.medplum, x.carmen)).length, before);
   });
 
   test('OBX without interpretation -> no interpretation (never "N")', async () => {

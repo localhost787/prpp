@@ -133,6 +133,10 @@ async function upsert(ctx, resource, removeKeys = []) {
   }
   const { meta, ...wanted } = withTag(resource, ctx.source);
   const current = found[0];
+  // A business identifier reused by another patient's message must never move a resource between patients.
+  if (current?.subject?.reference && wanted.subject?.reference && current.subject.reference !== wanted.subject.reference) {
+    throw hl7Error(`${resource.resourceType} ${value} es de otro paciente`);
+  }
   if (!current) {
     const created = await ctx.medplum.createResource({ ...wanted, meta });
     ctx.touched.push(created);
@@ -193,6 +197,9 @@ async function findVisit(ctx, visitNumber) {
   if (!visit) {
     throw hl7Error(`No hay visita ${visitNumber}: falta el A04`);
   }
+  if (visit.subject?.reference !== `Patient/${ctx.patient.id}`) {
+    throw hl7Error(`La visita ${visitNumber} es de otro paciente`);
+  }
   return visit;
 }
 
@@ -226,7 +233,13 @@ function queueFor(esi, phase) {
 
 function inputValue(task, name) {
   const i = (task?.input || []).find((x) => x.type?.text === name);
-  return i ? (i.valueInteger ?? i.valueString) : undefined;
+  if (!i) {
+    return undefined;
+  }
+  if (name === 'etapa-clave') {
+    return i.valueString === 'ingreso' ? 'ingreso' : Number(i.valueString);
+  }
+  return i.valueInteger ?? i.valueString;
 }
 
 /** Counts studies still in progress for the family member without "estudios" (API-06). */
@@ -246,10 +259,14 @@ async function studiesInProgress(ctx) {
 async function updateStage(ctx, changes) {
   const visitKey = ctx.visitNumber;
   const current = await findOne(ctx, 'Task', { identifier: `${SYS.stage}|${visitKey}` });
-  const prevStage = inputValue(current, 'etapa') || 0;
+  // "ingreso" is stage 7 on screen but a different stage: keep its key, not only the number.
+  const prevKey = inputValue(current, 'etapa-clave') ?? (inputValue(current, 'etapa') || 0);
+  const rank = (key) => (key === 'ingreso' ? 7 : key);
   const isFinal = changes.stage === 7 || changes.stage === 'ingreso';
   const stageKey =
-    changes.stage !== undefined && (isFinal || (prevStage !== 7 && changes.stage > prevStage)) ? changes.stage : prevStage;
+    changes.stage !== undefined && (isFinal || (rank(prevKey) !== 7 && rank(changes.stage) > rank(prevKey)))
+      ? changes.stage
+      : prevKey;
   const stageNumber = stageKey === 'ingreso' ? 7 : stageKey;
   const stage = STAGES[stageKey] || STAGES[1];
   const esi = changes.context?.esi ?? inputValue(current, 'esi');
@@ -270,6 +287,7 @@ async function updateStage(ctx, changes) {
   };
   const inputs = [
     ['etapa', 'valueInteger', stageNumber],
+    ['etapa-clave', 'valueString', String(stageKey)],
     ['nombre-etapa', 'valueString', stage.name],
     ['texto-etapa', 'valueString', stage.text(stageContext)],
     ['que-sigue', 'valueString', NEXT[stageKey] || NEXT[1]],
@@ -429,6 +447,9 @@ async function handleAdmit(ctx, msg, pv1, org, place, doctor) {
   if (!er) {
     throw hl7Error(`Ingreso sin visita de Emergencias (PV1-50 = ${erNumber || 'vacío'})`);
   }
+  if (er.subject?.reference !== `Patient/${ctx.patient.id}`) {
+    throw hl7Error(`La visita ${erNumber} es de otro paciente`);
+  }
   const { resource: imp } = await upsert(ctx, {
     resourceType: 'Encounter',
     identifier: ident(SYS.visit, ctx.visitNumber),
@@ -571,6 +592,7 @@ async function handleOrm(ctx, msg) {
 // ---------- ORU (POR-38) ----------
 
 const REPORT_STATUS = { I: 'registered', S: 'partial', A: 'partial', P: 'preliminary', F: 'final', C: 'corrected', X: 'cancelled' };
+const REPORT_RANK = { registered: 1, partial: 2, preliminary: 3, final: 4, amended: 5, corrected: 5, cancelled: 5 };
 const OBS_STATUS = { I: 'registered', P: 'preliminary', F: 'final', C: 'corrected', X: 'cancelled' };
 const INTERPRETATION = {
   N: 'Normal',
@@ -648,17 +670,25 @@ async function handleOru(ctx, msg) {
     if (!sr) {
       throw hl7Error(`Resultado de una orden que no existe: ${number}`);
     }
+    if (sr.subject?.reference !== `Patient/${ctx.patient.id}`) {
+      throw hl7Error(`La orden ${number} es de otro paciente`);
+    }
     const resultCode = field(g.obr, 25).toUpperCase();
     const status = REPORT_STATUS[resultCode];
     if (!status) {
       throw hl7Error(`OBR-25 desconocido: "${resultCode}" (use I, P, F o C)`);
+    }
+    // A late or replayed message never moves a result back (e.g. P arriving after F).
+    const previous = await findOne(ctx, 'DiagnosticReport', { identifier: `${SYS.report}|${number}` });
+    if (previous && (REPORT_RANK[previous.status] ?? 0) > (REPORT_RANK[status] ?? 0)) {
+      continue;
     }
     const observations = [];
     for (const { seg, notes } of g.obx) {
       const { resource } = await upsert(ctx, observationFromObx(ctx, seg, notes, g.obr, number, status));
       observations.push(resource);
     }
-    const before = await findOne(ctx, 'DiagnosticReport', { identifier: `${SYS.report}|${number}` });
+    const before = previous;
     const { resource: report, changed } = await upsert(ctx, {
       resourceType: 'DiagnosticReport',
       identifier: ident(SYS.report, number),

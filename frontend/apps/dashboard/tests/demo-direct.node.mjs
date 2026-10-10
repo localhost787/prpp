@@ -38,6 +38,6 @@ test('demo opens Carmen directly and switches only to her daughter, clearing con
   assert.equal(store.getSnapshot().section,'visit');
   await store.enter('carmen','self');
   assert.notEqual(store.getSnapshot().session, first);
-  assert.equal(store.getSnapshot().section,'visit');
+  assert.equal(store.getSnapshot().section,'results');
   store.close();
 });

@@ -40,8 +40,8 @@ test('canonical filters and local presentation preserve source data, codes, valu
   assert.equal(calls, 1);
   assert.deepEqual(controller.getSnapshot().items, []);
 });
-test('Spanish default with complete deterministic en/es dictionaries and matching interpolation', () => {
-  assert.equal(i18n.DEFAULT_LANGUAGE, 'es');
+test('English default with complete deterministic en/es dictionaries and matching interpolation', () => {
+  assert.equal(i18n.DEFAULT_LANGUAGE, 'en');
   assert.deepEqual(Object.keys(i18n.messages.en).sort(), Object.keys(i18n.messages.es).sort());
   for (const key of Object.keys(i18n.messages.en)) {
     for (const language of ['en', 'es']) assert.ok(i18n.messages[language][key].trim(), `${language}:${key}`);

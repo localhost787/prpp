@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const app = await readFile(new URL('../App.jsx', import.meta.url), 'utf8');
 const family = await import('../src/family/family.mjs').catch(() => ({}));
 
-test('AYO-84 integrates owner controls and resets the synthetic family state per context', () => {
+test('AYO-84 integrates owner controls with isolated synthetic family models', () => {
   assert.match(app, /FamilySection/);
   assert.match(app, /state\.account === 'carmen'/);
   assert.match(app, /state\.role === 'self'/);

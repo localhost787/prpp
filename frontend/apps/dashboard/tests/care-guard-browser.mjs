@@ -11,6 +11,7 @@ try{
  await page.addScriptTag({content:(Array.isArray(bundle)?bundle[0]:bundle).output.find(x=>x.type==='chunk').code});
  await expect(page.getByTestId('care-panel')).toContainText('Ceftriaxone');
  await page.evaluate(()=>window.careCalls=[]);
+ await page.getByRole('button',{name:'Demonstration options',exact:true}).click();
  await page.getByRole('button',{name:'Medicines restricted',exact:true}).click();
  await expect(page.getByTestId('care-medicines-section')).toContainText('private');
  let calls=await page.evaluate(()=>window.careCalls);expect(calls.map(x=>x.category)).toEqual(['team','instructions']);

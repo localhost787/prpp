@@ -5,6 +5,7 @@ try {
  for(const height of [844,500]) {
   const page=await browser.newPage({viewport:{width:1280,height}});
   await page.goto(process.env.PORTAL_URL || 'http://127.0.0.1:3001');
+  await page.getByRole('button',{name:'Switch language to Spanish',exact:true}).click();
   await page.getByRole('button',{name:'Aumentar letra',exact:true}).click();
   await page.getByRole('button',{name:'Aumentar letra',exact:true}).click();
   const nav=page.getByRole('navigation',{name:'Secciones del portal',exact:true});

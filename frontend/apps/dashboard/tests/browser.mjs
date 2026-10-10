@@ -1,4 +1,4 @@
-import { enterContext, changeRole } from './entry-helpers.mjs';
+import { enterContext, changeRole, showDemoControls } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { writeFile } from 'node:fs/promises';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -18,7 +18,10 @@ try {
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     page.on('websocket', socket => requests.push(socket.url()));
     await page.goto('http://127.0.0.1:3001');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.getByRole('button', { name: 'Switch language to Spanish', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await showDemoControls(page);
     await expect(page.getByRole('button', { name: 'Vista Carmen', exact: true })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
     await expect(page.getByTestId('demo-notice')).toHaveText('Demostración · datos ficticios');
@@ -63,11 +66,13 @@ try {
     await page.screenshot({ path: `../../docs/evidence/dashboard-expo/expo-${width}.png`, fullPage: true });
     await page.mouse.move(width - 20, 400);
     await page.mouse.wheel(0, 1200);
-    await expect(page.getByText('Toda la información de esta demo es ficticia.', { exact: true })).toBeInViewport();
+    await page.getByRole('button', { name: 'Acerca de esta demostración', exact: true }).click();
+    await expect(page.getByText('Este prototipo no está conectado a hospitales ni a PRHIE.', { exact: false })).toBeVisible();
+    await expect(page.getByTestId('demo-notice')).toHaveText('Demostración · datos ficticios');
     await enterContext(page, 'Lourdes', 'delegate', 'es');
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     await expect(page.getByRole('button', { name: 'Ir a Resultados', exact: true })).toBeDisabled();
-    await expect(page.getByText('Resultados: acceso no habilitado para este rol en el ejemplo. No indica si existe información.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Acceso no habilitado en este ejemplo. No indica si existe información.', { exact: true })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `../../docs/evidence/dashboard-expo/expo-delegada-${width}.png`, fullPage: true });
     await changeRole(page, 'self', 'es');
@@ -99,8 +104,9 @@ try {
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     await page.reload();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-    await expect(page.getByRole('button', { name: 'Vista Carmen', exact: true })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await showDemoControls(page);
+    await expect(page.getByRole('button', { name: 'View Carmen', exact: true })).toBeVisible();
     const storage = await page.evaluate(async () => ({ local: localStorage.length, session: sessionStorage.length, caches: (await caches.keys()).length, indexedDB: (await indexedDB.databases()).length }));
     expect(storage).toEqual({ local: 0, session: 0, caches: 0, indexedDB: 0 });
     expect(requests).toEqual([]); expect(errors).toEqual([]);

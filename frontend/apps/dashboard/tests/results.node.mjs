@@ -4,10 +4,10 @@ import { openContext } from '../src/context.mjs';
 const api = await import('../src/results.mjs').catch(() => ({}));
 const interpretationEs = item => api.interpretationLabel(item, 'es');
 const statusEs = item => api.statusLabel(item, 'es');
-test('seis valores documentados, fuente aislada, interpretación nunca inferida y filtros sin coincidencias', async () => {
+test('cinco valores seleccionados para la demo, fuente aislada, interpretación nunca inferida y filtros sin coincidencias', async () => {
   const session = await openContext('carmen', 'self');
   const data = await api.loadResults(session);
-  assert.equal(data.items.length, 6);
+  assert.equal(data.items.length, 5);
   assert.equal(data.items[0].valueQuantity.value, 15.2);
   assert.equal(data.items[0].referenceRange[0].text, '4.5–11.0');
   assert.equal(interpretationEs(data.items[0]), 'Alto');
@@ -16,16 +16,16 @@ test('seis valores documentados, fuente aislada, interpretación nunca inferida 
     assert.equal(interpretationEs({ interpretation: [{ coding: [{ code }] }] }), label);
   }
   assert.equal(interpretationEs({ interpretation: [{ coding: [{ code: 'unknown' }] }] }), 'Sin interpretación');
-  assert.deepEqual(data.items.map(item => item.valueQuantity?.value ?? item.valueString), [15.2, 12.8, 1.4, 168, 1.1, 'Posible pulmonía en la parte baja del pulmón derecho']);
+  assert.deepEqual(data.items.map(item => item.valueQuantity?.value ?? item.valueString), [15.2, 12.8, 168, 1.1, 'Posible pulmonía en la parte baja del pulmón derecho']);
   assert.ok(data.items.every(item => !item.effectiveDateTime && !item.issued));
-  assert.equal(statusEs(data.items[5]), 'Preliminar');
+  assert.equal(statusEs(data.items[4]), 'Preliminar');
   assert.equal(statusEs({ status: 'partial' }), 'Preliminar');
   assert.equal(api.filterResults(data.items, 'preliminary').length, 1);
   assert.equal(api.filterResults(data.items, 'final').length, 2);
-  assert.equal(api.filterResults(data.items, 'unknown').length, 3);
+  assert.equal(api.filterResults(data.items, 'unknown').length, 2);
   assert.equal(api.filterResults([], 'final').length, 0);
   const authorizedDelegate = { ...session, account: 'test-delegate', role: 'delegate' };
-  assert.equal((await api.loadResults(authorizedDelegate)).items.length, 6);
+  assert.equal((await api.loadResults(authorizedDelegate)).items.length, 5);
   assert.equal((await session.client.searchResources('Observation', {})).length, 0);
   session.client.clear();
 });

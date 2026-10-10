@@ -36,13 +36,13 @@ try {
     const panel = page.getByTestId('family-panel');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Family access');
-    await expect(panel.getByRole('heading', { name: 'Lourdes', exact: true })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'Lourdes Santiago Rivera', exact: true })).toBeVisible();
     await expect(panel.getByRole('heading', { name: 'Rafael', exact: true })).toHaveCount(0);
 
-    const lourdesCard = panel.getByRole('heading', { name: 'Lourdes', exact: true }).locator('..');
+    const lourdesCard = panel.getByRole('heading', { name: 'Lourdes Santiago Rivera', exact: true }).locator('..');
     await expect(lourdesCard.getByRole('switch', { name: 'Emergency status: On', exact: true })).toBeVisible();
     await expect(lourdesCard.getByRole('switch', { name: 'Medicines: On', exact: true })).toBeVisible();
-    await expect(lourdesCard.getByRole('switch', { name: 'Instructions: On', exact: true })).toBeVisible();
+    await expect(lourdesCard.getByRole('switch', { name: 'Discharge instructions and follow-up: On', exact: true })).toBeVisible();
     await expect(lourdesCard.getByRole('switch', { name: 'Studies and results: Off', exact: true })).toBeVisible();
 
     await lourdesCard.getByRole('switch', { name: 'Medicines: On', exact: true }).click();
@@ -65,8 +65,8 @@ try {
 
     await enterContext(page, 'Carmen', 'self', 'es');
     await page.getByRole('button', { name: es('goTo', { section: es('family') }), exact: true }).click();
-    const restoredLourdesCard = page.getByTestId('family-panel').getByRole('heading', { name: 'Lourdes', exact: true }).locator('..');
-    await expect(restoredLourdesCard.getByRole('switch', { name: 'Medicinas: Activado', exact: true })).toBeVisible();
+    const restoredLourdesCard = page.getByTestId('family-panel').getByRole('heading', { name: 'Lourdes Santiago Rivera', exact: true }).locator('..');
+    await expect(restoredLourdesCard.getByRole('switch', { name: 'Medicinas: Desactivado', exact: true })).toBeVisible();
 
     const metrics = await page.evaluate(() => ({
       overflow: document.documentElement.scrollWidth > innerWidth,

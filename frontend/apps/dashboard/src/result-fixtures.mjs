@@ -8,7 +8,6 @@ export function resultFixtures(patientId) {
   const rows = [
     ['wbc', sourceText('wbcTitle'), 15.2, sourceText('thousandPerMicroliter'), '4.5–11.0', 'H', sourceText('wbcNote'), 'final'],
     ['hb', sourceText('hbTitle'), 12.8, 'g/dL', '12.0–15.5', 'N', sourceText('hbNote'), 'final'],
-    ['lactato', sourceText('lactatoTitle'), 1.4, 'mmol/L', '0.5–2.0', 'N', sourceText('lactatoNote')],
     ['glucosa', sourceText('glucosaTitle'), 168, 'mg/dL', '70–99', 'H', sourceText('glucosaNote')],
     ['creatinina', sourceText('creatininaTitle'), 1.1, 'mg/dL', '0.6–1.2', 'N', sourceText('creatininaNote')],
     ['rx', sourceText('rxTitle'), sourceText('rxValue'), null, null, null, sourceText('rxNote'), 'preliminary'],

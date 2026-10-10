@@ -55,6 +55,8 @@ def render(report, copy):
     story = [para(copy['warning'], 'warning'), para(report['title'], 'title'),
              para(report['institution'], 'institution'), para(copy['fictitious'], 'small'),
              para(copy['grouping'], 'small'), para(copy['provisional'], 'small'), Spacer(1,18)]
+    if report.get('story'):
+        story.append(para(report['story']))
     for item in report['items']:
         value = str(item['value']) + (' ' + item['unit'] if item['unit'] else '')
         block = [para(item['title'],'item'),para(copy['value'] + ': ' + value),

@@ -11,7 +11,6 @@ import CareSection from './src/care/CareSection.jsx';
 import ServicesPanel from './src/services/ServicesPanel.jsx';
 import FamilyPanel from './src/family/FamilyPanel.jsx';
 import FamilySection from './src/family/FamilySection.jsx';
-import { FAMILY_PERMISSION_FIXTURE } from './src/family/family.mjs';
 import { createVisitController } from './src/visit.mjs';
 
 import { Action, Label, Scale } from './src/ui/Action.jsx';
@@ -26,6 +25,8 @@ const SECTION_ICONS = Object.freeze({
   family: UsersRound,
   more: Grid2x2,
 });
+
+const DEMO_VIEW_NAMES = Object.freeze({ carmen: 'Carmen', lourdes: 'Lourdes' });
 
 function Brand({ scale = 1, inverse = false }) {
   const { t } = useLanguage();
@@ -56,6 +57,8 @@ function Portal({ onLanguageChange }) {
   const [visitController] = useState(() => createVisitController());
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const [scale, setScale] = useState(1);
+  const [demoControls, setDemoControls] = useState(false);
+  const demoControlsId = useId();
   const { width } = useWindowDimensions();
   const desktop = width >= 1024;
 
@@ -97,16 +100,17 @@ function Portal({ onLanguageChange }) {
         <Label style={{ color: palette.muted, fontSize: 12 * scale, lineHeight: 18 * scale }}>{copy('demo')}</Label>
       </View>
       <View testID="dashboard-shell" style={[styles.shell, { flexDirection: desktop && !entering ? 'row' : 'column' }]}>
-        {!entering && desktop && <View style={styles.sidebar}>
+        {!entering && desktop && <View testID="sidebar-rail" style={styles.sidebarRail}><View style={styles.sidebar}>
           <Brand scale={scale} />
           <Label style={[styles.eyebrow, { marginTop: 28 }]}>{copy('navigation')}</Label>
           {navigation}
-          <View style={styles.sidebarFooter}><View style={styles.redRule} /><Label style={styles.small}>{t('tagline')}</Label></View>
-        </View>}
+          <View style={styles.sidebarFooter}><View style={styles.redRule} /><Label testID="portal-tagline" {...accessibilityLanguageProps(Platform.OS, language)} style={styles.small}>{copy('portalTagline')}</Label></View>
+        </View></View>}
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={[styles.topbar, { paddingHorizontal: desktop ? 32 : 16 }]}>
             {!desktop || entering ? <View style={{ maxWidth: 270, flexGrow: 1 }}><Brand scale={Math.min(scale, 1.15)} /></View> : <Label style={styles.eyebrow}>{copy('patientPortal')}</Label>}
             <View style={styles.tools}>
+              {desktop && <Action size="compact" variant="ghost" label={copy('demoControls')} expanded={demoControls} controls={demoControlsId} onPress={() => setDemoControls(value => !value)}>{copy('demoControls')}</Action>}
               <Action size="compact" variant="ghost" label={t('languageLabel')} onPress={() => { reportScope.invalidate(); onLanguageChange(); }}>{t('languageButton')}</Action>
               <View style={{ flexDirection: 'row', gap: 2 }} accessibilityLabel={t('textSize')}>
                 <Action size="compact" variant="ghost" label={t('smaller')} disabled={scale <= 1} onPress={() => setScale(value => Math.max(1, value - 0.25))}>A−</Action>
@@ -114,25 +118,28 @@ function Portal({ onLanguageChange }) {
               </View>
             </View>
           </View>
+          {desktop && demoControls && <View testID="demo-controls" nativeID={demoControlsId} style={{ padding: 16, backgroundColor: palette.pale, gap: 12, borderBottomWidth: 1, borderColor: palette.borderSoft }}>
+            <Label style={styles.small}>{copy('demoControlsBody')}</Label>
+            <View style={styles.tools}>
+              {accounts.map(account => <Action key={account} size="compact" label={copy('demoView', { name: DEMO_VIEW_NAMES[account] })} selected={state.account === account} showMarker={false} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); scrollRef.current?.scrollTo?.({ y: 0, animated: false }); }}>{copy('demoView', { name: DEMO_VIEW_NAMES[account] })}</Action>)}
+            </View>
+          </View>}
           <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-            <View style={[styles.main, { padding: desktop ? 32 : 16, maxWidth: entering ? 1160 : 1360 }]}>
+            <View style={[styles.main, { padding: desktop ? 32 : 16, gap: desktop ? 24 : 16, maxWidth: entering ? 1160 : 1360 }]}>
               {<>
-                <View testID="context-card" style={styles.context}>
+                <View testID="context-card" style={[styles.context, !desktop && { padding: 16, gap: 10 }]}>
                   <View style={styles.patientIdentity}>
-                    <View style={styles.patientAvatar}><Label style={{ color: palette.blue, fontWeight: '700' }}>{ready ? state.session.patient.name[0].text.slice(0, 1) : ''}</Label></View>
+                    {desktop && <View style={styles.patientAvatar}><Label style={{ color: palette.blue, fontWeight: '700' }}>{ready ? state.session.patient.name[0].text.slice(0, 1) : ''}</Label></View>}
                     <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
                       <Label style={styles.micro}>{copy('patient')}</Label>
                       {ready ? <Label testID="patient-name" style={{ fontWeight: '700', fontSize: 20 * scale, lineHeight: 27 * scale }}>{state.session.patient.name[0].text}</Label> : <Label accessibilityLiveRegion="polite">{t(state.status === 'error' ? 'contextError' : 'contextLoading')}</Label>}
                     </View>
                   </View>
-                  <View style={{ flexGrow: 1, gap: 4 }}>
+                  <View style={{ flexGrow: 1, flexShrink: 1, minWidth: 0, maxWidth: '100%', gap: 4 }}>
                     <Label style={styles.small}>{copy('account')}{': '}<Label style={{ fontWeight: '700', fontSize: 14 * scale }}>{accountNames[state.account]}{state.account === 'lourdes' ? ` · ${copy('daughter')}` : ''}</Label></Label>
                     {ready && <Label style={styles.small}>{copy('role')}{': '}{roleText}</Label>}
                   </View>
-                  <View style={styles.tools}>
-                    {accounts.map(account => <Action key={account} size="compact" variant="ghost" label={copy('demoView', { name: accountNames[account] })} selected={state.account === account} showMarker={false} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); }}>{copy('demoView', { name: accountNames[account] })}</Action>)}
 
-                  </View>
                 </View>
                 {!desktop && <View style={styles.mobileNav}>{navigation}</View>}
                 {ready && state.section === 'visit' && <View testID="section-card" style={{ minWidth: 0 }}><VisitPanel session={state.session} controller={visitController} {...{ Label, Action, styles, scale }} wide={desktop && scale === 1} /></View>}
@@ -140,11 +147,11 @@ function Portal({ onLanguageChange }) {
                 {ownerFamily && <View testID="section-card" style={{ gap: 20 }}>
                   <Label testID="section-heading" accessibilityRole="header" style={styles.sectionHeading}>{t('family')}</Label>
                   <View style={styles.familyNotice}><Label style={{ color: palette.muted }}>{copy('familyNotice')}</Label></View>
-                  <FamilySection key={`${state.account}:${state.role}:${state.session.patient.id}`} language={language} textScale={scale} patient={{ id: state.session.patient.id, name: state.session.patient.name?.[0]?.text }} />
+                  <FamilySection key={`${state.account}:${state.role}:${state.session.patient.id}`} initialCaregivers={store.getFamilyAccess()} save={payload => store.saveFamilyPermissions(payload, state.session)} language={language} textScale={scale} patient={{ id: state.session.patient.id, name: state.session.patient.name?.[0]?.text }} />
                 </View>}
                 {delegateFamily && <View testID="section-card" style={{ gap: 20 }}>
                   <Label testID="section-heading" accessibilityRole="header" style={styles.sectionHeading}>{t('family')}</Label>
-                  <FamilyPanel language={language} textScale={scale} viewer={{ kind: 'delegate', caregiverId: state.account }} patient={{ id: state.session.patient.id, name: state.session.patient.name?.[0]?.text }} permissions={FAMILY_PERMISSION_FIXTURE} state={{ status: 'ready' }} />
+                  <FamilyPanel language={language} textScale={scale} viewer={{ kind: 'delegate', caregiverId: state.account }} patient={{ id: state.session.patient.id, name: state.session.patient.name?.[0]?.text }} permissions={store.getFamilyAccess()} state={{ status: 'ready' }} />
                 </View>}
                 {ready && state.section === 'more' && <MoreSection key={`${state.account}:${state.role}`} language={language} scale={scale} />}
                 {ready && !ownerFamily && !delegateFamily && !['results', 'visit', 'care', 'more'].includes(state.section) && <View testID="section-card" style={styles.card}>
@@ -157,7 +164,15 @@ function Portal({ onLanguageChange }) {
                 {ready && state.section === 'results' && <ResultsPanel key={`${state.account}:${state.role}`} session={state.session} reportScope={reportScope} {...{ Label, Action, styles, scale }} wide={desktop && scale === 1} />}
                 {ready && state.section === 'visit' && <ShortcutCards {...{ desktop, scale, state, navigate, t, copy }} />}
               </>}
+              {!desktop && <View style={{ gap: 12 }}>
+                <Action size="compact" variant="ghost" label={copy('demoControls')} expanded={demoControls} controls={demoControlsId} onPress={() => setDemoControls(value => !value)}>{copy('demoControls')}</Action>
+                {demoControls && <View testID="demo-controls" nativeID={demoControlsId} style={{ padding: 16, backgroundColor: palette.pale, borderRadius: 12, gap: 12 }}>
+                  <Label style={styles.small}>{copy('demoControlsBody')}</Label>
+                  <View style={styles.tools}>{accounts.map(account => <Action key={account} size="compact" label={copy('demoView', { name: DEMO_VIEW_NAMES[account] })} selected={state.account === account} showMarker={false} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); scrollRef.current?.scrollTo?.({ y: 0, animated: false }); }}>{copy('demoView', { name: DEMO_VIEW_NAMES[account] })}</Action>)}</View>
+                </View>}
+              </View>}
               <DemoDisclosure title={copy('demoDetails')} body={copy('demoBody')} warning={t('permissionWarning')} />
+              {!desktop && <Label testID="portal-tagline" {...accessibilityLanguageProps(Platform.OS, language)} style={styles.small}>{copy('portalTagline')}</Label>}
             </View>
           </ScrollView>
         </View>
@@ -206,8 +221,9 @@ const styles = StyleSheet.create({
   notice: { paddingVertical: 6, paddingHorizontal: 16, backgroundColor: palette.white, borderBottomWidth: 1, borderColor: palette.borderSoft, flexDirection: 'row', gap: 8, justifyContent: 'center' },
   noticeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: palette.brandRed, marginTop: 6 },
   shell: { flex: 1, minWidth: 0, width: '100%' },
-  sidebar: { width: 244, padding: 22, borderRightWidth: 1, borderColor: palette.borderSoft, backgroundColor: palette.white, gap: 16, ...Platform.select({ web: { position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto', flexShrink: 0 }, default: {} }) },
-  sidebarFooter: { marginTop: 'auto', paddingTop: 40, gap: 12 },
+  sidebarRail: { width: 244, flexShrink: 0, alignSelf: 'stretch', borderRightWidth: 1, borderColor: palette.borderSoft, backgroundColor: palette.white },
+  sidebar: { padding: 22, gap: 16, ...Platform.select({ web: { position: 'sticky', top: 0, minHeight: '100vh', maxHeight: '100vh', overflowY: 'auto' }, default: { flex: 1 } }) },
+  sidebarFooter: { marginTop: 'auto', paddingTop: 40, paddingBottom: 64, gap: 12 },
   redRule: { width: 26, height: 3, borderRadius: 3, backgroundColor: palette.brandRed },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
   logoSurface: { borderRadius: 16, backgroundColor: palette.white },

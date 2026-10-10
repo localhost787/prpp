@@ -4,6 +4,12 @@ import { createStudiesController, studyPresentation } from './studies.mjs';
 import { useLanguage } from './Language.jsx';
 import { palette } from './ui.mjs';
 
+// Scoped presentation copy; the model and its permission gates remain unchanged.
+const metadataCopy = {
+  en: { missingPurpose: 'Some studies do not include a description.', missingTime: 'Completion times are not available.' },
+  es: { missingPurpose: 'Algunos estudios no incluyen una descripción.', missingTime: 'No hay tiempos de entrega disponibles.' },
+};
+
 export default function StudiesPanel({ session, Label, Action, styles, scale }) {
   const { t, language } = useLanguage();
   const [controller] = useState(() => createStudiesController());
@@ -25,16 +31,16 @@ export default function StudiesPanel({ session, Label, Action, styles, scale }) 
         return <View testID="study-row" key={item.id} style={[styles.card, { boxShadow: 'none', gap: 8 }]}>
           <View style={styles.topline}>
             <Label accessibilityRole="header" style={{ fontWeight: '700', flex: 1 }}>{row.name}</Label>
-            <Label style={{ fontWeight: '700', color: palette.blue }}>{row.status}</Label>
-          </View>
-          <View accessibilityRole="progressbar" accessibilityLabel={`${row.name}: ${row.status}`} accessibilityValue={{ min: 0, max: 100, now: row.progress }} style={{ height: 8, borderRadius: 4, backgroundColor: palette.borderSoft, overflow: 'hidden' }}>
-            <View style={{ width: `${row.progress}%`, height: '100%', backgroundColor: palette.blue }} />
+            <Label style={{ fontWeight: '700', color: palette.blue, backgroundColor: palette.borderSoft, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 1 }}>{row.status}</Label>
           </View>
           <Label>{row.explanation}</Label>
-          <Label style={styles.small}>{t('studyPurpose', { purpose: row.purpose })}</Label>
-          <Label style={styles.small}>{t('studyTypicalTime', { time: row.typicalTime })}</Label>
+          {item.purposeKey && <Label style={styles.small}>{t('studyPurpose', { purpose: row.purpose })}</Label>}
         </View>;
       })}
+      {state.status === 'ready' && <Label style={styles.small}>{[
+        state.items.some(item => !item.purposeKey) && metadataCopy[language === 'es' ? 'es' : 'en'].missingPurpose,
+        metadataCopy[language === 'es' ? 'es' : 'en'].missingTime,
+      ].filter(Boolean).join(' ')}</Label>}
     </View>
   </View>;
 }

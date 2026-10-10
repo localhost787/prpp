@@ -1,6 +1,6 @@
 // Explicit local UI and synthetic-case translations. Clinical wording is provisional;
 // see docs/PRPP-idiomas.md. Never translate live clinical data with this dictionary.
-export const DEFAULT_LANGUAGE = 'es';
+export const DEFAULT_LANGUAGE = 'en';
 export const messages = {
   en: {
     chooseAccount: 'Choose an account', chooseContext: 'What would you like to view?',
@@ -121,7 +121,7 @@ export const messages = {
     filterLabel: 'Filter: {status}', resultCount: '{visible} of {total} example results',
     noMatches: 'No matches for this filter. This does not mean there are no results.', clearFilter: 'Clear filter', viewAll: 'View all',
     statusDisclaimer: 'The source of the example does not specify the status of some results. They are not assumed to be complete.',
-    all: 'All', preliminary: 'Preliminary', final: 'Ready', corrected: 'Corrected', unknown: 'Status not available',
+    all: 'All', preliminary: 'Preliminary', final: 'Ready', corrected: 'Corrected', unknown: 'Final or preliminary status not provided',
     normal: 'Normal', high: 'High', low: 'Low', veryHigh: 'Very high', veryLow: 'Very low', abnormal: 'Abnormal', noInterpretation: 'No interpretation',
     wbcTitle: 'White blood cells', hbTitle: 'Hemoglobin', lactatoTitle: 'Lactate', glucosaTitle: 'Glucose', creatininaTitle: 'Creatinine (kidneys)', rxTitle: 'Chest X-ray',
     wbcNote: 'They are high. This often happens when the body fights an infection.', hbNote: 'Normal.', lactatoNote: 'Normal. This is a good sign.',
@@ -265,7 +265,7 @@ export const messages = {
     filterLabel: 'Filtrar: {status}', resultCount: '{visible} de {total} resultados de ejemplo',
     noMatches: 'No hay coincidencias con este filtro. No significa que no haya resultados.', clearFilter: 'Quitar filtro', viewAll: 'Ver todos',
     statusDisclaimer: 'El estado de algunos resultados no está indicado en la fuente del ejemplo. No se supone que estén completos.',
-    all: 'Todos', preliminary: 'Preliminar', final: 'Listo', corrected: 'Corregido', unknown: 'Estado no disponible',
+    all: 'Todos', preliminary: 'Preliminar', final: 'Listo', corrected: 'Corregido', unknown: 'No se indicó si son finales o preliminares',
     normal: 'Normal', high: 'Alto', low: 'Bajo', veryHigh: 'Muy alto', veryLow: 'Muy bajo', abnormal: 'Anormal', noInterpretation: 'Sin interpretación',
     wbcTitle: 'Glóbulos blancos', hbTitle: 'Hemoglobina', lactatoTitle: 'Lactato', glucosaTitle: 'Glucosa', creatininaTitle: 'Creatinina (riñones)', rxTitle: 'Radiografía de tórax',
     wbcNote: 'Están altos. Suele pasar cuando el cuerpo combate una infección.', hbNote: 'Normal.', lactatoNote: 'Normal. Es una buena señal.',

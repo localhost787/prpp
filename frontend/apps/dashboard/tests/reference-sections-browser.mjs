@@ -10,12 +10,15 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto('http://127.0.0.1:3001');
+    await expect(page.locator('html')).toHaveAttribute('lang','en');
+    await page.getByRole('button',{name:'Switch language to Spanish',exact:true}).click();
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     for (const section of ['visit', 'results', 'care', 'family', 'more']) {
       await expect(page.getByTestId(`nav-icon-${section}`)).toBeVisible();
     }
 
     await page.getByRole('button', { name: 'Ir a Resultados', exact: true }).click();
+    await page.getByRole('button', { name: 'Ver informe: Hemograma completo', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Sobre este informe de ejemplo', exact: true }).first()).toHaveAttribute('aria-expanded', 'false');
     expect(await page.getByTestId('result-card').first().evaluate(element => ({
       topWidth: getComputedStyle(element).borderTopWidth,
@@ -38,7 +41,8 @@ try {
     await expect(familyCards).not.toContainText('Rafael');
     const first = await familyCards.nth(0).boundingBox();
     expect(first.width).toBeGreaterThan(250);
-    expect(await page.getByRole('switch').first().evaluate(element => getComputedStyle(element).borderColor)).toBe('rgb(225, 231, 240)');
+    // Interactive switches use the stronger neutral control border, not the decorative card border.
+    expect(await page.getByRole('switch').first().evaluate(element => getComputedStyle(element).borderColor)).toBe('rgb(113, 129, 152)');
 
     await page.getByRole('button', { name: 'Ir a Más', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Servicios y ayuda', exact: true })).toBeVisible();

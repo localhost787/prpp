@@ -11,6 +11,7 @@ try {
   const button=name=>page.getByRole('button',{name,exact:true});
   await page.goto('http://127.0.0.1:3001');
   await expect(page.locator('html')).toHaveAttribute('lang','en');
+  await expect(button('Demonstration controls')).toBeInViewport();
   await button('Switch language to Spanish').click();
   await expect(page.getByTestId('section-heading')).toHaveText('Resultados');
   await expect(page.getByTestId('context-card').getByRole('button',{name:'Vista Carmen',exact:true})).toHaveCount(0);

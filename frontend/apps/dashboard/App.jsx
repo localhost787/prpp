@@ -118,7 +118,10 @@ function Portal({ onLanguageChange }) {
               </View>
             </View>
           </View>
-          {desktop && demoControls && <View testID="demo-controls" nativeID={demoControlsId} style={{ padding: 16, backgroundColor: palette.pale, gap: 12, borderBottomWidth: 1, borderColor: palette.borderSoft }}>
+          {!desktop && <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <Action size="compact" variant="ghost" label={copy('demoControls')} expanded={demoControls} controls={demoControlsId} onPress={() => setDemoControls(value => !value)}>{copy('demoControls')}</Action>
+          </View>}
+          {demoControls && <View testID="demo-controls" nativeID={demoControlsId} style={[{ padding: 16, backgroundColor: palette.pale, gap: 12, borderBottomWidth: 1, borderColor: palette.borderSoft }, !desktop && { marginHorizontal: 16, marginBottom: 12, borderRadius: 12, borderWidth: 1 }]}>
             <Label style={styles.small}>{copy('demoControlsBody')}</Label>
             <View style={styles.tools}>
               {accounts.map(account => <Action key={account} size="compact" label={copy('demoView', { name: DEMO_VIEW_NAMES[account] })} selected={state.account === account} showMarker={false} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); scrollRef.current?.scrollTo?.({ y: 0, animated: false }); }}>{copy('demoView', { name: DEMO_VIEW_NAMES[account] })}</Action>)}
@@ -164,13 +167,6 @@ function Portal({ onLanguageChange }) {
                 {ready && state.section === 'results' && <ResultsPanel key={`${state.account}:${state.role}`} session={state.session} reportScope={reportScope} {...{ Label, Action, styles, scale }} wide={desktop && scale === 1} />}
                 {ready && state.section === 'visit' && <ShortcutCards {...{ desktop, scale, state, navigate, t, copy }} />}
               </>}
-              {!desktop && <View style={{ gap: 12 }}>
-                <Action size="compact" variant="ghost" label={copy('demoControls')} expanded={demoControls} controls={demoControlsId} onPress={() => setDemoControls(value => !value)}>{copy('demoControls')}</Action>
-                {demoControls && <View testID="demo-controls" nativeID={demoControlsId} style={{ padding: 16, backgroundColor: palette.pale, borderRadius: 12, gap: 12 }}>
-                  <Label style={styles.small}>{copy('demoControlsBody')}</Label>
-                  <View style={styles.tools}>{accounts.map(account => <Action key={account} size="compact" label={copy('demoView', { name: DEMO_VIEW_NAMES[account] })} selected={state.account === account} showMarker={false} onPress={() => { visitController.close(true); store.enter(account, roles[account][0]); scrollRef.current?.scrollTo?.({ y: 0, animated: false }); }}>{copy('demoView', { name: DEMO_VIEW_NAMES[account] })}</Action>)}</View>
-                </View>}
-              </View>}
               <DemoDisclosure title={copy('demoDetails')} body={copy('demoBody')} warning={t('permissionWarning')} />
               {!desktop && <Label testID="portal-tagline" {...accessibilityLanguageProps(Platform.OS, language)} style={styles.small}>{copy('portalTagline')}</Label>}
             </View>

@@ -1,5 +1,6 @@
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { showDemoControls, expandReports } from './entry-helpers.mjs';
 import { translate } from '../src/i18n.mjs';
 const folder='../../docs/evidence/demo-direct'; await mkdir(folder,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
@@ -13,7 +14,7 @@ try {
   page.on('websocket',s=>report.requests.push(s.url()));
   const button=name=>page.getByRole('button',{name,exact:true});
   await page.goto('http://127.0.0.1:3001');
-  await expect(page.locator('html')).toHaveAttribute('lang','es');
+  await expect(page.locator('html')).toHaveAttribute('lang','en');
   await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
   await expect(page.getByTestId('account-chooser')).toHaveCount(0);
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
@@ -21,16 +22,19 @@ try {
    if(await page.locator('html').getAttribute('lang')!==language) await button(translate(language==='es'?'en':'es','languageLabel')).click();
    const t=(key,args)=>translate(language,key,args);
    const view=name=>button(`${language==='es'?'Vista':'View'} ${name}`);
+   await showDemoControls(page);
+   await button(t('goTo',{section:t('visit')})).click();
    await expect(page.getByTestId('context-card')).toContainText(t('selfRole'));
    await button(language==='es'?'Opciones de demostración':'Demonstration options').click();
    await button(t('visitAdvance')).click();
    await expect(page.getByTestId('visit-summary')).toContainText(language==='es'?'Etapa 6 de 7':'Stage 6 of 7');
    await button(t('goTo',{section:t('family')})).click();
    await expect(page.getByTestId('section-heading')).toHaveText(t('family'));
-   await expect(page.getByRole('heading',{name:'Lourdes',exact:true})).toBeVisible();
+   await expect(page.getByRole('heading',{name:'Lourdes Santiago Rivera',exact:true})).toBeVisible();
    expect(await page.locator('body').innerText()).not.toMatch(/Rafael/);
    const toggle=page.getByRole('switch').first(); const checked=await toggle.getAttribute('aria-checked');await toggle.click();await expect(toggle).not.toHaveAttribute('aria-checked',checked);
    await button(t('goTo',{section:t('results')})).click();
+   await expandReports(page);
    await expect(page.getByTestId('result-card').first()).toBeVisible();
    await view('Lourdes').focus();await page.keyboard.press('Enter');
    await expect(page.getByTestId('context-card')).toContainText(t('delegateRole'));
@@ -39,9 +43,13 @@ try {
    await expect(page.getByTestId('result-card')).toHaveCount(0);await expect(page.getByTestId('report-group')).toHaveCount(0);
    expect(await page.locator('body').innerText()).not.toMatch(/15\.2|Hemograma|Rafael/);
    await button(t('goTo',{section:t('family')})).click();await expect(page.getByRole('switch')).toHaveCount(0);
-   await view('Carmen').click();await expect(page.getByTestId('section-heading')).toHaveText(t('visit'));
+   await view('Carmen').click();await expect(page.getByTestId('section-heading')).toHaveText(t('results'));
+   await button(t('goTo',{section:t('visit')})).click();
    await expect(page.getByTestId('visit-summary')).toContainText(language==='es'?'Etapa 5 de 7':'Stage 5 of 7');
-   await button(t('goTo',{section:t('family')})).click();await expect(page.getByRole('switch').first()).toHaveAttribute('aria-checked',checked);
+   await button(t('goTo',{section:t('family')})).click();await expect(page.getByRole('switch').first()).not.toHaveAttribute('aria-checked',checked);
+   // Restore the demo grants explicitly for the next language pass. View switches no longer reset them.
+   await page.getByRole('switch').first().click();
+   for (const index of [1,2]) { const sw=page.getByRole('switch').nth(index);if(await sw.getAttribute('aria-checked')==='false')await sw.click(); }
    await view('Carmen').click();
    for(const scale of [1,1.5]) {
     if(scale===1.5){await button(t('larger')).click();await button(t('larger')).click();}
@@ -51,7 +59,7 @@ try {
     if(scale===1.5){await button(t('smaller')).click();await button(t('smaller')).click();}
    }
   }
-  await button('Vista Lourdes').click();await page.reload();await expect(page.getByTestId('context-card')).toContainText(translate('es','selfRole'));
+  await button('Vista Lourdes').click();await page.reload();await expect(page.locator('html')).toHaveAttribute('lang','en');await expect(page.getByTestId('context-card')).toContainText(translate('en','selfRole'));
   const storage=await page.evaluate(async()=>[localStorage.length,sessionStorage.length,(await caches.keys()).length,(await indexedDB.databases()).length]);expect(storage).toEqual([0,0,0,0]);
   report.cases.push({width,languages:['es','en','es'],scales:[1,1.5],storage});await context.close();
  }

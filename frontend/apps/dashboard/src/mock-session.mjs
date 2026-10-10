@@ -4,7 +4,7 @@ import { ClientStorage, MemoryStorage } from '@medplum/core';
 import { MockClient } from '@medplum/mock';
 
 export const accounts = ['carmen', 'lourdes'];
-export const accountNames = { carmen: 'Carmen', lourdes: 'Lourdes' };
+export const accountNames = { carmen: 'Carmen', lourdes: 'Lourdes Santiago Rivera' };
 export const roles = {
   carmen: ['self'],
   lourdes: ['delegate'],

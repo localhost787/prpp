@@ -14,10 +14,10 @@ try {
     await enterContext(page, 'Carmen', 'self', 'en');
     const panel = page.getByTestId('studies-panel');
     await expect(panel).toContainText('Studies in progress');
-    await expect(page.getByTestId('study-row')).toHaveCount(5);
+    await expect(page.getByTestId('study-row')).toHaveCount(4);
     await expect(panel).toContainText('Complete blood count');
     await expect(panel).toContainText('Ready');
-    for (const label of ['Ordered', 'Sample collected', 'In process', 'Preliminary', 'Ready']) await expect(panel).toContainText(label);
+    for (const label of ['Sample collected', 'In process', 'Preliminary', 'Ready']) await expect(panel).toContainText(label);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
 
     await enterContext(page, 'Lourdes', 'delegate', 'en');
@@ -25,10 +25,11 @@ try {
     expect(await panel.innerText()).not.toMatch(/blood count|lactate|metabolic|X-ray|blood culture/i);
 
     await enterContext(page, 'Carmen', 'self', 'en');
-    await expect(page.getByTestId('study-row')).toHaveCount(5);
+    await expect(page.getByTestId('study-row')).toHaveCount(4);
     await expect(panel).toContainText('Complete blood count');
     await page.getByRole('button', { name: 'Switch language to Spanish', exact: true }).click();
     await expect(panel).toContainText('Estudios en curso');
+    await expect(panel).not.toContainText('Lactato');
     await expect(panel).toContainText('Hemograma completo');
     await expect(panel).toContainText('Hemocultivo (busca bacterias en la sangre)');
     expect(errors).toEqual([]);

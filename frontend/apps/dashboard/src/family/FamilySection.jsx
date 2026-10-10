@@ -25,9 +25,9 @@ const STATUS_COPY = Object.freeze({
   }),
 });
 
-export default function FamilySection({ language = 'en', textScale = 1, patient, save = async () => {} }) {
+export default function FamilySection({ language = 'en', textScale = 1, patient, initialCaregivers = cloneFixture(), save = async () => {} }) {
   const resolvedLanguage = Object.hasOwn(FAMILY_COPY, language) ? language : 'en';
-  const [mutationQueue] = useState(() => createFamilyMutationQueue(cloneFixture(), save));
+  const [mutationQueue] = useState(() => createFamilyMutationQueue(initialCaregivers, save));
   const [caregivers, setCaregivers] = useState(() => mutationQueue.getCaregivers());
   const [saveStatus, setSaveStatus] = useState(null);
   const revision = useRef(0);

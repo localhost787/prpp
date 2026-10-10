@@ -16,8 +16,8 @@ test('report listing denies before fixture access; groups authorized synthetic c
   }
   assert.equal(reads, 0);
   const reports = api.listReports(context(), 'es').reports;
-  assert.deepEqual(reports.map(r => r.items.map(i => i.id)), [['wbc', 'hb'], ['rx'], ['lactato', 'glucosa', 'creatinina']]);
-  assert.deepEqual(reports[2].items.map(i => i.status), ['unknown', 'unknown', 'unknown']);
+  assert.deepEqual(reports.map(r => r.items.map(i => i.id)), [['wbc', 'hb'], ['rx'], ['glucosa', 'creatinina']]);
+  assert.deepEqual(reports[2].items.map(i => i.status), ['unknown', 'unknown']);
   assert.equal(reports[0].items[0].value, 15.2);
   assert.equal(reports[0].items[0].unit, 'mil/µL');
 });
@@ -98,6 +98,7 @@ test('all six real PDFs preserve fixture presentation, Unicode and source status
       const path = `${dir}${report.id}-${language}.pdf`;
       writeFileSync(path, bytes);
       const text = execFileSync('pdftotext', ['-layout', path, '-'], { encoding: 'utf8' });
+      assert.doesNotMatch(text, /lactate|lactato/i);
       const normalize = s => String(s).replace(/\s+/g, ' ').trim();
       for (const item of report.items) for (const expected of [item.title, item.value, item.unit, item.range, item.note, item.statusLabel, item.interpretation]) {
         if (expected !== null && expected !== '') assert.ok(normalize(text).includes(normalize(expected)), `Missing ${expected} in ${path}`);

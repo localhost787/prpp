@@ -1,4 +1,4 @@
-import { enterContext, changeRole } from './entry-helpers.mjs';
+import { enterContext, changeRole, expandReports, showDemoControls } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { translate } from '../src/i18n.mjs';
@@ -43,7 +43,7 @@ try {
    await enterContext(page,'Carmen','self',language);
    const enter=button(language==='es'?'Vista Carmen':'View Carmen'),box=await enter.boundingBox();
    if(width===1280) expect(box.width,'desktop CTA content width').toBeLessThan(720);
-   if(width===390) expect(box.y,'entry first viewport').toBeLessThan(650);
+   await expect(enter).toBeVisible(); // Presenter controls are separate from the patient header.
    await expect(page.getByTestId('demo-notice')).toContainText(language==='es'?'Demostración · datos ficticios':'Demonstration · fictional data');
    await capture(`${width}-${language}-landing`,{language,section:'landing',scale:1,entry:box});
    for(const [account,role]of [['Carmen','self'],['Lourdes','delegate']]){
@@ -61,7 +61,8 @@ try {
       }
       await nav.click();await expect(nav).toHaveAttribute('aria-pressed','true');await expect(page.getByTestId('section-heading')).toHaveText(section==='more'?(language==='es'?'Servicios y ayuda':'Services and help'):t(section));
       if(section==='results'){
-       await expect(page.getByTestId('result-card')).toHaveCount(account==='Lourdes'?0:6);
+       await expandReports(page);
+       await expect(page.getByTestId('result-card')).toHaveCount(account==='Lourdes'?0:5);
        if(account==='Carmen'&&scale===1){
         const search=page.getByRole('textbox',{name:t('searchResult')});await search.focus();
         const focus=await search.evaluate(el=>({outline:getComputedStyle(el).outlineWidth,offset:getComputedStyle(el).outlineOffset}));

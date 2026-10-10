@@ -6,7 +6,6 @@ const progressByState = { ordered: 15, collected: 35, processing: 60, preliminar
 export async function studyFixtures(patientId) {
   if (patientId !== 'carmen') return [];
   return [
-    { id: 'lactato', patientId, nameKey: 'studyNameLactate', state: 'ordered' },
     { id: 'panel-metabolico', patientId, nameKey: 'studyNameMetabolic', state: 'collected' },
     { id: 'hemocultivos', patientId, nameKey: 'studyNameBloodCulture', state: 'processing', purposeKey: 'studyPurposeBloodCulture' },
     { id: 'radiografia', patientId, nameKey: 'studyNameChestXray', state: 'preliminary' },

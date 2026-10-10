@@ -13,7 +13,7 @@ const caregivers = [...FAMILY_PERMISSION_FIXTURE, { id: 'test-caregiver', name: 
 test('AYO-97 renders one independent permission card for Lourdes and a test caregiver', () => {
   const model = createOwnerFamilyModel({ language: 'es', caregivers });
   assert.deepEqual(model.caregivers.map(caregiver => [caregiver.name, caregiver.relationship]), [
-    ['Lourdes', 'Hija'],
+    ['Lourdes Santiago Rivera', 'Hija'],
     ['Test caregiver', 'Prueba'],
   ]);
   assert.deepEqual(model.caregivers.map(caregiver => caregiver.categories.map(category => category.state)), [

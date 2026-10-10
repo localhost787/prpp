@@ -9,8 +9,9 @@ export const NOTICES_COPY = Object.freeze({
     restricted: 'Notices are private',
     unavailable: 'Access has not been confirmed',
     error: 'We could not load notices. Try again.',
-    unread: count => `${count} unread`,
-    open: 'Open notices',
+    unread: count => count > 0 ? `${count} unread` : 'All read in this view',
+    open: 'Mark all as read',
+    local: 'Local demo: marking notices as read does not notify the hospital. This status resets when you leave this view.',
   }),
   es: Object.freeze({
     title: 'Avisos',
@@ -20,8 +21,9 @@ export const NOTICES_COPY = Object.freeze({
     restricted: 'Los avisos son privados',
     unavailable: 'El acceso no está confirmado',
     error: 'No pudimos cargar los avisos. Intente de nuevo.',
-    unread: count => `${count} sin leer`,
-    open: 'Abrir avisos',
+    unread: count => count > 0 ? `${count} sin leer` : 'Todos leídos en esta vista',
+    open: 'Marcar todos como leídos',
+    local: 'Demostración local: marcar avisos como leídos no notifica al hospital. Este estado se reinicia al salir de esta vista.',
   }),
 });
 

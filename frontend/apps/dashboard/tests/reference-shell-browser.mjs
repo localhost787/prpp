@@ -21,13 +21,17 @@ try {
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto('http://127.0.0.1:3001');
 
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.getByRole('button', { name: 'Switch language to Spanish', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
     await expect(page.getByTestId('demo-notice')).toHaveText(/Demostración · datos ficticios/);
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
     await expect(page.getByTestId('account-chooser')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Acerca de esta demostración', exact: true })).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByText('Este prototipo no está conectado a hospitales ni a PRHIE.', { exact: false })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Vista Carmen', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Vista Carmen', exact: true })).toHaveCount(0);
+    await expect(page.getByTestId('section-heading')).toHaveText('Resultados');
+    await page.getByRole('button', { name: 'Ir a Mi visita', exact: true }).click();
 
     const surface = await page.getByTestId('dashboard-shell').boundingBox();
     expect(surface.width).toBe(width);

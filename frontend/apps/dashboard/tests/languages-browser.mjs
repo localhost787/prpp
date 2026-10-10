@@ -1,4 +1,4 @@
-import { enterContext, changeRole } from './entry-helpers.mjs';
+import { enterContext, changeRole, expandReports, showDemoControls } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { translate } from '../src/i18n.mjs';
@@ -27,7 +27,10 @@ try {
   };
   const overflow = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   await page.goto('http://127.0.0.1:3001');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await button('Switch language to Spanish').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+  await showDemoControls(page);
   await expect(button('Vista Carmen')).toBeVisible();
   await switchLanguage(); await expect(button('View Carmen')).toBeVisible(); await switchLanguage();
   await enterContext(page, 'Carmen', 'self', language);
@@ -42,8 +45,9 @@ try {
       await overflow();
       await button(t('smaller')).click(); await button(t('smaller')).click();
     }
-    await expect(page.getByTestId('result-card')).toHaveCount(6);
-    for (const id of ['wbc', 'hb', 'lactato', 'glucosa', 'creatinina', 'rx']) {
+    await expandReports(page);
+    await expect(page.getByTestId('result-card')).toHaveCount(5);
+    for (const id of ['wbc', 'hb', 'glucosa', 'creatinina', 'rx']) {
       await button(t('viewDetailLabel', { name: t(`${id}Title`) })).click();
       await expect(page.getByTestId('result-detail').getByText(t(`${id}Note`), { exact: true })).toBeVisible();
       await expect(page.getByTestId('result-detail').getByText(t('askTeam'), { exact: true })).toBeVisible();
@@ -52,17 +56,20 @@ try {
     await expect(page.getByText(`15.2 ${t('thousandPerMicroliter')}`, { exact: true })).toBeVisible();
     await expect(page.getByText('12.8 g/dL', { exact: true })).toBeVisible();
     await page.getByRole('textbox', { name: t('searchResult') }).fill(t('wbcTitle'));
+    await expandReports(page);
     await expect(page.getByTestId('result-card')).toHaveCount(1);
     await button(t('viewDetailLabel', { name: t('wbcTitle') })).click();
     await expect(page.getByText(t('wbcNote'), { exact: true })).toBeVisible();
     await page.getByRole('textbox', { name: t('searchResult') }).fill('');
     await button(t('filterLabel', { status: t('preliminary') })).click();
+    await expandReports(page);
     await expect(page.getByTestId('result-card')).toHaveCount(1);
     await button(t('viewDetailLabel', { name: t('rxTitle') })).click();
     await expect(page.getByText(t('rxValue'), { exact: true })).toBeVisible();
     await expect(page.getByText(t('rxNote'), { exact: true })).toBeVisible();
     await switchLanguage();
     await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
+    await expandReports(page);
     await expect(page.getByTestId('result-card')).toHaveCount(1);
     await expect(page.getByTestId('result-detail')).toHaveCount(1);
     await expect(button(t('filterLabel', { status: t('preliminary') }))).toHaveAttribute('aria-pressed', 'true');
@@ -81,6 +88,7 @@ try {
   await page.getByRole('textbox', { name: t('searchResult') }).fill('gl');
   await switchLanguage();
   await expect(page.getByRole('textbox', { name: t('searchResult') })).toHaveValue('gl');
+  await expandReports(page);
   await expect(page.getByTestId('result-card').getByRole('heading')).toHaveText([t('wbcTitle'), t('hbTitle'), t('glucosaTitle')]);
   await enterContext(page, 'Lourdes', 'delegate', language);
   for (let pass = 0; pass < 2; pass++) {
@@ -94,15 +102,18 @@ try {
   await changeRole(page, 'self', language);
   await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
   await button(t('goTo', { section: t('results') })).click();
+  await expandReports(page);
   await button(t('filterLabel', { status: t('final') })).click();
   await switchLanguage();
   await expect(page.getByTestId('context-card')).toContainText('Carmen');
+  await expandReports(page);
   await expect(page.getByTestId('result-card')).toHaveCount(2);
   await enterContext(page, 'Lourdes', 'delegate', language);
   await expect(page.getByTestId('result-card')).toHaveCount(0);
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-  await expect(button('Vista Carmen')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await showDemoControls(page);
+  await expect(button('View Carmen')).toBeVisible();
   expect(await page.evaluate(async () => [localStorage.length, sessionStorage.length, (await caches.keys()).length, (await indexedDB.databases()).length])).toEqual([0, 0, 0, 0]);
   expect(requests).toEqual([]); expect(errors).toEqual([]);
   report.cases.push({ width, passed: true, errors, requests, languages: ['en', 'es', 'en'], scale: [1, 1.5] });

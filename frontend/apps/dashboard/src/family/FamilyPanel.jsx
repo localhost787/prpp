@@ -21,6 +21,8 @@ function CategorySwitch({ caregiver, category, copy, languageTag, scale, onToggl
   const enabled = category.state === 'allowed';
   const disabled = category.state === 'unknown';
   const stateLabel = enabled ? copy.on : category.state === 'restricted' ? copy.off : copy.unknown;
+  const localQualifier = languageTag === 'es-PR' ? 'en este ejemplo local' : 'in this local example';
+  const meaning = disabled ? copy.unknown : `${enabled ? copy.allowed : copy.restricted} ${localQualifier}`;
   return <Pressable
     accessibilityLanguage={languageTag}
     accessibilityRole="switch"
@@ -28,13 +30,29 @@ function CategorySwitch({ caregiver, category, copy, languageTag, scale, onToggl
     onFocus={event => setFocused(Platform.OS !== 'web' || event.target.matches?.(':focus-visible') === true)}
     onBlur={() => setFocused(false)}
     accessibilityLabel={`${category.label}: ${stateLabel}`}
+    accessibilityHint={meaning}
     accessibilityState={{ checked: enabled, disabled }}
     disabled={disabled}
     onPress={() => onToggleCategory?.({ caregiverId: caregiver.id, category: category.id, enabled: !enabled })}
     style={({ pressed }) => [styles.switchRow, focused && styles.focused, enabled && styles.switchEnabled, pressed && styles.pressed, disabled && styles.disabled]}
   >
-    <FamilyText languageTag={languageTag} scale={scale} style={styles.switchLabel}>{category.label}</FamilyText>
-    <FamilyText languageTag={languageTag} scale={scale} style={styles.switchState}>{stateLabel}</FamilyText>
+    <View style={styles.switchCopy}>
+      <FamilyText languageTag={languageTag} scale={scale} style={styles.switchLabel}>{category.label}</FamilyText>
+      <FamilyText languageTag={languageTag} scale={scale} style={styles.muted}>{meaning}</FamilyText>
+    </View>
+    <View style={styles.switchIndicator}>
+      <View
+        testID="family-switch-track"
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        aria-hidden
+        style={[styles.switchTrack, enabled && styles.switchTrackEnabled]}
+      >
+        <View testID="family-switch-thumb" style={styles.switchThumb} />
+      </View>
+      <FamilyText languageTag={languageTag} scale={scale} style={[styles.switchState, !enabled && styles.muted]}>{stateLabel}</FamilyText>
+    </View>
   </Pressable>;
 }
 
@@ -142,7 +160,23 @@ const styles = StyleSheet.create({
   },
   switchEnabled: { backgroundColor: palette.pale },
   focused: { outlineColor: palette.blue, outlineStyle: 'solid', outlineWidth: 3, outlineOffset: 3 },
-  switchLabel: { flex: 1, fontWeight: '600' },
+  switchCopy: { flexGrow: 1, flexShrink: 1, flexBasis: 150, minWidth: 0, gap: spacing.xs },
+  switchLabel: { fontWeight: '600' },
+  switchIndicator: { alignItems: 'center', maxWidth: '100%', gap: spacing.xs },
+  switchTrack: {
+    width: 48,
+    height: 28,
+    borderRadius: radii.pill,
+    borderWidth: 2,
+    borderColor: palette.muted,
+    backgroundColor: palette.muted,
+    padding: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  switchTrackEnabled: { backgroundColor: palette.blue, borderColor: palette.blue, justifyContent: 'flex-end' },
+  switchThumb: { width: 20, height: 20, borderRadius: radii.pill, backgroundColor: palette.white },
   switchState: { color: palette.blue, fontWeight: '700' },
   pressed: { backgroundColor: palette.palePressed },
   disabled: { backgroundColor: palette.disabled, borderColor: palette.borderSoft },

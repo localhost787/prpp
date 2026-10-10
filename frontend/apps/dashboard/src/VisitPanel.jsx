@@ -26,8 +26,9 @@ export default function VisitPanel({ session, controller, Label, Action, styles,
   const waitingFixture = visit?.stage === 3 ? WAIT_FIXTURES.afterTriage : visit?.stage === 5 ? WAIT_FIXTURES.afterSamples : null;
   const waitState = createWaitModel({ language, state: waitingFixture ? 'ready' : 'empty', ...(waitingFixture ?? {}) });
   const validNoticeContext = ((session.account === 'carmen' && session.role === 'self') || (session.account === 'lourdes' && session.role === 'delegate')) && session.patient?.id === 'carmen';
-  const noticePermission = status !== 'restricted' && validNoticeContext;
-  const notices = createNoticesModel({ language, permission: noticePermission, state: noticePermission ? 'ready' : 'empty', communications: noticePermission ? SYNTHETIC_NOTICE_FIXTURE : [] });
+  const noticePermission = session.permissions.visita === true && status !== 'restricted' && validNoticeContext;
+  const noticeState = status === 'ready' && visit ? 'ready' : status === 'loading' ? 'loading' : status === 'error' ? 'error' : 'empty';
+  const notices = createNoticesModel({ language, permission: noticePermission, state: noticeState, communications: noticePermission && noticeState === 'ready' ? SYNTHETIC_NOTICE_FIXTURE : [] });
   const unreadCount = noticesRead ? 0 : notices.items.length;
 
   return <View testID="visit-panel" style={{ gap: 22, minWidth: 0 }}>

@@ -2,8 +2,8 @@ import { resultFixtures } from '../result-fixtures.mjs';
 import { resultPresentation, statusKey, statusLabel, interpretationLabel } from '../results.mjs';
 
 export const reportCopy = Object.freeze({
-  en: Object.freeze({ warning: 'SYNTHETIC DEMO — NOT FOR MEDICAL USE', fictitious: 'Fictitious institution', grouping: 'Mock-only presentation grouping; not an official FHIR report or source.', provisional: 'Clinical translations are provisional.', value: 'Result', range: 'Reference range', interpretation: 'Interpretation', status: 'Source status', note: 'Explanation', missing: 'Not provided', download: 'Download synthetic PDF', institutionA: 'Demo Laboratory A', institutionB: 'Demo Laboratory B', institutionX: 'Demo Imaging Center', cbc: 'Complete blood count', rx: 'Chest X-ray', blood: 'Other blood results' }),
-  es: Object.freeze({ warning: 'DEMOSTRACIÓN SINTÉTICA — NO USAR PARA ATENCIÓN MÉDICA', fictitious: 'Institución ficticia', grouping: 'Agrupación visual solo del mock; no es un informe ni fuente FHIR oficial.', provisional: 'Las traducciones clínicas son provisionales.', value: 'Resultado', range: 'Intervalo de referencia', interpretation: 'Interpretación', status: 'Estado en la fuente', note: 'Explicación', missing: 'No indicado', download: 'Descargar PDF sintético', institutionA: 'Laboratorio de demostración A', institutionB: 'Laboratorio de demostración B', institutionX: 'Centro de imágenes de demostración', cbc: 'Hemograma completo', rx: 'Radiografía de tórax', blood: 'Otros resultados de sangre' }),
+  en: Object.freeze({ warning: 'SYNTHETIC DEMO — NOT FOR MEDICAL USE', fictitious: 'Fictitious institution', grouping: 'Mock-only presentation grouping; not an official FHIR report or source.', provisional: 'Clinical translations are provisional.', value: 'Result', range: 'Reference range', interpretation: 'Interpretation', status: 'Source status', note: 'Explanation', missing: 'Not provided', download: 'Download synthetic PDF', institutionA: 'Demo Hospital', cbcStory: 'Emergency visit · available at 9:41 a.m. (fictional scenario)', institutionB: 'Demo Laboratory B', institutionX: 'Demo Imaging Center', cbc: 'Complete blood count', rx: 'Chest X-ray', blood: 'Other blood results' }),
+  es: Object.freeze({ warning: 'DEMOSTRACIÓN SINTÉTICA — NO USAR PARA ATENCIÓN MÉDICA', fictitious: 'Institución ficticia', grouping: 'Agrupación visual solo del mock; no es un informe ni fuente FHIR oficial.', provisional: 'Las traducciones clínicas son provisionales.', value: 'Resultado', range: 'Intervalo de referencia', interpretation: 'Interpretación', status: 'Estado en la fuente', note: 'Explicación', missing: 'No indicado', download: 'Descargar PDF sintético', institutionA: 'Hospital de demostración', cbcStory: 'Visita a Emergencias · disponible a las 9:41 a. m. (escenario ficticio)', institutionB: 'Laboratorio de demostración B', institutionX: 'Centro de imágenes de demostración', cbc: 'Hemograma completo', rx: 'Radiografía de tórax', blood: 'Otros resultados de sangre' }),
 });
 // Assets are bundled synthetic demonstration data, NOT access-controlled server records.
 async function loadBundledPdf(id, language) {
@@ -55,7 +55,7 @@ export function saveBrowserPdf({ bytes, filename, mimeType, isCurrent }, environ
   }
 }
 
-const groups = [ ['a', 'institutionA', 'cbc', ['wbc', 'hb']], ['b', 'institutionX', 'rx', ['rx']], ['c', 'institutionB', 'blood', ['lactato', 'glucosa', 'creatinina']] ];
+const groups = [ ['a', 'institutionA', 'cbc', ['wbc', 'hb']], ['b', 'institutionX', 'rx', ['rx']], ['c', 'institutionB', 'blood', ['glucosa', 'creatinina']] ];
 const authorized = ctx => ctx?.status === 'ready' && Number.isSafeInteger(ctx.generation) && ctx.generation >= 0 && ctx.session?.permissions?.estudios === true && ctx.session?.patient?.id === 'carmen';
 export function listReports(context, language = 'en', { source = resultFixtures } = {}) {
   if (!authorized(context)) return { status: 'restricted', reports: [] };
@@ -65,6 +65,7 @@ export function listReports(context, language = 'en', { source = resultFixtures 
   const reports = groups.map(([id, institution, title, ids]) => ({
     id, language, institution: copy[institution], title: copy[title], fictitious: true, synthetic: true,
     warning: copy.warning, grouping: copy.grouping, provisional: copy.provisional,
+    ...(id === 'a' ? { story: copy.cbcStory } : {}),
     items: ids.map(id => rows.find(item => item.id === id && item.subject?.reference === 'Patient/carmen')).filter(Boolean).map(item => ({
       id: item.id, ...resultPresentation(item, language), range: item.referenceRange?.[0]?.text ?? null,
       interpretationCode: item.interpretation?.[0]?.coding?.[0]?.code ?? null,

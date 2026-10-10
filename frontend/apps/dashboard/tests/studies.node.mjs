@@ -5,16 +5,16 @@ const studies = await import('../src/studies.mjs').catch(() => ({}));
 
 const permitted = { account: 'carmen', role: 'self', patient: { id: 'carmen' }, permissions: { visita: true, estudios: true } };
 
-test('authorized synthetic case presents five named studies across the five documented states', async () => {
+test('authorized synthetic case presents four selected studies with documented states', async () => {
   assert.equal(typeof studies.loadStudies, 'function');
   const state = await studies.loadStudies(permitted);
   assert.equal(state.status, 'ready');
-  assert.equal(state.items.length, 5);
-  assert.deepEqual(state.items.map(item => item.state), ['ordered', 'collected', 'processing', 'preliminary', 'ready']);
+  assert.equal(state.items.length, 4);
+  assert.deepEqual(state.items.map(item => item.state), ['collected', 'processing', 'preliminary', 'ready']);
   assert.equal(state.items.find(item => item.id === 'hemograma').nameKey, 'studyNameCbc');
   for (const language of ['en', 'es']) {
     const rows = state.items.map(item => studies.studyPresentation(item, language));
-    assert.equal(rows.length, 5);
+    assert.equal(rows.length, 4);
     assert.equal(rows.at(-1).status, language === 'es' ? 'Listo' : 'Ready');
     assert.ok(rows.every(row => row.name && row.status && row.explanation && Number.isInteger(row.progress)));
   }

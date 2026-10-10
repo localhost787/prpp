@@ -12,7 +12,7 @@ export const FAMILY_COPY = Object.freeze({
     categories: Object.freeze({
       status: 'Emergency status',
       medicines: 'Medicines',
-      instructions: 'Instructions',
+      instructions: 'Discharge instructions and follow-up',
       studies: 'Studies and results',
     }),
     allowed: 'Shared',
@@ -34,7 +34,7 @@ export const FAMILY_COPY = Object.freeze({
     categories: Object.freeze({
       status: 'Estado en Emergencias',
       medicines: 'Medicinas',
-      instructions: 'Instrucciones',
+      instructions: 'Instrucciones del alta y cita',
       studies: 'Estudios y resultados',
     }),
     allowed: 'Compartido',
@@ -54,7 +54,7 @@ export const FAMILY_COPY = Object.freeze({
 export const FAMILY_PERMISSION_FIXTURE = Object.freeze([
   Object.freeze({
     id: 'lourdes',
-    name: 'Lourdes',
+    name: 'Lourdes Santiago Rivera',
     relationship: localized('Daughter', 'Hija'),
     permissions: Object.freeze({ status: true, medicines: true, instructions: true, studies: false }),
   }),

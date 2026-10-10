@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 const visit = await import('../src/visit.mjs').catch(() => ({}));
 import { DEFAULT_LANGUAGE, messages } from '../src/i18n.mjs';
-test('bilingual presentation defaults to Spanish, uses PR time, never alters stage', async () => {
+test('bilingual presentation defaults to English, uses PR time, never alters stage', async () => {
   assert.equal(typeof visit.visitPresentation, 'function');
   const { visit: data } = await visit.loadVisit(carmen);
-  assert.equal(DEFAULT_LANGUAGE, 'es');
-  const es = visit.visitPresentation(data, carmen.permissions);
+  assert.equal(DEFAULT_LANGUAGE, 'en');
+  const es = visit.visitPresentation(data, carmen.permissions, 'es');
   const en = visit.visitPresentation(data, carmen.permissions, 'en');
   assert.equal(en.stages[4], 'Tests'); assert.equal(es.stages[4], 'Estudios');
   assert.match(en.startedAt, /8:12/); assert.match(es.startedAt, /8:12/);

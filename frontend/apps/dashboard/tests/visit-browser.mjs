@@ -1,4 +1,12 @@
-import { enterContext, changeRole } from './entry-helpers.mjs';
+import { enterContext as enterBase } from './entry-helpers.mjs';
+async function enterContext(page, account, role, language) {
+  await enterBase(page, account, role, language);
+  for (const name of language === 'en' ? ['View the visit stages', 'Demonstration options'] : ['Ver las etapas de la visita', 'Opciones de demostración']) {
+    const button = page.getByRole('button', { name, exact: true });
+    if (await button.getAttribute('aria-expanded') !== 'true') await button.click();
+  }
+}
+async function changeRole(page, role, language) { await enterContext(page, role === 'self' ? 'Carmen' : 'Lourdes', role, language); }
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 const folder = '../../docs/evidence/AYO-66';
@@ -18,48 +26,48 @@ try {
   await enterContext(page, 'Carmen', 'self', 'en');
   const panel = page.getByTestId('visit-panel'), current = page.getByTestId('visit-current');
   await expect(panel).toBeVisible();
-  await expect(panel).toContainText('Initial example status: Receiving care');
-  await expect(current).toHaveText('Current simulated stage: 5 of 7 · Tests');
+  await expect(page.getByTestId('visit-summary')).toContainText('Stage 5 of 7 · simulated');
+  await expect(current).toHaveAttribute('aria-label', 'Current simulated stage: 5 of 7 · Tests');
   await expect(page.getByTestId('visit-phase')).toHaveCount(7);
   await expect(panel).toContainText('Cubicle 12'); await expect(panel).toContainText('8:12');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${folder}/after-en-${width}.png`, fullPage: true });
   await page.getByRole('button', { name: 'Simulate next stage', exact: true }).click();
-  await expect(current).toContainText('6 of 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('6 of 7'));
   await page.getByRole('button', { name: 'Switch language to Spanish', exact: true }).click();
-  await expect(current).toHaveText('Etapa simulada actual: 6 de 7 · Decisión');
+  await expect(current).toHaveAttribute('aria-label', 'Etapa simulada actual: 6 de 7 · Decisión');
   await page.getByRole('button', { name: 'Cambiar idioma a inglés', exact: true }).click();
-  await expect(current).toHaveText('Current simulated stage: 6 of 7 · Decision');
+  await expect(current).toHaveAttribute('aria-label', 'Current simulated stage: 6 of 7 · Decision');
   await page.getByRole('button', { name: 'Switch language to Spanish', exact: true }).click();
   await page.getByRole('button', { name: 'Reiniciar simulación a etapa 5', exact: true }).click();
-  await expect(current).toContainText('5 de 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('5 de 7'));
   await expect(panel).toContainText('Esperar resultados de laboratorio y la radiografía.');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${folder}/after-es-${width}.png`, fullPage: true });
   for (let stage = 4; stage >= 1; stage--) {
     await page.getByRole('button', { name: 'Simular etapa anterior', exact: true }).click();
-    await expect(current).toContainText(`${stage} de 7`);
+    await expect(current).toHaveAttribute('aria-label', new RegExp(`${stage} de 7`));
   }
   await expect(page.getByRole('button', { name: 'Simular etapa anterior', exact: true })).toBeDisabled();
   for (let stage = 2; stage <= 7; stage++) {
     await page.getByRole('button', { name: 'Simular etapa siguiente', exact: true }).click();
-    await expect(current).toContainText(`${stage} de 7`);
+    await expect(current).toHaveAttribute('aria-label', new RegExp(`${stage} de 7`));
   }
   await expect(page.getByRole('button', { name: 'Simular etapa siguiente', exact: true })).toBeDisabled();
   await enterContext(page, 'Carmen', 'self', 'es');
-  await expect(current).toContainText('5 de 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('5 de 7'));
   await page.getByRole('button', { name: 'Reiniciar simulación a etapa 5', exact: true }).click();
   await enterContext(page, 'Lourdes', 'delegate', 'es');
-  await expect(current).toHaveText('Etapa simulada actual: 5 de 7 · Atención de la visita');
+  await expect(current).toHaveAttribute('aria-label', 'Etapa simulada actual: 5 de 7 · Atención de la visita');
   await expect(page.getByTestId('studies-panel')).toContainText('1 estudio en curso; los resultados son privados.');
   expect(await panel.innerText()).not.toMatch(/Hemograma|Lactato|Panel metabólico|Radiografía de tórax|Hemocultivo|15\.2/);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${folder}/lourdes-${width}.png`, fullPage: true });
   await changeRole(page, 'self', 'es');
   await expect(page.getByTestId('patient-name')).toHaveText('Carmen Rivera Colón');
-  await expect(current).toContainText('5 de 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('5 de 7'));
   await enterContext(page, 'Carmen', 'self', 'es');
   for (const [scenario, button, text] of [
     ['denied', 'Simular sin permiso de visita', 'Acceso a la visita no habilitado'],
@@ -74,7 +82,7 @@ try {
     await page.screenshot({ path: `${folder}/state-${scenario}-${width}.png`, fullPage: true });
   }
   await page.getByRole('button', { name: 'Usar datos del contexto', exact: true }).click();
-  await expect(current).toContainText('5 de 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('5 de 7'));
   const reset = page.getByRole('button', { name: 'Reiniciar simulación a etapa 5', exact: true });
   await page.getByRole('button', { name: 'Simular etapa siguiente', exact: true }).focus();
   await page.keyboard.press('Tab'); await expect(reset).toBeFocused();
@@ -100,10 +108,10 @@ try {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${folder}/large-es-${width}.png`, fullPage: true });
   await page.getByRole('button', { name: 'Simular etapa siguiente', exact: true }).click();
-  await expect(current).toContainText('6 de 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('6 de 7'));
   await page.getByRole('button', { name: 'Vista Lourdes', exact: true }).click();
   await enterContext(page, 'Carmen', 'self', 'es');
-  await expect(current).toContainText('5 de 7');
+  await expect(current).toHaveAttribute('aria-label', new RegExp('5 de 7'));
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
   expect(errors).toEqual([]); expect(requests).toEqual([]);
   report.cases.push({ width, passed: true, controls, focus, contrasts, errors, requests });

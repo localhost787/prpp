@@ -1,4 +1,4 @@
-import { enterContext, changeRole } from './entry-helpers.mjs';
+import { enterContext, changeRole, expandReports, showDemoControls } from './entry-helpers.mjs';
 import { chromium, expect } from '../../../node_modules/@playwright/test/index.mjs';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -32,6 +32,8 @@ try {
    for(const report of expected) {
     const group=page.getByTestId(`report-${report.id}`);
     await expect(group.getByText(report.institution,{exact:true})).toBeVisible();
+    const open=group.getByRole('button',{name:/^(Ver informe:|View report:)/});
+    if(await open.count()) await open.click();
     await expect(group.getByTestId('result-card')).toHaveCount(report.items.length);
     if(width===1280) {
      const waiting=page.waitForEvent('download');
@@ -58,6 +60,7 @@ try {
   }
   // Dispatch both actions in one JS task: PDF async continuation must not survive context change.
   const before=downloads.length;
+  await expandReports(page);
   await page.evaluate(()=>{
    const get=label=>document.querySelector(`[aria-label="${label}"]`);
    get('Descargar PDF sintético: Hemograma completo').click();
@@ -72,6 +75,7 @@ try {
   expect(downloads.length).toBe(before);
   await enterContext(page, 'Carmen', 'self', 'es');await button('Abrir Resultados').click();
   await expect(page.getByTestId('report-group')).toHaveCount(3);
+  await expandReports(page);
   await page.evaluate(()=>{
    document.querySelector('[aria-label="Descargar PDF sintético: Hemograma completo"]').click();
    document.querySelector('[aria-label="Cambiar idioma a inglés"]').click();
@@ -79,6 +83,7 @@ try {
   await expect(page.locator('html')).toHaveAttribute('lang','en');
   await expect(page.getByTestId('report-group')).toHaveCount(3);
   expect(downloads.length).toBe(before);
+  await expandReports(page);
   await page.evaluate(()=>{
    document.querySelector('[aria-label="Download synthetic PDF: Complete blood count"]').click();
    document.querySelector('[aria-label="Go to My visit"]').click();
@@ -87,6 +92,7 @@ try {
   expect(downloads.length).toBe(before);
   await button('Go to Results').click();
   await expect(page.getByTestId('report-group')).toHaveCount(3);
+  await expandReports(page);
   await page.evaluate(()=>{
    document.querySelector('[aria-label="Download synthetic PDF: Complete blood count"]').click();
    document.querySelector('[aria-label="View Lourdes"]').click();

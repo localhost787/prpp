@@ -11,7 +11,7 @@ test('AYO-84 owner model shows Lourdes with four independent explicit categories
   });
 
   assert.equal(model.caregivers.length, 1);
-  assert.equal(model.caregivers[0].name, 'Lourdes');
+  assert.equal(model.caregivers[0].name, 'Lourdes Santiago Rivera');
   assert.equal(model.caregivers[0].relationship, 'Daughter');
   assert.deepEqual(
     Object.fromEntries(model.caregivers[0].categories.map(category => [category.id, category.state])),
@@ -59,6 +59,6 @@ test('AYO-84 local removal uses neutral copy and never claims immediate server r
     instructions: false,
     studies: false,
   });
-  assert.equal(result.message, 'Access for Lourdes is off in this local example.');
+  assert.equal(result.message, 'Access for Lourdes Santiago Rivera is off in this local example.');
   assert.doesNotMatch(result.message, /immediate|server/i);
 });

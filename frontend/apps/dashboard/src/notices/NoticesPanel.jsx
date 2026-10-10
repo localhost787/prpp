@@ -2,6 +2,21 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { controlSizes, palette, radii, spacing, surfaceStyles } from '../ui.mjs';
 
+// Only exact, explicitly synthetic fixture rows have presentation translations.
+// Arbitrary clinical text (including rows reusing these IDs) is left untouched.
+const syntheticNoticeCopy = {
+  arrival: { source: 'Synthetic arrival notice', en: 'Your arrival was registered.', es: 'Se registró su llegada.' },
+  triage: { source: 'Synthetic triage notice', en: 'Your initial assessment was recorded.', es: 'Se registró su evaluación inicial.' },
+  cubicle: { source: 'Synthetic cubicle notice', en: 'You were moved to the treatment area.', es: 'Pasó al área de atención.' },
+};
+
+function noticeText(item, language) {
+  const known = Object.hasOwn(syntheticNoticeCopy, item.id) ? syntheticNoticeCopy[item.id] : null;
+  return item.synthetic === true && known?.source === item.text
+    ? known[language === 'es' ? 'es' : 'en']
+    : item.text;
+}
+
 function Copy({ children, languageTag, scale, style, ...props }) {
   return <Text accessibilityLanguage={languageTag} {...props} style={[styles.text, { fontSize: 16 * scale, lineHeight: 24 * scale }, style]}>{children}</Text>;
 }
@@ -14,11 +29,12 @@ export default function NoticesPanel({ language = 'en', textScale = 1, state, un
   return <View testID="notices-panel" style={styles.panel}>
     <View style={styles.header}>
       <Copy languageTag={languageTag} scale={scale} accessibilityRole="header" style={[styles.heading, { fontSize: 24 * scale, lineHeight: 32 * scale }]}>{copy?.title ?? (language === 'es' ? 'Avisos' : 'Notices')}</Copy>
-      <Copy languageTag={languageTag} scale={scale} style={styles.count}>{copy?.unread?.(unreadCount) ?? `${unreadCount}`}</Copy>
+      {status === 'ready' && <Copy languageTag={languageTag} scale={scale} accessibilityLiveRegion="polite" style={styles.count}>{copy?.unread?.(unreadCount) ?? `${unreadCount}`}</Copy>}
     </View>
-    <Pressable accessibilityLanguage={languageTag} accessibilityRole="button" accessibilityLabel={copy?.open} onPress={onOpen} style={({ pressed }) => [styles.openButton, pressed && styles.pressed]}>
+    {status === 'ready' && <Pressable accessibilityLanguage={languageTag} accessibilityRole="button" accessibilityLabel={copy?.open} disabled={unreadCount === 0} accessibilityState={{ disabled: unreadCount === 0 }} onPress={onOpen} style={({ pressed }) => [styles.openButton, pressed && styles.pressed]}>
       <Copy languageTag={languageTag} scale={scale} style={styles.openText}>{copy?.open}</Copy>
-    </Pressable>
+    </Pressable>}
+    {status === 'ready' && <Copy languageTag={languageTag} scale={scale} style={styles.synthetic}>{copy?.local}</Copy>}
     {status !== 'ready' ? <View accessibilityLiveRegion="polite" accessibilityState={status === 'loading' ? { busy: true } : undefined} style={styles.notice}>
       <Copy languageTag={languageTag} scale={scale}>{state?.message}</Copy>
     </View> : <View style={styles.list}>
@@ -27,7 +43,7 @@ export default function NoticesPanel({ language = 'en', textScale = 1, state, un
           {item.time && <Copy languageTag={languageTag} scale={scale} style={styles.time}>{item.time}</Copy>}
           {item.synthetic && <Copy languageTag={languageTag} scale={scale} style={styles.synthetic}>{copy.synthetic}</Copy>}
         </View>
-        <Copy languageTag={languageTag} scale={scale}>{item.text}</Copy>
+        <Copy languageTag={languageTag} scale={scale}>{noticeText(item, language)}</Copy>
       </View>)}
     </View>}
   </View>;
